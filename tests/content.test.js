@@ -371,6 +371,34 @@ test("an hours suffix updates after a grid time change without a pointer gesture
   app.dom.window.close();
 });
 
+test("an extension reload stops stale grid updates without recording a resize error", async () => {
+  let requests = 0;
+  const app = run(`<div data-eventchip data-eventid="allergy-1" role="button">
+    <div>4pm to 5pm, Allergy Shot (1 hour), Calendar: Events, October 26, 2026</div>
+    <div aria-hidden="true"><span class="I0UMhf">Allergy Shot (1 hour)</span></div>
+  </div>`, { updateExistingHours: true }, {
+    sendMessage: async () => { requests++; throw new Error("Extension context invalidated."); }
+  });
+  await settle();
+  let warnings = 0;
+  app.window.console.warn = () => { warnings++; };
+  const chip = app.window.document.querySelector("[data-eventchip]");
+  chip.dispatchEvent(new app.window.MouseEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
+  chip.firstElementChild.textContent = "4pm to 4:30pm, Allergy Shot (1 hour), Calendar: Events, October 26, 2026";
+  chip.dispatchEvent(new app.window.MouseEvent("pointerup", { bubbles: true, clientX: 10, clientY: 30 }));
+  await settle();
+  assert.equal(requests, 1);
+  assert.equal(warnings, 0);
+  assert.match(app.window.document.querySelector(".calendar-hours-notice").textContent, /Refresh this Calendar tab/);
+  assert.equal(chip.querySelector(".I0UMhf").textContent, "Allergy Shot (1 hour)");
+  chip.dispatchEvent(new app.window.MouseEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
+  chip.firstElementChild.textContent = "4pm to 4:45pm, Allergy Shot (1 hour), Calendar: Events, October 26, 2026";
+  chip.dispatchEvent(new app.window.MouseEvent("pointerup", { bubbles: true, clientX: 10, clientY: 30 }));
+  await settle();
+  assert.equal(requests, 1);
+  app.dom.window.close();
+});
+
 test("grid changes do not auto-save while keep-updated mode is disabled", async () => {
   const app = run(`<div data-eventchip data-eventid="event-2" role="button">
     <div>10:15am to 1:25pm, SCU Block (3.17 hours), October 26, 2026</div>

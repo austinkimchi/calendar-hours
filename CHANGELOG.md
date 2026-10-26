@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.8 — development build, October 26, 2026
+
+- Recognize an invalidated extension context after an unpacked extension reload. Stop the stale Calendar tab's grid updates and show a refresh prompt without recording a resize error.
+
 ## 0.2.7 — development build, October 26, 2026
 
 - Apply `/hours` before Calendar handles Enter, Save, or form submission, closing the fast-save race.

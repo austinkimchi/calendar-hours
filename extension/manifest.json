@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Calendar Hours",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Add calculated hours or minutes to Google Calendar event titles.",
   "permissions": ["storage"],
   "content_scripts": [

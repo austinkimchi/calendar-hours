@@ -2,9 +2,9 @@
 
 Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed duration between an event's start and end time and inserts hours or minutes into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
 
-Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). Version 0.2.7 fixes fast `/hours` saves and saves settings changes automatically. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
+Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). Version 0.2.8 includes the fast `/hours` save and automatic settings save fixes, and gives a clear refresh prompt when an open Calendar tab still has an old script after an extension reload. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
 
-**Store status (verified October 26, 2026 in the publisher dashboard):** v0.1.0 is pending review; no version is published, and package upload is disabled during review. v0.2.7 is prepared for a later submission. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
+**Store status (verified October 26, 2026 in the publisher dashboard):** v0.1.0 is pending review; no version is published, and package upload is disabled during review. v0.2.8 is prepared for a later submission. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
 
 ## Use
 
@@ -45,9 +45,9 @@ npm test
 npm run package
 ```
 
-The generated `dist/calendar-hours-0.2.7.zip` has `manifest.json` at its root. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
+The generated `dist/calendar-hours-0.2.8.zip` has `manifest.json` at its root. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
 
-For a local development check only, load the `extension` folder from the browser's Extensions page. The store package does not need Developer mode after publication.
+For a local development check only, load the `extension` folder from the browser's Extensions page. After reloading the unpacked extension, refresh any open Google Calendar tabs once so their content script uses the new version. The store package does not need Developer mode after publication.
 
 ## Release process
 

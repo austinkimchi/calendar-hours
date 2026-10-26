@@ -16,6 +16,7 @@
   let notice = null;
   const optimisticTitles = new Map();
   let settingsReady;
+  let contextInvalidated = false;
 
   const visible = element => !!element && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden";
   const firstVisible = (root, selector) => [...root.querySelectorAll(selector)].find(visible) || null;
@@ -96,6 +97,7 @@
   }
 
   function apply(reason) {
+    if (contextInvalidated) return { ok: false, message: "Refresh this Calendar tab to finish updating Calendar Hours." };
     const editor = findEditor();
     if (!editor) return { ok: false, message: "Open a Google Calendar event first." };
     const result = calculate(editor);
@@ -110,6 +112,7 @@
   }
 
   function applyPendingKeyword(reason) {
+    if (contextInvalidated) return;
     const editor = findEditor();
     if (!editor || !settings.keyword || !editor.title.value.toLowerCase().includes(settings.keyword.toLowerCase())) return;
     apply(reason);
@@ -141,6 +144,7 @@
   }
 
   function update() {
+    if (contextInvalidated) return;
     const editor = findEditor();
     const result = editor && calculate(editor);
     if (!editor || !result) { hideChip(); return; }
@@ -162,6 +166,7 @@
   }
 
   function queueUpdate() {
+    if (contextInvalidated) return;
     clearTimeout(timer);
     timer = setTimeout(update, 120);
   }
@@ -246,7 +251,7 @@
   }
 
   function scanGridChanges() {
-    if (typeof document === "undefined") return;
+    if (typeof document === "undefined" || contextInvalidated) return;
     for (const chip of document.querySelectorAll('[data-eventchip][data-eventid]')) {
       const id = chip.getAttribute("data-eventid");
       const summary = chipSummary(chip);
@@ -317,7 +322,7 @@
   }
 
   async function syncResizedEvent(gesture) {
-    if (gridBusy || !core.shouldUpdateDuration(gesture.title, settings)) return;
+    if (contextInvalidated || gridBusy || !core.shouldUpdateDuration(gesture.title, settings)) return;
     gridBusy = true;
     let expectedTitle = null;
     try {
@@ -349,6 +354,17 @@
         paintOptimisticTitles();
       }
     } catch (error) {
+      if (/Extension context invalidated/i.test(String(error?.message || error))) {
+        contextInvalidated = true;
+        optimisticTitles.clear();
+        observedGridRanges.clear();
+        for (const timeout of gridFallbackTimers.values()) clearTimeout(timeout);
+        gridFallbackTimers.clear();
+        queuedGridGesture = null;
+        if (expectedTitle) restoreChipTitle(gesture.id, gesture.title, expectedTitle);
+        showNotice("Calendar Hours was reloaded. Refresh this Calendar tab to use the update.");
+        return;
+      }
       console.warn("Calendar Hours could not update a resized event:", error);
       if (expectedTitle) restoreChipTitle(gesture.id, gesture.title, expectedTitle);
       const recurring = error.message === "recurring event";
@@ -362,13 +378,14 @@
       queuedGridGesture = null;
       const current = queued && eventChip(queued.id);
       const currentTitle = chipTitle(current);
-      if (queued && currentTitle && core.shouldUpdateDuration(currentTitle, settings)) {
+      if (!contextInvalidated && queued && currentTitle && core.shouldUpdateDuration(currentTitle, settings)) {
         syncResizedEvent({ ...queued, title: currentTitle });
       }
     }
   }
 
   function startGridGesture(event) {
+    if (contextInvalidated) return;
     if (!(event.target instanceof Element)) return;
     const chip = event.target.closest('[data-eventchip][data-eventid]');
     const title = chipTitle(chip);
@@ -377,6 +394,7 @@
   }
 
   function finishGridGesture(event) {
+    if (contextInvalidated) return;
     const gesture = gridGesture;
     gridGesture = null;
     if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) >= 5) {
@@ -437,6 +455,7 @@
   window.addEventListener("resize", queueUpdate);
   window.addEventListener("scroll", queueUpdate, true);
   new MutationObserver(changes => {
+    if (contextInvalidated) return;
     if (optimisticTitles.size) paintOptimisticTitles();
     scanGridChanges();
     if (changes.some(change => change.type === "childList")) queueUpdate();
