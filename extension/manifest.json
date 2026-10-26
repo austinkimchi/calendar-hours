@@ -16,7 +16,7 @@
   "commands": {
     "insert-hours": {
       "suggested_key": { "default": "Ctrl+Shift+H", "mac": "Command+Shift+H" },
-      "description": "Insert or update duration hours in the open event"
+      "description": "Insert or update the duration in the open event"
     }
   },
   "action": {
