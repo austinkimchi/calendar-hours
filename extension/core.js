@@ -12,7 +12,13 @@
     incrementMinutes: 1,
     trimZeros: true,
     unit: "hours",
+    singularUnit: "hour",
     template: "({value} {unit})",
+    displayUnit: "hours",
+    minutesBelowHour: false,
+    minutesUnit: "minutes",
+    minutesSingularUnit: "minute",
+    minutesTemplate: "({value} {unit})",
     keyword: "/hours",
     showSuggestion: true,
     automatic: false,
@@ -41,14 +47,23 @@
     const source = value && typeof value === "object" ? value : {};
     const matchingPhrases = normalizedPhrases(source);
     const updateExistingHours = typeof source.updateExistingHours === "boolean" ? source.updateExistingHours : defaults.updateExistingHours;
+    const unit = typeof source.unit === "string" && source.unit.trim() ? source.unit.trim().slice(0, 24) : defaults.unit;
+    const minutesUnit = typeof source.minutesUnit === "string" && source.minutesUnit.trim() ? source.minutesUnit.trim().slice(0, 24) : defaults.minutesUnit;
+    const template = typeof source.template === "string" && source.template.includes("{value}") ? source.template.slice(0, 100) : defaults.template;
     return {
       ...defaults,
       decimals: Math.max(0, Math.min(4, Number.parseInt(source.decimals ?? defaults.decimals, 10) || 0)),
       rounding: ["nearest", "down", "up", "truncate"].includes(source.rounding) ? source.rounding : defaults.rounding,
       incrementMinutes: [1, 5, 10, 15, 30, 60].includes(Number(source.incrementMinutes)) ? Number(source.incrementMinutes) : defaults.incrementMinutes,
       trimZeros: typeof source.trimZeros === "boolean" ? source.trimZeros : defaults.trimZeros,
-      unit: typeof source.unit === "string" && source.unit.trim() ? source.unit.trim().slice(0, 24) : defaults.unit,
-      template: typeof source.template === "string" && source.template.includes("{value}") ? source.template.slice(0, 100) : defaults.template,
+      unit,
+      singularUnit: typeof source.singularUnit === "string" && source.singularUnit.trim() ? source.singularUnit.trim().slice(0, 24) : singularUnitFor(unit),
+      template,
+      displayUnit: source.displayUnit === "minutes" ? "minutes" : "hours",
+      minutesBelowHour: source.minutesBelowHour === true,
+      minutesUnit,
+      minutesSingularUnit: typeof source.minutesSingularUnit === "string" && source.minutesSingularUnit.trim() ? source.minutesSingularUnit.trim().slice(0, 24) : singularUnitFor(minutesUnit),
+      minutesTemplate: typeof source.minutesTemplate === "string" && source.minutesTemplate.includes("{value}") ? source.minutesTemplate.slice(0, 100) : template,
       keyword: typeof source.keyword === "string" && source.keyword.trim() ? source.keyword.trim().slice(0, 40) : defaults.keyword,
       showSuggestion: typeof source.showSuggestion === "boolean" ? source.showSuggestion : defaults.showSuggestion,
       automatic: typeof source.automatic === "boolean" ? source.automatic : defaults.automatic,
@@ -108,6 +123,11 @@
     return Math.round(scaled + 1e-9) / factor;
   }
 
+  function singularUnitFor(unit) {
+    if (/^(hours|hrs|minutes|mins)$/i.test(unit)) return unit.slice(0, -1);
+    return unit.endsWith("s") && unit.length > 1 ? unit.slice(0, -1) : unit;
+  }
+
   function formattedDuration(minutes, settings) {
     const cfg = settingsFrom(settings);
     if (!Number.isFinite(minutes) || minutes <= 0) return null;
@@ -115,38 +135,49 @@
     const roundedIncrements = cfg.rounding === "down" || cfg.rounding === "truncate"
       ? Math.floor(increments + 1e-9)
       : cfg.rounding === "up" ? Math.ceil(increments - 1e-9) : Math.round(increments + 1e-9);
-    const hours = roundNumber((roundedIncrements * cfg.incrementMinutes) / 60, cfg.decimals, cfg.rounding);
+    const roundedMinutes = roundedIncrements * cfg.incrementMinutes;
+    const useMinutes = cfg.displayUnit === "minutes" || (cfg.minutesBelowHour && minutes < 60);
+    if (useMinutes) {
+      const value = String(roundedMinutes);
+      const unit = roundedMinutes === 1 ? cfg.minutesSingularUnit : cfg.minutesUnit;
+      return { value, unit, kind: "minutes", text: cfg.minutesTemplate.replaceAll("{value}", value).replaceAll("{unit}", unit) };
+    }
+    const hours = roundNumber(roundedMinutes / 60, cfg.decimals, cfg.rounding);
     let value = hours.toFixed(cfg.decimals);
     if (cfg.trimZeros && cfg.decimals > 0) value = value.replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
-    return { value, unit: cfg.unit, text: cfg.template.replaceAll("{value}", value).replaceAll("{unit}", cfg.unit) };
+    const unit = hours === 1 ? cfg.singularUnit : cfg.unit;
+    return { value, unit, kind: "hours", text: cfg.template.replaceAll("{value}", value).replaceAll("{unit}", unit) };
   }
 
   function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  function durationSuffixPattern(settings) {
-    const cfg = settingsFrom(settings);
-    const distinctTemplate = cfg.template.replaceAll("{value}", "").trim().length > 0;
+  function durationSuffixPattern(template, units) {
+    const distinctTemplate = template.replaceAll("{value}", "").trim().length > 0;
     if (!distinctTemplate) return null;
-    const template = cfg.template.split(/(\{value\}|\{unit\})/g).map(part => {
+    const pattern = template.split(/(\{value\}|\{unit\})/g).map(part => {
       if (part === "{value}") return "\\d+(?:\\.\\d+)?";
-      if (part === "{unit}") return escapeRegExp(cfg.unit);
+      if (part === "{unit}") return `(?:${[...new Set(units)].map(escapeRegExp).join("|")})`;
       return escapeRegExp(part).replace(/\s+/g, "\\s+");
     }).join("");
-    return new RegExp(`\\s*${template}\\s*$`, "i");
+    return new RegExp(`\\s*${pattern}\\s*$`, "i");
   }
 
   function existingDurationPattern(settings) {
-    const configured = durationSuffixPattern(settings);
-    const legacy = /\s*(?:\(\s*\d+(?:\.\d+)?\s*(?:hours?|hrs?)\s*\)|\d+(?:\.\d+)?\s*(?:hours?|hrs?))\s*$/i;
+    const cfg = settingsFrom(settings);
+    const configured = [
+      durationSuffixPattern(cfg.template, [cfg.unit, cfg.singularUnit]),
+      durationSuffixPattern(cfg.minutesTemplate, [cfg.minutesUnit, cfg.minutesSingularUnit])
+    ].filter(Boolean);
+    const legacy = /\s*(?:\(\s*\d+(?:\.\d+)?\s*(?:hours?|hrs?|minutes?|mins?)\s*\)|\d+(?:\.\d+)?\s*(?:hours?|hrs?|minutes?|mins?))\s*$/i;
     return { configured, legacy };
   }
 
   function hasDurationSuffix(title, settings) {
     if (typeof title !== "string") return false;
     const { configured, legacy } = existingDurationPattern(settings);
-    return !!(configured?.test(title) || legacy.test(title));
+    return configured.some(pattern => pattern.test(title)) || legacy.test(title);
   }
 
   function titleWithDuration(title, formatted, settings) {
@@ -157,7 +188,7 @@
     const keyword = new RegExp(escapeRegExp(cfg.keyword), "gi");
     if (keyword.test(trimmed)) return trimmed.replace(keyword, formatted.text).replace(/\s{2,}/g, " ").trim();
     const { configured, legacy } = existingDurationPattern(cfg);
-    const existing = configured?.test(trimmed) ? configured : legacy.test(trimmed) ? legacy : null;
+    const existing = configured.find(pattern => pattern.test(trimmed)) || (legacy.test(trimmed) ? legacy : null);
     if (existing) {
       return cfg.replaceExisting ? trimmed.replace(existing, ` ${formatted.text}`).trim() : trimmed;
     }
@@ -183,5 +214,5 @@
     return cfg.updateExistingHours && hasDurationSuffix(title, cfg);
   }
 
-  return { defaults, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic, hasDurationSuffix, shouldUpdateDuration };
+  return { defaults, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic, hasDurationSuffix, shouldUpdateDuration, singularUnitFor };
 });

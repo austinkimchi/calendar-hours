@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4 — development build, October 26, 2026
+
+- Add a choice to show every duration in minutes or use minutes only for events under one hour.
+- Give minutes a separate title template and editable singular and plural unit labels; initialize that template from the current hours template when minutes are first enabled.
+- Use singular units for exactly one hour or minute, including custom abbreviations such as `hr` and `min`.
+- Recognize and replace existing hour or minute suffixes when formatting or event times change.
+
 ## 0.2.3 — development build, October 26, 2026
 
 - Add an opt-in Other setting that keeps titles with a recognized hours suffix current after editing, moving, or resizing events, even when the title has no matching phrase.

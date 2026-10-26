@@ -10,32 +10,50 @@
   <main>
     <header>
       <div class="mark" aria-hidden="true">◷</div>
-      <div><h1>Calendar Hours</h1><p>Choose when hours appear and how they look.</p></div>
+      <div><h1>Calendar Hours</h1><p>Choose when durations appear and how they look.</p></div>
     </header>
     <form id="settings">
       <section aria-labelledby="general-heading">
         <h2 id="general-heading">General</h2>
         <p class="section-intro">Add a phrase for each kind of event you want Calendar Hours to recognize.</p>
         <div class="rules-header"><span>Matching phrase</span><span>Dynamic <button type="button" id="dynamic-help-button" class="info-button" aria-label="What is Dynamic mode?" aria-controls="dynamic-help" aria-expanded="false">i</button></span><span></span></div>
-        <div id="dynamic-help" class="info-panel" hidden>Dynamic updates the hours when you change event times or move or resize a matching one-time event. After a grid change, it saves the corrected title through Google Calendar. Repeating events need manual review.</div>
+        <div id="dynamic-help" class="info-panel" hidden>Dynamic updates the duration when you change event times or move or resize a matching one-time event. After a grid change, it saves the corrected title through Google Calendar. Repeating events need manual review.</div>
         <div id="rules" aria-label="Matching phrases"></div>
         <button type="button" id="add-rule" class="secondary-button">+ Add phrase</button>
         <p class="hint after-rules">Matching ignores case and uses whole words or phrases.</p>
-        <label class="check"><input type="checkbox" name="automatic"> Automatically add hours to matching titles</label>
+        <label class="check"><input type="checkbox" name="automatic"> Automatically add duration to matching titles</label>
       </section>
 
       <section aria-labelledby="hours-heading">
         <h2 id="hours-heading">Hours</h2>
+        <label>Display duration as <select name="displayUnit"><option value="hours">Hours</option><option value="minutes">Minutes</option></select></label>
+        <label class="check" id="below-hour-option"><input type="checkbox" name="minutesBelowHour"> Show minutes for durations under 1 hour</label>
+        <p class="hint" id="below-hour-hint">When enabled, longer events still use hours. Choosing Minutes above uses minutes for every duration.</p>
         <div class="grid">
-          <label>Decimal places <select name="decimals"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
           <label>Rounding <select name="rounding"><option value="nearest">Nearest</option><option value="down">Down</option><option value="up">Up</option><option value="truncate">Truncate</option></select></label>
           <label>Minute increment <select name="incrementMinutes"><option value="1">1 minute</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></label>
-          <label>Unit text <input name="unit" maxlength="24" value="hours" placeholder="hours, hrs, or hr"></label>
         </div>
-        <label class="check"><input type="checkbox" name="trimZeros" checked> Hide trailing zeros, such as 3.20 → 3.2</label>
-        <label>Title template <input name="template" maxlength="100" value="({value} {unit})" required></label>
-        <p class="hint">Use <code>{value}</code> for the number and <code>{unit}</code> for the unit.</p>
-        <div class="preview">Example: <strong id="preview">Work session (3.17 hours)</strong></div>
+        <div id="hours-format">
+          <h3>Hours format</h3>
+          <div class="grid">
+            <label>Decimal places <select name="decimals"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+            <label>Plural unit <input name="unit" maxlength="24" value="hours" placeholder="hours or hrs"></label>
+            <label>Singular unit <input name="singularUnit" maxlength="24" value="hour" placeholder="hour or hr"></label>
+          </div>
+          <label class="check"><input type="checkbox" name="trimZeros" checked> Hide trailing zeros, such as 3.20 → 3.2</label>
+          <label>Hours title template <input name="template" maxlength="100" value="({value} {unit})" required></label>
+          <p class="hint">Use <code>{value}</code> for the number and <code>{unit}</code> for the unit.</p>
+        </div>
+        <div id="minutes-format" hidden>
+          <h3>Minutes format</h3>
+          <div class="grid">
+            <label>Plural unit <input name="minutesUnit" maxlength="24" value="minutes" placeholder="minutes or mins"></label>
+            <label>Singular unit <input name="minutesSingularUnit" maxlength="24" value="minute" placeholder="minute or min"></label>
+          </div>
+          <label>Minutes title template <input name="minutesTemplate" maxlength="100" value="({value} {unit})" required></label>
+          <p class="hint">When you first enable minutes, this starts with your Hours title template. You can then customize it separately.</p>
+        </div>
+        <div class="preview"><div>3 hours 10 minutes: <strong id="preview">Work session (3.17 hours)</strong></div><div>45 minutes: <strong id="short-preview">Work session (0.75 hours)</strong></div><div>1 hour: <strong id="singular-preview">Work session (1 hour)</strong></div></div>
       </section>
 
       <section aria-labelledby="other-heading">
@@ -43,9 +61,9 @@
         <label>Typed keyword <input name="keyword" maxlength="40" value="/hours" required></label>
         <p class="hint">Type this in an event title to replace it with calculated hours.</p>
         <label class="check"><input type="checkbox" name="showSuggestion" checked> Show a suggestion beside the title; click it or press Tab to accept</label>
-        <label class="check"><input type="checkbox" name="replaceExisting" checked> Replace previous hours when I add them again</label>
-        <label class="check"><input type="checkbox" name="updateExistingHours"> Automatically keep titles with an hours suffix updated after time changes</label>
-        <p class="hint">Includes hours added with the keyword or suggestion when no matching phrase is configured for that title. A matching phrase uses its own Dynamic switch. One-time grid moves and resizes save automatically; editor changes still need Calendar's Save.</p>
+        <label class="check"><input type="checkbox" name="replaceExisting" checked> Replace a previous duration when I add it again</label>
+        <label class="check"><input type="checkbox" name="updateExistingHours"> Automatically keep titles with a duration suffix updated after time changes</label>
+        <p class="hint">Includes hours or minutes added with the keyword or suggestion when no matching phrase is configured for that title. A matching phrase uses its own Dynamic switch. One-time grid moves and resizes save automatically; editor changes still need Calendar's Save.</p>
       </section>
       <footer><button type="submit" class="primary-button">Save settings</button><span id="status" role="status"></span></footer>
     </form>

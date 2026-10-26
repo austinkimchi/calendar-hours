@@ -52,6 +52,7 @@ test("settings migrate phrases into rows and save each Dynamic choice", async ()
     { phrase: "Work block", dynamic: false }
   ]);
   assert.equal(saved.automatic, true);
+  assert.equal(saved.minutesTemplate, undefined, "minutes should inherit the latest hours template until first enabled");
   assert.deepEqual(Array.from(removed), ["autoWords", "keepUpdated"]);
   assert.equal(window.document.querySelector("#status").textContent, "Saved");
 
@@ -62,5 +63,50 @@ test("settings migrate phrases into rows and save each Dynamic choice", async ()
   await settle();
   assert.equal(saved.updateExistingHours, true);
   assert.equal(saved.replaceExisting, true);
+  dom.window.close();
+});
+
+test("enabling minutes starts with the current hours template and keeps later customization", async () => {
+  const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
+  const { window } = dom;
+  let saved;
+  window.chrome = { storage: { sync: {
+    get: async () => ({ template: "— {value} {unit}", unit: "hrs" }),
+    set: async value => { saved = value; },
+    remove: async () => {}
+  } } };
+  window.eval(core);
+  window.eval(options);
+  await settle();
+
+  const field = name => window.document.querySelector(`[name="${name}"]`);
+  assert.equal(field("singularUnit").value, "hr");
+  assert.equal(window.document.querySelector("#minutes-format").hidden, true);
+  field("template").value = "[{value} {unit}]";
+  field("template").dispatchEvent(new window.Event("input", { bubbles: true }));
+  field("minutesBelowHour").click();
+  assert.equal(window.document.querySelector("#minutes-format").hidden, false);
+  assert.equal(field("minutesTemplate").value, "[{value} {unit}]");
+  assert.equal(window.document.querySelector("#short-preview").textContent, "Work session [45 minutes]");
+  assert.equal(window.document.querySelector("#singular-preview").textContent, "Work session [1 hr]");
+
+  field("minutesUnit").value = "mins";
+  field("minutesUnit").dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.equal(field("minutesSingularUnit").value, "min");
+  field("minutesTemplate").value = "~ {value} {unit}";
+  field("minutesTemplate").dispatchEvent(new window.Event("input", { bubbles: true }));
+  field("minutesBelowHour").click();
+  field("minutesBelowHour").click();
+  assert.equal(field("minutesTemplate").value, "~ {value} {unit}");
+  field("displayUnit").value = "minutes";
+  field("displayUnit").dispatchEvent(new window.Event("change", { bubbles: true }));
+  assert.equal(window.document.querySelector("#below-hour-option").hidden, true);
+  assert.equal(window.document.querySelector("#hours-format").hidden, true);
+  assert.equal(window.document.querySelector("#preview").textContent, "Work session ~ 190 mins");
+  window.document.querySelector("#settings").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+  await settle();
+  assert.equal(saved.displayUnit, "minutes");
+  assert.equal(saved.minutesTemplate, "~ {value} {unit}");
+  assert.equal(saved.minutesSingularUnit, "min");
   dom.window.close();
 });

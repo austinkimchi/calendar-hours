@@ -5,6 +5,9 @@
   const rules = document.querySelector("#rules");
   const status = document.querySelector("#status");
   const names = Object.keys(core.defaults).filter(name => name !== "matchingPhrases");
+  let minutesTemplateInitialized = false;
+  let lastHoursUnit = core.defaults.unit;
+  let lastMinutesUnit = core.defaults.minutesUnit;
 
   function addRule(phrase = "", dynamic = false) {
     const row = document.querySelector("#rule-template").content.firstElementChild.cloneNode(true);
@@ -44,18 +47,39 @@
     const needed = form.elements.namedItem("updateExistingHours").checked || matchingPhrases().some(item => item.dynamic && item.phrase.trim());
     if (needed) field.checked = true;
     field.disabled = needed;
-    field.title = needed ? "Automatic updates need existing hours to be replaced." : "";
+    field.title = needed ? "Automatic updates need an existing duration to be replaced." : "";
+  }
+
+  function showMinutesFormat() {
+    const alwaysMinutes = form.elements.namedItem("displayUnit").value === "minutes";
+    const showMinutes = alwaysMinutes || form.elements.namedItem("minutesBelowHour").checked;
+    document.querySelector("#hours-format").hidden = alwaysMinutes;
+    document.querySelector("#below-hour-option").hidden = alwaysMinutes;
+    document.querySelector("#below-hour-hint").hidden = alwaysMinutes;
+    document.querySelector("#minutes-format").hidden = !showMinutes;
+    form.elements.namedItem("template").required = !alwaysMinutes;
+    form.elements.namedItem("minutesTemplate").required = showMinutes;
+  }
+
+  function initializeMinutesTemplate() {
+    if (minutesTemplateInitialized) return;
+    form.elements.namedItem("minutesTemplate").value = form.elements.namedItem("template").value;
+    minutesTemplateInitialized = true;
   }
 
   function preview() {
     updateReplaceExisting();
+    showMinutesFormat();
     const cfg = values();
-    const formatted = core.formattedDuration(190, cfg);
-    document.querySelector("#preview").textContent = core.titleWithDuration("Work session", formatted, cfg);
+    for (const [id, minutes] of [["preview", 190], ["short-preview", 45], ["singular-preview", 60]]) {
+      const formatted = core.formattedDuration(minutes, cfg);
+      document.querySelector(`#${id}`).textContent = core.titleWithDuration("Work session", formatted, cfg);
+    }
   }
 
   chrome.storage.sync.get(null).then(saved => {
     const cfg = core.settingsFrom(saved);
+    minutesTemplateInitialized = typeof saved.minutesTemplate === "string" && saved.minutesTemplate.includes("{value}");
     for (const name of names) {
       const field = form.elements.namedItem(name);
       if (field.type === "checkbox") field.checked = cfg[name];
@@ -63,7 +87,27 @@
     }
     rules.replaceChildren();
     for (const rule of cfg.matchingPhrases) addRule(rule.phrase, rule.dynamic);
+    lastHoursUnit = cfg.unit;
+    lastMinutesUnit = cfg.minutesUnit;
     preview();
+  });
+
+  form.elements.namedItem("minutesBelowHour").addEventListener("change", event => {
+    if (event.target.checked) initializeMinutesTemplate();
+  });
+  form.elements.namedItem("displayUnit").addEventListener("change", event => {
+    if (event.target.value === "minutes") initializeMinutesTemplate();
+  });
+  form.elements.namedItem("minutesTemplate").addEventListener("input", () => { minutesTemplateInitialized = true; });
+  form.elements.namedItem("unit").addEventListener("input", event => {
+    const singular = form.elements.namedItem("singularUnit");
+    if (singular.value === core.singularUnitFor(lastHoursUnit)) singular.value = core.singularUnitFor(event.target.value);
+    lastHoursUnit = event.target.value;
+  });
+  form.elements.namedItem("minutesUnit").addEventListener("input", event => {
+    const singular = form.elements.namedItem("minutesSingularUnit");
+    if (singular.value === core.singularUnitFor(lastMinutesUnit)) singular.value = core.singularUnitFor(event.target.value);
+    lastMinutesUnit = event.target.value;
   });
 
   document.querySelector("#add-rule").addEventListener("click", () => {
@@ -91,6 +135,7 @@
     event.preventDefault();
     try {
       const cfg = values();
+      if (!minutesTemplateInitialized) delete cfg.minutesTemplate;
       await chrome.storage.sync.set(cfg);
       await chrome.storage.sync.remove(["autoWords", "keepUpdated"]);
       rules.replaceChildren();

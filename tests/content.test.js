@@ -269,6 +269,25 @@ test("an hours suffix updates after editing time fields even without a matching 
   app.dom.window.close();
 });
 
+test("an edited short event switches from an hours suffix to minutes", async () => {
+  const app = run(`<input aria-label="Title" value="Allergy Shot (0.75 hours)">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="4pm">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="4:45pm">`, {
+    updateExistingHours: true,
+    minutesBelowHour: true,
+    matchingPhrases: [{ phrase: "SCU Block", dynamic: true }]
+  });
+  await settle();
+  const end = app.window.document.querySelector('[aria-label="End time"]');
+  end.value = "4:30pm";
+  end.dispatchEvent(new app.window.Event("change", { bubbles: true }));
+  await settle();
+  assert.equal(app.window.document.querySelector('[aria-label="Title"]').value, "Allergy Shot (30 minutes)");
+  app.dom.window.close();
+});
+
 test("an hours suffix updates after Calendar replaces the title input during a time edit", async () => {
   const app = run(`<input aria-label="Title" value="Allergy Shot (1 hours)">
     <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">

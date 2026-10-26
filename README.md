@@ -1,10 +1,10 @@
 # Calendar Hours
 
-Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed hours between an event's start and end time and inserts the result into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
+Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed duration between an event's start and end time and inserts hours or minutes into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
 
-Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.2 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.2) is the latest published release. This v0.2.3 build adds hours-suffix updates. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
+Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.2 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.2) is the latest published release. This v0.2.4 development build adds minute display and singular unit labels. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
 
-**Store status (last verified October 26, 2026):** v0.1.0 was pending Chrome Web Store review. v0.2.2 was packaged for submission but dashboard access was blocked in this session. v0.2.3 is a development build. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
+**Store status (last verified October 26, 2026):** v0.1.0 was pending Chrome Web Store review. v0.2.2 was packaged for submission but dashboard access was blocked in this session. v0.2.4 is a development build. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
 
 ## Use
 
@@ -13,20 +13,20 @@ Source is kept in the [private GitHub repository](https://github.com/austinkimch
 3. Click the duration suggestion beside the title, or press **Tab** while the title field is focused. The default format is `Work session (3.17 hours)` for a 10:15am–1:25pm event.
 4. Save the event using Google Calendar's **Save** button.
 
-Other ways to insert or update hours:
+Other ways to insert or update the duration:
 
 - Type `/hours` anywhere in the title. It is replaced when the times are valid.
 - Press **Ctrl+Shift+H** on Windows/Linux or **Command+Shift+H** on macOS while an event editor is open. Browser shortcut conflicts can be resolved at `chrome://extensions/shortcuts` or `edge://extensions/shortcuts`.
-- Click the extension icon, then **Add hours to open event**.
-- In Settings → General, add one row for each matching phrase. Enable **Automatically add hours to matching titles** to insert the duration when a matching event is composed. The default phrase is `block`.
-- Turn on **Dynamic** for any phrase whose matching events should stay current. After you drag or resize a matching timed event on the Calendar grid, the extension shows the new hours immediately and saves the title from an inactive Calendar tab. Dynamic also updates the title when you change start or end fields in the editor; use Calendar's Save button for those manual edits. Matching ignores case and respects word boundaries. Existing phrase lists and the prior global keep-updated setting migrate to these rows automatically.
-- In Settings → Other, turn on **Automatically keep titles with an hours suffix updated after time changes** to cover events where you inserted hours with `/hours` or a suggestion but did not configure a matching phrase. It detects the current Hours template plus older `hours`, `hrs`, and `hr` endings. Grid moves and resizes of one-time events update and save automatically; editor time changes update the title for you to save. If an event matches a configured phrase, that phrase's Dynamic switch takes precedence. This broader option is off by default.
+- Click the extension icon, then **Add duration to open event**.
+- In Settings → General, add one row for each matching phrase. Enable **Automatically add duration to matching titles** to insert it when a matching event is composed. The default phrase is `block`.
+- Turn on **Dynamic** for any phrase whose matching events should stay current. After you drag or resize a matching timed event on the Calendar grid, the extension shows the new duration immediately and saves the title from an inactive Calendar tab. Dynamic also updates the title when you change start or end fields in the editor; use Calendar's Save button for those manual edits. Matching ignores case and respects word boundaries. Existing phrase lists and the prior global keep-updated setting migrate to these rows automatically.
+- In Settings → Other, turn on **Automatically keep titles with a duration suffix updated after time changes** to cover events where you inserted a duration with `/hours` or a suggestion but did not configure a matching phrase. It detects the current Hours and Minutes templates plus older `hours`, `hrs`, `hr`, `minutes`, `mins`, and `min` endings. Grid moves and resizes of one-time events update and save automatically; editor time changes update the title for you to save. If an event matches a configured phrase, that phrase's Dynamic switch takes precedence. This broader option is off by default.
 
 ## Formatting
 
-Settings → Hours allows 0–4 decimal places; nearest, down, up, or truncation rounding; 1/5/10/15/30/60 minute increments; fixed or trimmed trailing zeros; custom unit text (`hours`, `hrs`, `hr`); and a title template using `{value}` and `{unit}`. An existing trailing `(… hours)`, `(… hrs)`, or `(… hr)` is updated when the event time changes.
+Settings → Hours lets you display every duration in hours or minutes, or display minutes only when the actual duration is under one hour. The first time you enable minutes, its title template starts with your current Hours template; you can then change the Minutes template separately. Each unit has customizable plural and singular text, so the defaults produce `1 hour`, `2 hours`, `1 minute`, and `2 minutes`. The same section controls nearest, down, up, or truncation rounding and 1/5/10/15/30/60 minute increments. Hours also support 0–4 decimal places and fixed or trimmed trailing zeros. Templates use `{value}` and `{unit}`.
 
-The initial settings use nearest rounding to two decimal places, a one minute increment, `hours`, and `({value} {unit})`.
+The initial settings use hours, nearest rounding to two decimal places, a one minute increment, and `({value} {unit})`. Minutes display is off by default.
 
 ## Privacy and scope
 
@@ -42,7 +42,7 @@ npm test
 npm run package
 ```
 
-The generated `dist/calendar-hours-0.2.3.zip` has `manifest.json` at its root. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
+The generated `dist/calendar-hours-0.2.4.zip` has `manifest.json` at its root. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
 
 For a local development check only, load the `extension` folder from the browser's Extensions page. The store package does not need Developer mode after publication.
 

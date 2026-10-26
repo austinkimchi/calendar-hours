@@ -84,3 +84,33 @@ test("custom hours templates are detected and replaced", () => {
   assert.equal(core.titleWithDuration("Work — 1.25 hrs", core.formattedDuration(90, settings), settings), "Work — 1.5 hrs");
   assert.equal(core.hasDurationSuffix("Work 2026", { ...settings, template: "{value}" }), false);
 });
+
+test("hours and minutes use singular labels at exactly one unit", () => {
+  assert.equal(core.formattedDuration(60, {}).text, "(1 hour)");
+  assert.equal(core.titleWithDuration("Allergy Shot (1 hours)", core.formattedDuration(60, {}), {}), "Allergy Shot (1 hour)");
+  assert.equal(core.formattedDuration(60, { trimZeros: false }).text, "(1.00 hour)");
+  assert.equal(core.formattedDuration(60, { unit: "hrs" }).text, "(1 hr)");
+  assert.equal(core.formattedDuration(1, { displayUnit: "minutes" }).text, "(1 minute)");
+  assert.equal(core.formattedDuration(60, { displayUnit: "minutes" }).text, "(60 minutes)");
+});
+
+test("minutes can be used for every duration or only durations below one hour", () => {
+  assert.equal(core.formattedDuration(190, { displayUnit: "minutes" }).text, "(190 minutes)");
+  assert.equal(core.formattedDuration(45, { minutesBelowHour: true }).text, "(45 minutes)");
+  assert.equal(core.formattedDuration(60, { minutesBelowHour: true }).text, "(1 hour)");
+  assert.equal(core.formattedDuration(190, { minutesBelowHour: true }).text, "(3.17 hours)");
+  assert.equal(core.formattedDuration(43, { displayUnit: "minutes", incrementMinutes: 5 }).text, "(45 minutes)");
+});
+
+test("custom minutes formatting replaces either an hours or minutes suffix", () => {
+  const settings = {
+    displayUnit: "minutes", minutesUnit: "mins", minutesSingularUnit: "min",
+    minutesTemplate: "— {value} {unit}", replaceExisting: true, updateExistingHours: true
+  };
+  assert.equal(core.formattedDuration(1, settings).text, "— 1 min");
+  assert.equal(core.formattedDuration(45, settings).text, "— 45 mins");
+  assert.equal(core.titleWithDuration("Work (0.75 hours)", core.formattedDuration(45, settings), settings), "Work — 45 mins");
+  assert.equal(core.titleWithDuration("Work — 45 mins", core.formattedDuration(60, settings), settings), "Work — 60 mins");
+  assert.equal(core.hasDurationSuffix("Work (1 minute)", settings), true);
+  assert.equal(core.shouldUpdateDuration("Work — 45 mins", settings), true);
+});

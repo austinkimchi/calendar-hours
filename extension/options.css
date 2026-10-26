@@ -5,6 +5,8 @@ header { display: flex; gap: 16px; align-items: center; margin-bottom: 24px; }
 header .mark { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 14px; background: #2463d6; color: white; font-size: 40px; }
 h1 { font-size: 26px; margin: 0 0 4px; }
 h2 { font-size: 18px; margin: 0 0 16px; }
+h3 { font-size: 15px; margin: 18px 0 14px; }
+[hidden] { display: none !important; }
 p { margin: 0; line-height: 1.5; color: #5b6676; }
 section { background: white; border: 1px solid #dce3ee; border-radius: 14px; padding: 22px; margin-bottom: 18px; box-shadow: 0 2px 8px rgb(25 45 75 / 4%); }
 .section-intro { font-size: 14px; margin: -4px 0 20px; }
@@ -18,6 +20,7 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid #3b82f6; ou
 .hint { font-size: 12px; margin: -8px 0 16px; }
 .after-rules { margin: 10px 0 19px; }
 .preview { padding: 13px; background: #edf4ff; border-radius: 8px; font-size: 14px; }
+.preview div + div { margin-top: 7px; }
 .rules-header, .rule-row { display: grid; grid-template-columns: minmax(0, 1fr) 112px 74px; align-items: center; gap: 10px; }
 .rules-header { color: #435167; font-size: 12px; font-weight: 700; margin-bottom: 7px; }
 .rules-header span:nth-child(2) { white-space: nowrap; }

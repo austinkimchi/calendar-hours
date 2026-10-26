@@ -99,7 +99,7 @@
     const editor = findEditor();
     if (!editor) return { ok: false, message: "Open a Google Calendar event first." };
     const result = calculate(editor);
-    if (!result) return { ok: false, message: "Enter a title and valid start and end times first, or the hours are already current." };
+    if (!result) return { ok: false, message: "Enter a title and valid start and end times first, or the duration is already current." };
     changingTitle = true;
     setNativeInputValue(editor.title, result.nextTitle);
     changingTitle = false;
