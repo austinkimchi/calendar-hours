@@ -231,8 +231,9 @@
     const save = labelledButton(document, "Save");
     if (!save) return { ok: false, reason: "Calendar Save button was unavailable" };
     save.click();
-    const saved = await waitFor(() => !location.pathname.includes("/eventedit/"), 10000);
-    return saved ? { ok: true, nextTitle: result.nextTitle } : { ok: false, reason: "Calendar did not leave the editor after Save" };
+    const saved = await waitFor(() => !location.pathname.includes("/eventedit/") &&
+      [...document.querySelectorAll('[aria-live="polite"]')].some(element => element.textContent.trim() === "Event saved"), 10000);
+    return saved ? { ok: true, nextTitle: result.nextTitle } : { ok: false, reason: "Calendar did not confirm the save" };
   }
 
   async function verifyBackgroundSave(message) {

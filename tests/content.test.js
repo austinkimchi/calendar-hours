@@ -212,15 +212,24 @@ test("background editor saves and verifies a resized one-time event", async () =
   { keepUpdated: true, autoWords: "SCU Block" }, { url });
   await settle();
   let savedTitle = "";
+  let confirmed = false;
   app.window.document.querySelector("button").addEventListener("click", () => {
     savedTitle = app.window.document.querySelector('[aria-label="Title"]').value;
     app.window.history.pushState({}, "", "/calendar/u/0/r/week/2026/10/26");
   });
-  const result = await app.send({ type: "CALENDAR_HOURS_BACKGROUND_SYNC", id: "event-1",
+  const saving = app.send({ type: "CALENDAR_HOURS_BACKGROUND_SYNC", id: "event-1",
     title: "SCU Block (3.17 hours)", startTime: "10:15am", endTime: "2:25pm" });
+  saving.then(() => { confirmed = true; });
+  await settle();
+  assert.equal(savedTitle, "SCU Block (4.17 hours)");
+  assert.equal(confirmed, false, "leaving the editor must not count as a completed save");
+  const announcement = app.window.document.createElement("div");
+  announcement.setAttribute("aria-live", "polite");
+  announcement.textContent = "Event saved";
+  app.window.document.body.append(announcement);
+  const result = await saving;
   assert.equal(result.ok, true);
   assert.equal(result.nextTitle, "SCU Block (4.17 hours)");
-  assert.equal(savedTitle, "SCU Block (4.17 hours)");
   app.window.history.pushState({}, "", url);
   const verified = await app.send({ type: "CALENDAR_HOURS_BACKGROUND_VERIFY", id: "event-1", title: savedTitle });
   assert.equal(verified.ok, true);
