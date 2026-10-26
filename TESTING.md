@@ -1,5 +1,7 @@
 # Edge Calendar test notes — October 26, 2026
 
+- The v0.2.2 settings redesign migrates comma-separated matching phrases into individual rows. Each row has its own Dynamic checkbox; the existing keep-updated setting becomes Dynamic on each migrated phrase. Local tests cover migration, settings save, and a non-Dynamic phrase staying unchanged when another phrase is Dynamic. The grid implementation and live-tested save workflow are otherwise unchanged from v0.2.1.
+
 - Today's Work calendar event began at 10:55am, ended at 12:45pm, and displayed `SCU Block (1.83 hours)`.
 - In the full event editor, changing the end field to 1:00pm caused the installed extension to update the title immediately to `SCU Block (2.08 hours)`. That edit was discarded.
 - Resizing the block on the calendar grid to end at 1:15pm saved the new time, but the installed v0.2.0 build left the title at `1.83 hours` and showed its save error. The event was restored to 12:45pm and `SCU Block (1.83 hours)`; the grid showed both original values afterward.

@@ -9,12 +9,23 @@
 <body>
   <main>
     <header>
-      <div class="mark">◷</div>
-      <div><h1>Calendar Hours</h1><p>Choose how event durations appear in Google Calendar.</p></div>
+      <div class="mark" aria-hidden="true">◷</div>
+      <div><h1>Calendar Hours</h1><p>Choose when hours appear and how they look.</p></div>
     </header>
     <form id="settings">
-      <section>
-        <h2>Format</h2>
+      <section aria-labelledby="general-heading">
+        <h2 id="general-heading">General</h2>
+        <p class="section-intro">Add a phrase for each kind of event you want Calendar Hours to recognize.</p>
+        <div class="rules-header"><span>Matching phrase</span><span>Dynamic <button type="button" id="dynamic-help-button" class="info-button" aria-label="What is Dynamic mode?" aria-controls="dynamic-help" aria-expanded="false">i</button></span><span></span></div>
+        <div id="dynamic-help" class="info-panel" hidden>Dynamic updates the hours when you change event times or move or resize a matching one-time event. After a grid change, it saves the corrected title through Google Calendar. Repeating events need manual review.</div>
+        <div id="rules" aria-label="Matching phrases"></div>
+        <button type="button" id="add-rule" class="secondary-button">+ Add phrase</button>
+        <p class="hint after-rules">Matching ignores case and uses whole words or phrases.</p>
+        <label class="check"><input type="checkbox" name="automatic"> Automatically add hours to matching titles</label>
+      </section>
+
+      <section aria-labelledby="hours-heading">
+        <h2 id="hours-heading">Hours</h2>
         <div class="grid">
           <label>Decimal places <select name="decimals"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
           <label>Rounding <select name="rounding"><option value="nearest">Nearest</option><option value="down">Down</option><option value="up">Up</option><option value="truncate">Truncate</option></select></label>
@@ -23,24 +34,27 @@
         </div>
         <label class="check"><input type="checkbox" name="trimZeros" checked> Hide trailing zeros, such as 3.20 → 3.2</label>
         <label>Title template <input name="template" maxlength="100" value="({value} {unit})" required></label>
-        <p class="hint">Use <code>{value}</code> for the number and <code>{unit}</code> for the unit. Example: <code>({value} {unit})</code>.</p>
+        <p class="hint">Use <code>{value}</code> for the number and <code>{unit}</code> for the unit.</p>
         <div class="preview">Example: <strong id="preview">Work session (3.17 hours)</strong></div>
       </section>
-      <section>
-        <h2>Ways to add hours</h2>
+
+      <section aria-labelledby="other-heading">
+        <h2 id="other-heading">Other</h2>
         <label>Typed keyword <input name="keyword" maxlength="40" value="/hours" required></label>
-        <p class="hint">Type the keyword in a title and it is replaced with calculated hours.</p>
+        <p class="hint">Type this in an event title to replace it with calculated hours.</p>
         <label class="check"><input type="checkbox" name="showSuggestion" checked> Show a suggestion beside the title; click it or press Tab to accept</label>
-        <label class="check"><input type="checkbox" name="automatic"> Automatically insert for matching titles</label>
-        <label>Matching title words or phrases <input name="autoWords" maxlength="200" value="block" placeholder="Work block, study session"></label>
-        <p class="hint">Separate matches with commas. Matching uses whole words or phrases, ignoring case. To target a specific type of event, enter its title phrase, such as <code>Work block</code>.</p>
-        <label class="check"><input type="checkbox" name="keepUpdated"> Keep matching event hours updated and saved after moving or resizing an event in Calendar</label>
-        <p class="hint">When enabled, the extension shows the new hours on the grid immediately, then saves the changed event in an inactive Calendar tab. It also updates titles when you edit start or end times in the event editor. Existing suffix replacement is enabled with this setting. Events with repeat rules are left for you to review.</p>
         <label class="check"><input type="checkbox" name="replaceExisting" checked> Update an existing hours suffix when times change</label>
       </section>
-      <footer><button type="submit">Save settings</button><span id="status" role="status"></span></footer>
+      <footer><button type="submit" class="primary-button">Save settings</button><span id="status" role="status"></span></footer>
     </form>
   </main>
+  <template id="rule-template">
+    <div class="rule-row">
+      <input class="rule-phrase" type="text" maxlength="80" aria-label="Matching phrase" placeholder="e.g. Work block">
+      <label class="rule-dynamic"><input type="checkbox" aria-label="Dynamic mode for this phrase"><span>Enable</span></label>
+      <button type="button" class="remove-rule" aria-label="Remove phrase">Remove</button>
+    </div>
+  </template>
   <script src="core.js"></script>
   <script src="options.js"></script>
 </body>

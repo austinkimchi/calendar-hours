@@ -6,7 +6,7 @@
 
 **Detailed description:**
 
-Calendar Hours turns event start and end times into a title suffix such as `Work session (3.17 hours)`. It works in Google Calendar's quick composer and full event editor. Accept a suggested duration with a click or Tab, type `/hours`, use the keyboard shortcut, or enable automatic insertion for titles matching your chosen words. Set decimal places, rounding mode, minute increment, unit text, and title template in Settings. Optionally keep matching one-time event titles current after moving or resizing them on the Calendar grid: the new hours appear immediately, and the extension saves the corrected title through Calendar. Manual editor changes still use Calendar's Save button.
+Calendar Hours turns event start and end times into a title suffix such as `Work session (3.17 hours)`. It works in Google Calendar's quick composer and full event editor. Accept a suggested duration with a click or Tab, type `/hours`, use the keyboard shortcut, or enable automatic insertion for titles matching your chosen phrases. Give each phrase its own Dynamic setting to keep those one-time event titles current after moving or resizing them on the Calendar grid: the new hours appear immediately, and the extension saves the corrected title through Calendar. Set decimal places, rounding mode, minute increment, unit text, and title template in Settings. Manual editor changes still use Calendar's Save button.
 
 **Single purpose:** Calculate and insert elapsed hours into Google Calendar event titles.
 
@@ -22,4 +22,4 @@ Calendar Hours turns event start and end times into a title suffix such as `Work
 
 **Dashboard:** [Calendar Hours item](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. Version 0.1.0 was submitted on October 26, 2026; the dashboard showed **Pending review** with automatic publication after approval enabled. The unlisted store link will become installable once Google approves and publishes it.
 
-**Next submission:** Version 0.2.1 is packaged for the Chrome Web Store. The dashboard listing copy and settings screenshot should be updated for this release. Confirm the dashboard's current review status before uploading, then verify the uploaded version and submission state there.
+**Next submission:** Version 0.2.2 is packaged for the Chrome Web Store. The dashboard listing copy and settings screenshot should be updated for this release. Confirm the dashboard's current review status before uploading, then verify the uploaded version and submission state there.

@@ -16,13 +16,29 @@
     keyword: "/hours",
     showSuggestion: true,
     automatic: false,
-    autoWords: "block",
-    keepUpdated: false,
+    matchingPhrases: [{ phrase: "block", dynamic: false }],
     replaceExisting: true
   });
 
+  function normalizedPhrases(source) {
+    const legacy = typeof source.autoWords === "string" ? source.autoWords : "block";
+    const entries = Array.isArray(source.matchingPhrases)
+      ? source.matchingPhrases
+      : legacy.split(/[,\n]/).map(phrase => ({ phrase, dynamic: source.keepUpdated === true }));
+    const seen = new Set();
+    return entries.slice(0, 30).flatMap(entry => {
+      const raw = typeof entry === "string" ? entry : entry?.phrase;
+      const phrase = (typeof raw === "string" ? raw : "").trim().slice(0, 80);
+      const key = phrase.toLowerCase();
+      if (!phrase || seen.has(key)) return [];
+      seen.add(key);
+      return [{ phrase, dynamic: entry?.dynamic === true }];
+    });
+  }
+
   function settingsFrom(value) {
     const source = value && typeof value === "object" ? value : {};
+    const matchingPhrases = normalizedPhrases(source);
     return {
       ...defaults,
       decimals: Math.max(0, Math.min(4, Number.parseInt(source.decimals ?? defaults.decimals, 10) || 0)),
@@ -34,9 +50,9 @@
       keyword: typeof source.keyword === "string" && source.keyword.trim() ? source.keyword.trim().slice(0, 40) : defaults.keyword,
       showSuggestion: typeof source.showSuggestion === "boolean" ? source.showSuggestion : defaults.showSuggestion,
       automatic: typeof source.automatic === "boolean" ? source.automatic : defaults.automatic,
-      autoWords: typeof source.autoWords === "string" ? source.autoWords.slice(0, 200) : defaults.autoWords,
-      keepUpdated: typeof source.keepUpdated === "boolean" ? source.keepUpdated : defaults.keepUpdated,
-      replaceExisting: source.keepUpdated === true ? true : (typeof source.replaceExisting === "boolean" ? source.replaceExisting : defaults.replaceExisting)
+      matchingPhrases,
+      replaceExisting: matchingPhrases.some(item => item.dynamic) ? true
+        : (typeof source.replaceExisting === "boolean" ? source.replaceExisting : defaults.replaceExisting)
     };
   }
 
@@ -120,14 +136,18 @@
     return `${trimmed} ${formatted.text}`;
   }
 
-  function matchesAutoWords(title, settings) {
+  function matchesPhrase(title, settings, dynamicOnly = false) {
     const cfg = settingsFrom(settings);
-    const words = cfg.autoWords.split(/[,\n]/).map(item => item.trim().toLowerCase()).filter(Boolean);
-    return words.length > 0 && words.some(word => {
-      const pattern = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegExp(word)}(?=$|[^\\p{L}\\p{N}])`, "iu");
+    if (typeof title !== "string") return false;
+    return cfg.matchingPhrases.some(({ phrase, dynamic }) => {
+      if (dynamicOnly && !dynamic) return false;
+      const pattern = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegExp(phrase)}(?=$|[^\\p{L}\\p{N}])`, "iu");
       return pattern.test(title);
     });
   }
 
-  return { defaults, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords };
+  function matchesAutoWords(title, settings) { return matchesPhrase(title, settings); }
+  function matchesDynamic(title, settings) { return matchesPhrase(title, settings, true); }
+
+  return { defaults, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic };
 });

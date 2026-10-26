@@ -140,7 +140,7 @@
     const key = `${editor.title.value}|${result.minutes}`;
     const hasKeyword = editor.title.value.toLowerCase().includes(settings.keyword.toLowerCase());
     if (hasKeyword) { apply("keyword"); return; }
-    if (settings.keepUpdated && timeEditedFor === editor.title && core.matchesAutoWords(editor.title.value, settings)) {
+    if (timeEditedFor === editor.title && core.matchesDynamic(editor.title.value, settings)) {
       timeEditedFor = null;
       apply("time edit");
       return;
@@ -244,7 +244,7 @@
 
   async function saveInBackground(message) {
     await settingsReady;
-    if (!settings.keepUpdated || !core.matchesAutoWords(message.title, settings)) return { ok: false, reason: "Automatic updates are off" };
+    if (!core.matchesDynamic(message.title, settings)) return { ok: false, reason: "Dynamic updates are off for this phrase" };
     if (!decodeURIComponent(location.pathname).endsWith(`/eventedit/${message.id}`)) return { ok: false, reason: "Wrong event editor" };
     const editor = await waitFor(() => {
       const current = findEditor();
@@ -281,14 +281,14 @@
   }
 
   async function syncResizedEvent(gesture) {
-    if (gridBusy || !settings.keepUpdated) return;
+    if (gridBusy || !core.matchesDynamic(gesture.title, settings)) return;
     gridBusy = true;
     let expectedTitle = null;
     try {
       const changedChip = await waitForGridChange(gesture.id, gesture.summary);
       if (!changedChip) return;
       const chip = eventChip(gesture.id);
-      if (!chip || chipTitle(chip) !== gesture.title || !core.matchesAutoWords(gesture.title, settings) || findEditor()) return;
+      if (!chip || chipTitle(chip) !== gesture.title || !core.matchesDynamic(gesture.title, settings) || findEditor()) return;
       const range = gridRange(chipSummary(chip));
       if (range) {
         const minutes = core.durationMinutes({
@@ -326,17 +326,17 @@
       queuedGridGesture = null;
       const current = queued && eventChip(queued.id);
       const currentTitle = chipTitle(current);
-      if (queued && currentTitle && core.matchesAutoWords(currentTitle, settings)) {
+      if (queued && currentTitle && core.matchesDynamic(currentTitle, settings)) {
         syncResizedEvent({ ...queued, title: currentTitle });
       }
     }
   }
 
   function startGridGesture(event) {
-    if (!settings.keepUpdated || !(event.target instanceof Element)) return;
+    if (!(event.target instanceof Element)) return;
     const chip = event.target.closest('[data-eventchip][data-eventid]');
     const title = chipTitle(chip);
-    if (!chip || !title || !core.matchesAutoWords(title, settings)) return;
+    if (!chip || !title || !core.matchesDynamic(title, settings)) return;
     gridGesture = { id: chip.getAttribute("data-eventid"), title, summary: chipSummary(chip), x: event.clientX, y: event.clientY };
   }
 

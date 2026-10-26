@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2 — October 26, 2026
+
+- Put matching phrases first and organize settings into General, Hours, and Other.
+- Give each matching phrase its own Dynamic setting for automatic title updates after time changes, moves, and resizes.
+- Move the longer Dynamic explanation into one information button and migrate existing comma-separated phrases and the former global keep-updated setting.
+
 ## 0.2.1 — October 26, 2026
 
 - Show the recalculated hours on the Calendar grid as soon as a matching drag or resize finishes.

@@ -41,3 +41,27 @@ test("automatic insertion requires a configured title word", () => {
   assert.equal(core.matchesAutoWords("Unblocked time", { autoWords: "block" }), false);
   assert.equal(core.settingsFrom({ keepUpdated: true, replaceExisting: false }).replaceExisting, true);
 });
+
+test("each matching phrase controls Dynamic mode independently", () => {
+  const cfg = core.settingsFrom({
+    matchingPhrases: [
+      { phrase: "Work block", dynamic: true },
+      { phrase: "Study session", dynamic: false }
+    ],
+    replaceExisting: false
+  });
+  assert.equal(core.matchesAutoWords("Study session (2 hours)", cfg), true);
+  assert.equal(core.matchesDynamic("Study session (2 hours)", cfg), false);
+  assert.equal(core.matchesDynamic("Work block (2 hours)", cfg), true);
+  assert.equal(cfg.replaceExisting, true);
+  assert.equal(core.matchesAutoWords("Homework block", cfg), false);
+});
+
+test("old comma-separated phrases migrate to individual rules", () => {
+  const cfg = core.settingsFrom({ autoWords: "SCU Block, Study session", keepUpdated: true });
+  assert.deepEqual(cfg.matchingPhrases, [
+    { phrase: "SCU Block", dynamic: true },
+    { phrase: "Study session", dynamic: true }
+  ]);
+  assert.deepEqual(core.settingsFrom({ matchingPhrases: [] }).matchingPhrases, []);
+});

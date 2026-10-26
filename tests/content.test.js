@@ -206,6 +206,27 @@ test("keep-updated mode corrects a matching title when editor times change", asy
   app.dom.window.close();
 });
 
+test("a Dynamic phrase does not update a different non-Dynamic phrase", async () => {
+  const app = run(`<input aria-label="Title" value="Study session (3.17 hours)">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="10:15am">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="1:25pm">`, {
+    showSuggestion: false,
+    matchingPhrases: [
+      { phrase: "Work block", dynamic: true },
+      { phrase: "Study session", dynamic: false }
+    ]
+  });
+  await settle();
+  const end = app.window.document.querySelector('[aria-label="End time"]');
+  end.value = "2:25pm";
+  end.dispatchEvent(new app.window.Event("change", { bubbles: true }));
+  await settle();
+  assert.equal(app.window.document.querySelector('[aria-label="Title"]').value, "Study session (3.17 hours)");
+  app.dom.window.close();
+});
+
 test("grid changes do not auto-save while keep-updated mode is disabled", async () => {
   const app = run(`<div data-eventchip data-eventid="event-2" role="button">
     <div>10:15am to 1:25pm, SCU Block (3.17 hours), October 26, 2026</div>
