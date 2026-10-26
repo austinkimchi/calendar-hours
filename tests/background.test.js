@@ -10,6 +10,8 @@ test("grid sync uses inactive Calendar tabs and confirms the saved title", async
   const created = [];
   const removed = [];
   const updated = [];
+  const reloaded = [];
+  let staleReads = 0;
   let handler;
   const chrome = {
     commands: { onCommand: { addListener() {} } },
@@ -21,11 +23,13 @@ test("grid sync uses inactive Calendar tabs and confirms the saved title", async
         return tab;
       },
       remove: async id => { removed.push(id); },
-      reload: async () => {},
+      reload: async id => { reloaded.push(id); },
       update: async (id, options) => { updated.push({ id, ...options }); },
-      sendMessage: async (id, message) => message.type === "CALENDAR_HOURS_BACKGROUND_SYNC"
-        ? { ok: true, nextTitle: "SCU Block (2.33 hours)" }
-        : { ok: true }
+      sendMessage: async (id, message) => {
+        if (message.type !== "CALENDAR_HOURS_BACKGROUND_SYNC") return { ok: true };
+        if (staleReads++ < 3) return { ok: false, retry: true, reason: "Waiting for Calendar's resize save" };
+        return { ok: true, nextTitle: "SCU Block (2.33 hours)" };
+      }
     }
   };
   vm.runInNewContext(script, { chrome, URL, setTimeout, console });
@@ -40,5 +44,6 @@ test("grid sync uses inactive Calendar tabs and confirms the saved title", async
     "https://calendar.google.com/calendar/u/0/r/eventedit/event-1"
   ]);
   assert.deepEqual(updated, [{ id: 1, url: "https://calendar.google.com/calendar/u/0/r/eventedit/event-1" }]);
+  assert.deepEqual(reloaded, [1, 1, 1]);
   assert.deepEqual(removed, [1]);
 });

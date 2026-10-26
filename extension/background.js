@@ -36,7 +36,7 @@ async function syncGridEvent(message, sender) {
   const tab = await chrome.tabs.create({ url: editorUrl, active: false, windowId: sender.tab.windowId });
   try {
     let result;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt) { await pause(400); await chrome.tabs.reload(tab.id); }
       result = await sendWhenReady(tab.id, {
         type: "CALENDAR_HOURS_BACKGROUND_SYNC",
