@@ -24,7 +24,7 @@
         <label class="check"><input type="checkbox" name="trimZeros" checked> Hide trailing zeros, such as 3.20 → 3.2</label>
         <label>Title template <input name="template" maxlength="100" value="({value} {unit})" required></label>
         <p class="hint">Use <code>{value}</code> for the number and <code>{unit}</code> for the unit. Example: <code>({value} {unit})</code>.</p>
-        <div class="preview">Example: <strong id="preview">SCU Block (3.17 hours)</strong></div>
+        <div class="preview">Example: <strong id="preview">Work session (3.17 hours)</strong></div>
       </section>
       <section>
         <h2>Ways to add hours</h2>
@@ -32,8 +32,8 @@
         <p class="hint">Type the keyword in a title and it is replaced with calculated hours.</p>
         <label class="check"><input type="checkbox" name="showSuggestion" checked> Show a suggestion beside the title; click it or press Tab to accept</label>
         <label class="check"><input type="checkbox" name="automatic"> Automatically insert for matching titles</label>
-        <label>Matching title words or phrases <input name="autoWords" maxlength="200" value="block" placeholder="SCU Block, work session"></label>
-        <p class="hint">Separate matches with commas. Matching uses whole words or phrases, ignoring case. For only your SCU blocks, enter <code>SCU Block</code>.</p>
+        <label>Matching title words or phrases <input name="autoWords" maxlength="200" value="block" placeholder="Work block, study session"></label>
+        <p class="hint">Separate matches with commas. Matching uses whole words or phrases, ignoring case. To target a specific type of event, enter its title phrase, such as <code>Work block</code>.</p>
         <label class="check"><input type="checkbox" name="keepUpdated"> Keep matching event hours updated and saved after moving or resizing an event in Calendar</label>
         <p class="hint">When enabled, the extension shows the new hours on the grid immediately, then saves the changed event in an inactive Calendar tab. It also updates titles when you edit start or end times in the event editor. Existing suffix replacement is enabled with this setting. Events with repeat rules are left for you to review.</p>
         <label class="check"><input type="checkbox" name="replaceExisting" checked> Update an existing hours suffix when times change</label>

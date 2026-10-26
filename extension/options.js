@@ -15,7 +15,7 @@
   function preview() {
     const cfg = values();
     const formatted = core.formattedDuration(190, cfg);
-    document.querySelector("#preview").textContent = core.titleWithDuration("SCU Block", formatted, cfg);
+    document.querySelector("#preview").textContent = core.titleWithDuration("Work session", formatted, cfg);
   }
 
   chrome.storage.sync.get(null).then(saved => {
