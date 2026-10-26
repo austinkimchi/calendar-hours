@@ -2,9 +2,9 @@
 
 Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed duration between an event's start and end time and inserts hours or minutes into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
 
-Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.2 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.2) is the latest published release. This v0.2.5 development build adds minute display, singular unit labels, and updated first-time defaults. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
+Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.2 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.2) is the latest published release. This v0.2.6 development build adds minute display, singular unit labels, updated first-time defaults, and clearer setting help. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
 
-**Store status (last verified October 26, 2026):** v0.1.0 was pending Chrome Web Store review. v0.2.2 was packaged for submission but dashboard access was blocked in this session. v0.2.5 is a development build. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
+**Store status (last verified October 26, 2026):** v0.1.0 was pending Chrome Web Store review. v0.2.2 was packaged for submission but dashboard access was blocked in this session. v0.2.6 is a development build. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
 
 ## Use
 
@@ -21,6 +21,7 @@ Other ways to insert or update the duration:
 - In Settings → General, add one row for each matching phrase. **Automatically add duration to matching titles** starts on for a new installation and inserts the duration when a matching event is composed. The default phrase is `block`.
 - Turn on **Dynamic** for any phrase whose matching events should stay current. After you drag or resize a matching timed event on the Calendar grid, the extension shows the new duration immediately and saves the title from an inactive Calendar tab. Dynamic also updates the title when you change start or end fields in the editor; use Calendar's Save button for those manual edits. Matching ignores case and respects word boundaries. Existing phrase lists and the prior global keep-updated setting migrate to these rows automatically.
 - In Settings → Other, **Update hours or minutes when times change** starts on for a new installation. It covers events where you inserted a duration with `/hours` or a suggestion but did not configure a matching phrase. It detects the current Hours and Minutes templates plus older `hours`, `hrs`, `hr`, `minutes`, `mins`, and `min` endings. Grid moves and resizes of one-time events update and save automatically; editor time changes update the title for you to save. If an event matches a configured phrase, that phrase's Dynamic switch takes precedence. Saved off choices remain off.
+- **Replace a previous duration when I add it again** stays on while Dynamic or automatic time-change updates need it. The information button beside the locked checkbox explains why.
 
 ## Formatting
 

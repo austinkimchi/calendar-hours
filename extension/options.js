@@ -4,6 +4,8 @@
   const form = document.querySelector("#settings");
   const rules = document.querySelector("#rules");
   const status = document.querySelector("#status");
+  const replaceHelpButton = document.querySelector("#replace-help-button");
+  const replaceHelp = document.querySelector("#replace-help");
   const names = Object.keys(core.defaults).filter(name => name !== "matchingPhrases");
   let minutesTemplateInitialized = false;
   let lastHoursUnit = core.defaults.unit;
@@ -44,10 +46,21 @@
 
   function updateReplaceExisting() {
     const field = form.elements.namedItem("replaceExisting");
-    const needed = form.elements.namedItem("updateExistingHours").checked || matchingPhrases().some(item => item.dynamic && item.phrase.trim());
+    const updateEnabled = form.elements.namedItem("updateExistingHours").checked;
+    const dynamicEnabled = matchingPhrases().some(item => item.dynamic && item.phrase.trim());
+    const needed = updateEnabled || dynamicEnabled;
     if (needed) field.checked = true;
     field.disabled = needed;
-    field.title = needed ? "Automatic updates need an existing duration to be replaced." : "";
+    replaceHelpButton.hidden = !needed;
+    if (!needed) {
+      replaceHelp.hidden = true;
+      replaceHelpButton.setAttribute("aria-expanded", "false");
+    }
+    replaceHelp.textContent = dynamicEnabled && updateEnabled
+      ? "Dynamic and automatic time-change updates both need to replace the old duration. Turn both off to change this setting."
+      : dynamicEnabled
+        ? "Dynamic needs to replace the old duration when an event's time changes. Turn off Dynamic for all phrases to change this setting."
+        : "Automatic time-change updates need to replace the old duration. Turn off ‘Update hours or minutes when times change’ to change this setting.";
   }
 
   function showMinutesFormat() {
@@ -129,6 +142,10 @@
   helpButton.addEventListener("click", () => {
     help.hidden = !help.hidden;
     helpButton.setAttribute("aria-expanded", String(!help.hidden));
+  });
+  replaceHelpButton.addEventListener("click", () => {
+    replaceHelp.hidden = !replaceHelp.hidden;
+    replaceHelpButton.setAttribute("aria-expanded", String(!replaceHelp.hidden));
   });
 
   form.addEventListener("submit", async event => {

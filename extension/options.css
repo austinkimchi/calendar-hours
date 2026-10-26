@@ -17,6 +17,8 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid #3b82f6; ou
 .check { display: flex; align-items: flex-start; gap: 9px; font-weight: 400; font-size: 14px; }
 .check input { margin: 0; width: 17px; height: 17px; flex: none; }
 .check input:disabled { cursor: not-allowed; }
+.check-with-help { display: flex; align-items: flex-start; gap: 4px; }
+.check-with-help .info-button { flex: none; margin-top: -1px; }
 .hint { font-size: 12px; margin: -8px 0 16px; }
 .after-rules { margin: 10px 0 19px; }
 .preview { padding: 13px; background: #edf4ff; border-radius: 8px; font-size: 14px; }

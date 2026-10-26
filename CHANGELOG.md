@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.6 — development build, October 26, 2026
+
+- Show a small information button beside the replacement checkbox when Dynamic or automatic time-change updates keep it enabled. The explanation names the setting that locks it.
+
 ## 0.2.5 — development build, October 26, 2026
 
 - Enable automatic insertion for matching titles and updates for existing duration suffixes by default on first setup. Explicitly saved off choices remain off.

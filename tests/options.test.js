@@ -79,6 +79,40 @@ test("first-time options enable both defaults while saved off choices stay off",
   }
 });
 
+test("the locked replacement setting explains which update option requires it", async () => {
+  const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
+  const { window } = dom;
+  window.chrome = { storage: { sync: {
+    get: async () => ({ matchingPhrases: [{ phrase: "Work block", dynamic: true }], updateExistingHours: false }),
+    set: async () => {}, remove: async () => {}
+  } } };
+  window.eval(core);
+  window.eval(options);
+  await settle();
+
+  const field = window.document.querySelector('[name="replaceExisting"]');
+  const icon = window.document.querySelector("#replace-help-button");
+  const help = window.document.querySelector("#replace-help");
+  assert.equal(field.disabled, true);
+  assert.equal(icon.hidden, false);
+  icon.click();
+  assert.equal(icon.getAttribute("aria-expanded"), "true");
+  assert.match(help.textContent, /Dynamic needs to replace/);
+
+  window.document.querySelector(".rule-dynamic input").click();
+  assert.equal(field.disabled, false);
+  assert.equal(icon.hidden, true);
+  assert.equal(help.hidden, true);
+  assert.equal(icon.getAttribute("aria-expanded"), "false");
+
+  window.document.querySelector('[name="updateExistingHours"]').click();
+  assert.equal(field.disabled, true);
+  assert.equal(icon.hidden, false);
+  icon.click();
+  assert.match(help.textContent, /Automatic time-change updates need to replace/);
+  dom.window.close();
+});
+
 test("enabling minutes starts with the current hours template and keeps later customization", async () => {
   const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
   const { window } = dom;
