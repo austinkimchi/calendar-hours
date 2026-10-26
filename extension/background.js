@@ -37,7 +37,7 @@ async function syncGridEvent(message, sender) {
   try {
     let result;
     for (let attempt = 0; attempt < 5; attempt++) {
-      if (attempt) { await pause(400); await chrome.tabs.reload(tab.id); }
+      if (attempt) { await chrome.tabs.reload(tab.id); await pause(400); }
       result = await sendWhenReady(tab.id, {
         type: "CALENDAR_HOURS_BACKGROUND_SYNC",
         id: message.id,
@@ -50,7 +50,7 @@ async function syncGridEvent(message, sender) {
     if (!result.ok) return result;
     await chrome.tabs.update(tab.id, { url: editorUrl });
     for (let attempt = 0; attempt < 2; attempt++) {
-      if (attempt) { await pause(400); await chrome.tabs.reload(tab.id); }
+      if (attempt) { await chrome.tabs.reload(tab.id); await pause(400); }
       const verified = await sendWhenReady(tab.id, {
         type: "CALENDAR_HOURS_BACKGROUND_VERIFY", id: message.id, title: result.nextTitle
       });
