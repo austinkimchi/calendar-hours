@@ -1,0 +1,20 @@
+.calendar-hours-suggestion {
+  position: fixed;
+  z-index: 2147483647;
+  max-width: min(360px, calc(100vw - 16px));
+  padding: 7px 11px;
+  border: 1px solid #b7c7f5;
+  border-radius: 8px;
+  color: #174ea6;
+  background: #f4f7ff;
+  box-shadow: 0 3px 12px rgb(0 0 0 / 16%);
+  font: 13px/1.35 Arial, sans-serif;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.calendar-hours-suggestion:hover,
+.calendar-hours-suggestion:focus-visible {
+  background: #e8f0fe;
+  outline: 2px solid #1a73e8;
+}

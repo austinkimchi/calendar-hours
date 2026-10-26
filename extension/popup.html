@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calendar Hours</title>
+  <style>
+    body { width: 270px; margin: 0; padding: 16px; font: 13px/1.45 Arial, sans-serif; color: #1f2937; }
+    h1 { font-size: 17px; margin: 0 0 8px; }
+    p { margin: 0 0 14px; color: #596579; }
+    button { width: 100%; border: 0; border-radius: 7px; padding: 10px; cursor: pointer; }
+    #apply { background: #2463d6; color: white; font-weight: 600; }
+    #options { background: #edf3ff; color: #174ea6; margin-top: 8px; }
+    #status { min-height: 18px; margin-top: 10px; }
+    kbd { background: #eef1f5; padding: 2px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Calendar Hours</h1>
+  <p>Open a timed Google Calendar event, then add its duration to the title. You can also type <kbd>/hours</kbd> or accept a suggestion.</p>
+  <button id="apply">Add hours to open event</button>
+  <button id="options">Settings</button>
+  <div id="status" role="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

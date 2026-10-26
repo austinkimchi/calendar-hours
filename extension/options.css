@@ -1,0 +1,22 @@
+:root { color-scheme: light; font-family: Arial, sans-serif; color: #1f2937; background: #f4f7fb; }
+body { margin: 0; }
+main { max-width: 760px; margin: 32px auto; padding: 0 20px 36px; }
+header { display: flex; gap: 16px; align-items: center; margin-bottom: 24px; }
+header .mark { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 14px; background: #2463d6; color: white; font-size: 40px; }
+h1 { font-size: 26px; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 0 0 18px; }
+p { margin: 0; line-height: 1.5; color: #5b6676; }
+section { background: white; border: 1px solid #dce3ee; border-radius: 14px; padding: 22px; margin-bottom: 18px; box-shadow: 0 2px 8px rgb(25 45 75 / 4%); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 16px; }
+input:not([type=checkbox]), select { display: block; box-sizing: border-box; width: 100%; margin-top: 7px; padding: 10px 11px; border: 1px solid #bfc9d8; border-radius: 7px; font: 15px Arial, sans-serif; color: #1f2937; background: white; }
+input:focus, select:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+.check { display: flex; align-items: flex-start; gap: 9px; font-weight: 400; font-size: 14px; }
+.check input { margin: 0; width: 17px; height: 17px; flex: none; }
+.hint { font-size: 12px; margin: -8px 0 16px; }
+.preview { padding: 13px; background: #edf4ff; border-radius: 8px; font-size: 14px; }
+footer { display: flex; align-items: center; gap: 14px; }
+button { background: #2463d6; color: white; border: 0; border-radius: 8px; padding: 11px 18px; font-weight: 600; cursor: pointer; }
+button:hover { background: #174ea6; }
+#status { color: #1c7b42; font-size: 14px; }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; gap: 0; } main { margin-top: 18px; } }

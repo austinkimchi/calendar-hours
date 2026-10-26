@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calendar Hours settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="mark">◷</div>
+      <div><h1>Calendar Hours</h1><p>Choose how event durations appear in Google Calendar.</p></div>
+    </header>
+    <form id="settings">
+      <section>
+        <h2>Format</h2>
+        <div class="grid">
+          <label>Decimal places <select name="decimals"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+          <label>Rounding <select name="rounding"><option value="nearest">Nearest</option><option value="down">Down</option><option value="up">Up</option><option value="truncate">Truncate</option></select></label>
+          <label>Minute increment <select name="incrementMinutes"><option value="1">1 minute</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></label>
+          <label>Unit text <input name="unit" maxlength="24" value="hours" placeholder="hours, hrs, or hr"></label>
+        </div>
+        <label class="check"><input type="checkbox" name="trimZeros" checked> Hide trailing zeros, such as 3.20 → 3.2</label>
+        <label>Title template <input name="template" maxlength="100" value="({value} {unit})" required></label>
+        <p class="hint">Use <code>{value}</code> for the number and <code>{unit}</code> for the unit. Example: <code>({value} {unit})</code>.</p>
+        <div class="preview">Example: <strong id="preview">SCU Block (3.17 hours)</strong></div>
+      </section>
+      <section>
+        <h2>Ways to add hours</h2>
+        <label>Typed keyword <input name="keyword" maxlength="40" value="/hours" required></label>
+        <p class="hint">Type the keyword in a title and it is replaced with calculated hours.</p>
+        <label class="check"><input type="checkbox" name="showSuggestion" checked> Show a suggestion beside the title; click it or press Tab to accept</label>
+        <label class="check"><input type="checkbox" name="automatic"> Automatically insert for matching titles</label>
+        <label>Automatic title words <input name="autoWords" maxlength="200" value="block" placeholder="block, work session"></label>
+        <p class="hint">Separate words or phrases with commas. Automatic mode stays off until you enable it.</p>
+        <label class="check"><input type="checkbox" name="replaceExisting" checked> Update an existing hours suffix when times change</label>
+      </section>
+      <footer><button type="submit">Save settings</button><span id="status" role="status"></span></footer>
+    </form>
+  </main>
+  <script src="core.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
