@@ -22,4 +22,4 @@ Calendar Hours turns event start and end times into a title suffix such as `Work
 
 **Dashboard:** [Calendar Hours item](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. Version 0.1.0 was submitted on October 26, 2026; the dashboard showed **Pending review** with automatic publication after approval enabled. The unlisted store link will become installable once Google approves and publishes it.
 
-**Next submission:** Version 0.2.2 is packaged for the Chrome Web Store. The dashboard listing copy and settings screenshot should be updated for this release. Confirm the dashboard's current review status before uploading, then verify the uploaded version and submission state there.
+**Next submission:** Version 0.2.3 adds opt-in updates for titles with a recognized hours suffix. Update the dashboard copy, screenshot, and public privacy policy before its submission. Dashboard access was blocked in the Codex browser session; confirm its current review status before uploading, then verify the uploaded version and submission state there.

@@ -11,6 +11,8 @@
   let gridGesture = null;
   let queuedGridGesture = null;
   let gridBusy = false;
+  const observedGridRanges = new Map();
+  const gridFallbackTimers = new Map();
   let notice = null;
   const optimisticTitles = new Map();
   let settingsReady;
@@ -140,7 +142,7 @@
     const key = `${editor.title.value}|${result.minutes}`;
     const hasKeyword = editor.title.value.toLowerCase().includes(settings.keyword.toLowerCase());
     if (hasKeyword) { apply("keyword"); return; }
-    if (timeEditedFor === editor.title && core.matchesDynamic(editor.title.value, settings)) {
+    if (timeEditedFor === editor.title.value && core.shouldUpdateDuration(editor.title.value, settings)) {
       timeEditedFor = null;
       apply("time edit");
       return;
@@ -231,6 +233,33 @@
     return { startTime: times[1], endTime: times[2], date };
   }
 
+  function gridRangeKey(summary) {
+    const range = gridRange(summary);
+    return range ? `${range.date}|${range.startTime}|${range.endTime}` : null;
+  }
+
+  function scanGridChanges() {
+    if (typeof document === "undefined") return;
+    for (const chip of document.querySelectorAll('[data-eventchip][data-eventid]')) {
+      const id = chip.getAttribute("data-eventid");
+      const summary = chipSummary(chip);
+      const rangeKey = gridRangeKey(summary);
+      const title = chipTitle(chip);
+      if (!id || !rangeKey || !title) continue;
+      const previous = observedGridRanges.get(id);
+      observedGridRanges.set(id, { summary, rangeKey, title });
+      if (!previous || previous.rangeKey === rangeKey || !core.shouldUpdateDuration(title, settings)) continue;
+      clearTimeout(gridFallbackTimers.get(id));
+      gridFallbackTimers.set(id, setTimeout(() => {
+        gridFallbackTimers.delete(id);
+        const current = eventChip(id);
+        if (!current || gridBusy || chipTitle(current) !== previous.title ||
+            gridRangeKey(chipSummary(current)) !== rangeKey) return;
+        syncResizedEvent({ id, title: previous.title, summary: previous.summary });
+      }, 250));
+    }
+  }
+
   function sameClock(left, right) {
     const a = core.parseClock(left);
     const b = core.parseClock(right);
@@ -244,7 +273,7 @@
 
   async function saveInBackground(message) {
     await settingsReady;
-    if (!core.matchesDynamic(message.title, settings)) return { ok: false, reason: "Dynamic updates are off for this phrase" };
+    if (!core.shouldUpdateDuration(message.title, settings)) return { ok: false, reason: "Automatic updates are off for this title" };
     if (!decodeURIComponent(location.pathname).endsWith(`/eventedit/${message.id}`)) return { ok: false, reason: "Wrong event editor" };
     const editor = await waitFor(() => {
       const current = findEditor();
@@ -281,14 +310,14 @@
   }
 
   async function syncResizedEvent(gesture) {
-    if (gridBusy || !core.matchesDynamic(gesture.title, settings)) return;
+    if (gridBusy || !core.shouldUpdateDuration(gesture.title, settings)) return;
     gridBusy = true;
     let expectedTitle = null;
     try {
       const changedChip = await waitForGridChange(gesture.id, gesture.summary);
       if (!changedChip) return;
       const chip = eventChip(gesture.id);
-      if (!chip || chipTitle(chip) !== gesture.title || !core.matchesDynamic(gesture.title, settings) || findEditor()) return;
+      if (!chip || chipTitle(chip) !== gesture.title || !core.shouldUpdateDuration(gesture.title, settings) || findEditor()) return;
       const range = gridRange(chipSummary(chip));
       if (range) {
         const minutes = core.durationMinutes({
@@ -326,7 +355,7 @@
       queuedGridGesture = null;
       const current = queued && eventChip(queued.id);
       const currentTitle = chipTitle(current);
-      if (queued && currentTitle && core.matchesDynamic(currentTitle, settings)) {
+      if (queued && currentTitle && core.shouldUpdateDuration(currentTitle, settings)) {
         syncResizedEvent({ ...queued, title: currentTitle });
       }
     }
@@ -336,7 +365,7 @@
     if (!(event.target instanceof Element)) return;
     const chip = event.target.closest('[data-eventchip][data-eventid]');
     const title = chipTitle(chip);
-    if (!chip || !title || !core.matchesDynamic(title, settings)) return;
+    if (!chip || !title || !core.shouldUpdateDuration(title, settings)) return;
     gridGesture = { id: chip.getAttribute("data-eventid"), title, summary: chipSummary(chip), x: event.clientX, y: event.clientY };
   }
 
@@ -357,18 +386,23 @@
 
   document.addEventListener("input", event => {
     if (event.target instanceof HTMLInputElement && /^(Start|End) (date|time)$/i.test(event.target.getAttribute("aria-label") || "")) {
-      timeEditedFor = findEditor()?.title || null;
+      timeEditedFor = findEditor()?.title.value || null;
     }
     if (!changingTitle && event.target instanceof HTMLInputElement) { dismissedFor = null; queueUpdate(); }
   }, true);
   document.addEventListener("change", event => {
     if (event.target instanceof HTMLInputElement && /^(Start|End) (date|time)$/i.test(event.target.getAttribute("aria-label") || "")) {
-      timeEditedFor = findEditor()?.title || null;
+      timeEditedFor = findEditor()?.title.value || null;
     }
     if (!changingTitle && event.target instanceof HTMLInputElement) { dismissedFor = null; queueUpdate(); }
   }, true);
   document.addEventListener("focusout", event => {
-    if (event.target instanceof HTMLInputElement) queueUpdate();
+    if (event.target instanceof HTMLInputElement) {
+      if (/^(Start|End) (date|time)$/i.test(event.target.getAttribute("aria-label") || "")) {
+        timeEditedFor = findEditor()?.title.value || null;
+      }
+      queueUpdate();
+    }
   }, true);
   document.addEventListener("keydown", event => {
     const editor = findEditor();
@@ -385,12 +419,13 @@
   window.addEventListener("scroll", queueUpdate, true);
   new MutationObserver(changes => {
     if (optimisticTitles.size) paintOptimisticTitles();
+    scanGridChanges();
     if (changes.some(change => change.type === "childList")) queueUpdate();
   }).observe(document.documentElement, {
     childList: true, characterData: true, subtree: true
   });
 
-  settingsReady = chrome.storage.sync.get(null).then(saved => { settings = core.settingsFrom(saved); queueUpdate(); });
+  settingsReady = chrome.storage.sync.get(null).then(saved => { settings = core.settingsFrom(saved); scanGridChanges(); queueUpdate(); });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync") return;
     const patch = Object.fromEntries(Object.entries(changes).map(([key, change]) => [key, change.newValue]));

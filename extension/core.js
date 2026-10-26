@@ -17,6 +17,7 @@
     showSuggestion: true,
     automatic: false,
     matchingPhrases: [{ phrase: "block", dynamic: false }],
+    updateExistingHours: false,
     replaceExisting: true
   });
 
@@ -39,6 +40,7 @@
   function settingsFrom(value) {
     const source = value && typeof value === "object" ? value : {};
     const matchingPhrases = normalizedPhrases(source);
+    const updateExistingHours = typeof source.updateExistingHours === "boolean" ? source.updateExistingHours : defaults.updateExistingHours;
     return {
       ...defaults,
       decimals: Math.max(0, Math.min(4, Number.parseInt(source.decimals ?? defaults.decimals, 10) || 0)),
@@ -51,7 +53,8 @@
       showSuggestion: typeof source.showSuggestion === "boolean" ? source.showSuggestion : defaults.showSuggestion,
       automatic: typeof source.automatic === "boolean" ? source.automatic : defaults.automatic,
       matchingPhrases,
-      replaceExisting: matchingPhrases.some(item => item.dynamic) ? true
+      updateExistingHours,
+      replaceExisting: updateExistingHours || matchingPhrases.some(item => item.dynamic) ? true
         : (typeof source.replaceExisting === "boolean" ? source.replaceExisting : defaults.replaceExisting)
     };
   }
@@ -122,6 +125,30 @@
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
+  function durationSuffixPattern(settings) {
+    const cfg = settingsFrom(settings);
+    const distinctTemplate = cfg.template.replaceAll("{value}", "").trim().length > 0;
+    if (!distinctTemplate) return null;
+    const template = cfg.template.split(/(\{value\}|\{unit\})/g).map(part => {
+      if (part === "{value}") return "\\d+(?:\\.\\d+)?";
+      if (part === "{unit}") return escapeRegExp(cfg.unit);
+      return escapeRegExp(part).replace(/\s+/g, "\\s+");
+    }).join("");
+    return new RegExp(`\\s*${template}\\s*$`, "i");
+  }
+
+  function existingDurationPattern(settings) {
+    const configured = durationSuffixPattern(settings);
+    const legacy = /\s*(?:\(\s*\d+(?:\.\d+)?\s*(?:hours?|hrs?)\s*\)|\d+(?:\.\d+)?\s*(?:hours?|hrs?))\s*$/i;
+    return { configured, legacy };
+  }
+
+  function hasDurationSuffix(title, settings) {
+    if (typeof title !== "string") return false;
+    const { configured, legacy } = existingDurationPattern(settings);
+    return !!(configured?.test(title) || legacy.test(title));
+  }
+
   function titleWithDuration(title, formatted, settings) {
     if (!formatted || typeof title !== "string") return null;
     const cfg = settingsFrom(settings);
@@ -129,8 +156,9 @@
     if (!trimmed) return null;
     const keyword = new RegExp(escapeRegExp(cfg.keyword), "gi");
     if (keyword.test(trimmed)) return trimmed.replace(keyword, formatted.text).replace(/\s{2,}/g, " ").trim();
-    const existing = /\s*\(\s*\d+(?:\.\d+)?\s*(?:hours?|hrs?)\s*\)\s*$/i;
-    if (existing.test(trimmed)) {
+    const { configured, legacy } = existingDurationPattern(cfg);
+    const existing = configured?.test(trimmed) ? configured : legacy.test(trimmed) ? legacy : null;
+    if (existing) {
       return cfg.replaceExisting ? trimmed.replace(existing, ` ${formatted.text}`).trim() : trimmed;
     }
     return `${trimmed} ${formatted.text}`;
@@ -149,5 +177,11 @@
   function matchesAutoWords(title, settings) { return matchesPhrase(title, settings); }
   function matchesDynamic(title, settings) { return matchesPhrase(title, settings, true); }
 
-  return { defaults, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic };
+  function shouldUpdateDuration(title, settings) {
+    const cfg = settingsFrom(settings);
+    if (matchesAutoWords(title, cfg)) return matchesDynamic(title, cfg);
+    return cfg.updateExistingHours && hasDurationSuffix(title, cfg);
+  }
+
+  return { defaults, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic, hasDurationSuffix, shouldUpdateDuration };
 });

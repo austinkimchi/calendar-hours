@@ -41,10 +41,10 @@
 
   function updateReplaceExisting() {
     const field = form.elements.namedItem("replaceExisting");
-    const needed = matchingPhrases().some(item => item.dynamic && item.phrase.trim());
+    const needed = form.elements.namedItem("updateExistingHours").checked || matchingPhrases().some(item => item.dynamic && item.phrase.trim());
     if (needed) field.checked = true;
     field.disabled = needed;
-    field.title = needed ? "Dynamic mode needs existing hours to be updated." : "";
+    field.title = needed ? "Automatic updates need existing hours to be replaced." : "";
   }
 
   function preview() {

@@ -43,7 +43,9 @@
         <label>Typed keyword <input name="keyword" maxlength="40" value="/hours" required></label>
         <p class="hint">Type this in an event title to replace it with calculated hours.</p>
         <label class="check"><input type="checkbox" name="showSuggestion" checked> Show a suggestion beside the title; click it or press Tab to accept</label>
-        <label class="check"><input type="checkbox" name="replaceExisting" checked> Update an existing hours suffix when times change</label>
+        <label class="check"><input type="checkbox" name="replaceExisting" checked> Replace previous hours when I add them again</label>
+        <label class="check"><input type="checkbox" name="updateExistingHours"> Automatically keep titles with an hours suffix updated after time changes</label>
+        <p class="hint">Includes hours added with the keyword or suggestion when no matching phrase is configured for that title. A matching phrase uses its own Dynamic switch. One-time grid moves and resizes save automatically; editor changes still need Calendar's Save.</p>
       </section>
       <footer><button type="submit" class="primary-button">Save settings</button><span id="status" role="status"></span></footer>
     </form>

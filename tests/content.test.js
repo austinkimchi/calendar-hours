@@ -227,6 +227,89 @@ test("a Dynamic phrase does not update a different non-Dynamic phrase", async ()
   app.dom.window.close();
 });
 
+test("an hours suffix updates a non-matching event after a grid resize", async () => {
+  const requests = [];
+  const app = run(`<div data-eventchip data-eventid="allergy-1" role="button">
+    <div>4pm to 5pm, Allergy Shot (1 hours), Calendar: Events, October 26, 2026</div>
+    <div aria-hidden="true"><span class="I0UMhf">Allergy Shot (1 hours)</span></div>
+  </div>`, { updateExistingHours: true, matchingPhrases: [{ phrase: "block", dynamic: false }] }, {
+    sendMessage: async message => {
+      requests.push(message);
+      return { ok: true, nextTitle: "Allergy Shot (0.75 hours)" };
+    }
+  });
+  const { window } = app;
+  await settle();
+  const chip = window.document.querySelector("[data-eventchip]");
+  chip.dispatchEvent(new window.MouseEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
+  chip.firstElementChild.textContent = "4pm to 4:45pm, Allergy Shot (1 hours), Calendar: Events, October 26, 2026";
+  chip.dispatchEvent(new window.MouseEvent("pointerup", { bubbles: true, clientX: 10, clientY: 30 }));
+  await settle();
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].endTime, "4:45pm");
+  assert.equal(chip.querySelector(".I0UMhf").textContent, "Allergy Shot (0.75 hours)");
+  app.dom.window.close();
+});
+
+test("an hours suffix updates after editing time fields even without a matching phrase", async () => {
+  const app = run(`<input aria-label="Title" value="Allergy Shot (1 hours)">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="4pm">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="5pm">`, {
+    updateExistingHours: true,
+    matchingPhrases: [{ phrase: "block", dynamic: false }]
+  });
+  await settle();
+  const end = app.window.document.querySelector('[aria-label="End time"]');
+  end.value = "4:45pm";
+  end.dispatchEvent(new app.window.Event("change", { bubbles: true }));
+  await settle();
+  assert.equal(app.window.document.querySelector('[aria-label="Title"]').value, "Allergy Shot (0.75 hours)");
+  app.dom.window.close();
+});
+
+test("an hours suffix updates after Calendar replaces the title input during a time edit", async () => {
+  const app = run(`<input aria-label="Title" value="Allergy Shot (1 hours)">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="4pm">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="5pm">`, {
+    updateExistingHours: true,
+    matchingPhrases: [{ phrase: "SCU Block", dynamic: true }]
+  });
+  await settle();
+  const title = app.window.document.querySelector('[aria-label="Title"]');
+  const end = app.window.document.querySelector('[aria-label="End time"]');
+  end.value = "4:45pm";
+  end.dispatchEvent(new app.window.Event("change", { bubbles: true }));
+  title.replaceWith(title.cloneNode(true));
+  await settle();
+  assert.equal(app.window.document.querySelector('[aria-label="Title"]').value, "Allergy Shot (0.75 hours)");
+  app.dom.window.close();
+});
+
+test("an hours suffix updates after a grid time change without a pointer gesture", async () => {
+  const requests = [];
+  const app = run(`<div data-eventchip data-eventid="allergy-1" role="button">
+    <div>4pm to 5pm, Allergy Shot (1 hours), Calendar: Events, October 26, 2026</div>
+    <div aria-hidden="true"><span class="I0UMhf">Allergy Shot (1 hours)</span></div>
+  </div>`, { updateExistingHours: true, matchingPhrases: [{ phrase: "SCU Block", dynamic: true }] }, {
+    sendMessage: async message => {
+      requests.push(message);
+      return { ok: true, nextTitle: "Allergy Shot (0.75 hours)" };
+    }
+  });
+  await settle();
+  const chip = app.window.document.querySelector("[data-eventchip]");
+  chip.firstElementChild.textContent = "4pm to 4:45pm, Allergy Shot (1 hours), Calendar: Events, October 26, 2026";
+  await new Promise(resolve => setTimeout(resolve, 330));
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].endTime, "4:45pm");
+  assert.equal(chip.querySelector(".I0UMhf").textContent, "Allergy Shot (0.75 hours)");
+  app.dom.window.close();
+});
+
 test("grid changes do not auto-save while keep-updated mode is disabled", async () => {
   const app = run(`<div data-eventchip data-eventid="event-2" role="button">
     <div>10:15am to 1:25pm, SCU Block (3.17 hours), October 26, 2026</div>

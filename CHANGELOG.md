@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.3 — development build, October 26, 2026
+
+- Add an opt-in Other setting that keeps titles with a recognized hours suffix current after editing, moving, or resizing events, even when the title has no matching phrase.
+- Detect both the current custom hours template and older hours/hrs/hr suffixes. Keep a phrase's explicit Dynamic-off choice in control when that phrase matches.
+- Watch Calendar's displayed time range as a fallback when its drag or resize gestures do not reach the extension, and keep editor updates working when Calendar replaces the title field during an edit.
+- Live tested an Allergy Shot event in Edge: resizing 4:00–5:00pm to 4:00–4:45pm saved `0.75 hours`, and resizing back restored `1 hours`.
+
 ## 0.2.2 — October 26, 2026
 
 - Put matching phrases first and organize settings into General, Hours, and Other.

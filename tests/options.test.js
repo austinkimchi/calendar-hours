@@ -54,5 +54,13 @@ test("settings migrate phrases into rows and save each Dynamic choice", async ()
   assert.equal(saved.automatic, true);
   assert.deepEqual(Array.from(removed), ["autoWords", "keepUpdated"]);
   assert.equal(window.document.querySelector("#status").textContent, "Saved");
+
+  window.document.querySelectorAll(".rule-dynamic input")[0].click();
+  window.document.querySelector('[name="updateExistingHours"]').click();
+  assert.equal(window.document.querySelector('[name="replaceExisting"]').disabled, true);
+  window.document.querySelector("#settings").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+  await settle();
+  assert.equal(saved.updateExistingHours, true);
+  assert.equal(saved.replaceExisting, true);
   dom.window.close();
 });

@@ -65,3 +65,22 @@ test("old comma-separated phrases migrate to individual rules", () => {
   ]);
   assert.deepEqual(core.settingsFrom({ matchingPhrases: [] }).matchingPhrases, []);
 });
+
+test("hours suffix enables updates outside matching phrases without overriding a Dynamic-off phrase", () => {
+  const settings = {
+    updateExistingHours: true,
+    matchingPhrases: [{ phrase: "Work block", dynamic: false }]
+  };
+  assert.equal(core.hasDurationSuffix("Allergy Shot (1 hours)", settings), true);
+  assert.equal(core.shouldUpdateDuration("Allergy Shot (1 hours)", settings), true);
+  assert.equal(core.shouldUpdateDuration("Allergy Shot", settings), false);
+  assert.equal(core.shouldUpdateDuration("Work block (1 hours)", settings), false);
+  assert.equal(core.shouldUpdateDuration("Allergy Shot (1 hours)", { ...settings, updateExistingHours: false }), false);
+});
+
+test("custom hours templates are detected and replaced", () => {
+  const settings = { updateExistingHours: true, template: "— {value} {unit}", unit: "hrs" };
+  assert.equal(core.hasDurationSuffix("Work — 1.25 hrs", settings), true);
+  assert.equal(core.titleWithDuration("Work — 1.25 hrs", core.formattedDuration(90, settings), settings), "Work — 1.5 hrs");
+  assert.equal(core.hasDurationSuffix("Work 2026", { ...settings, template: "{value}" }), false);
+});
