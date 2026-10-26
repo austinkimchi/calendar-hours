@@ -171,6 +171,28 @@
     return chip?.firstElementChild?.textContent?.trim() || chip?.getAttribute("aria-label") || "";
   }
 
+  function waitForGridChange(id, previousSummary) {
+    return new Promise(resolve => {
+      let observer;
+      let timeout;
+      const finish = chip => {
+        observer?.disconnect();
+        clearTimeout(timeout);
+        resolve(chip);
+      };
+      const check = () => {
+        const chip = eventChip(id);
+        if (chip && chipSummary(chip) !== previousSummary) finish(chip);
+      };
+      observer = new MutationObserver(check);
+      observer.observe(document.documentElement, {
+        childList: true, characterData: true, attributes: true, attributeFilter: ["aria-label"], subtree: true
+      });
+      timeout = setTimeout(() => finish(null), 7000);
+      check();
+    });
+  }
+
   function paintOptimisticTitles() {
     if (typeof document === "undefined") return;
     for (const [id, title] of optimisticTitles) {
@@ -250,10 +272,7 @@
     gridBusy = true;
     let expectedTitle = null;
     try {
-      const changedChip = await waitFor(() => {
-        const chip = eventChip(gesture.id);
-        return chip && chipSummary(chip) !== gesture.summary ? chip : null;
-      }, 7000);
+      const changedChip = await waitForGridChange(gesture.id, gesture.summary);
       if (!changedChip) return;
       const chip = eventChip(gesture.id);
       if (!chip || chipTitle(chip) !== gesture.title || !core.matchesAutoWords(gesture.title, settings) || findEditor()

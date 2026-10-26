@@ -87,13 +87,14 @@ test("manual message works in the full editor and automatic mode respects title 
 
 test("keep-updated mode paints the new title without opening the editor", async () => {
   const requests = [];
+  let finishSave;
   const app = run(`<div data-eventchip data-eventid="event-1" role="button">
     <div class="screen-reader">10:15am to 1:25pm, SCU Block (3.17 hours), Calendar: Work, October 26, 2026</div>
     <div aria-hidden="true"><span class="I0UMhf">SCU Block (3.17 hours)</span></div>
   </div>`, { keepUpdated: true, autoWords: "SCU Block" }, {
     sendMessage: async message => {
       requests.push(message);
-      return { ok: true, nextTitle: "SCU Block (4.17 hours)" };
+      return new Promise(resolve => { finishSave = resolve; });
     }
   });
   const { window } = app;
@@ -104,11 +105,12 @@ test("keep-updated mode paints the new title without opening the editor", async 
   chip.dispatchEvent(new window.MouseEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
   chip.querySelector(".screen-reader").textContent = "10:15am to 2:25pm, SCU Block (3.17 hours), Calendar: Work, October 26, 2026";
   chip.dispatchEvent(new window.MouseEvent("pointerup", { bubbles: true, clientX: 10, clientY: 30 }));
-  await settle();
+  await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(opened, 0);
   assert.equal(requests.length, 1);
   assert.equal(requests[0].endTime, "2:25pm");
   assert.equal(chip.querySelector(".I0UMhf").textContent, "SCU Block (4.17 hours)");
+  finishSave({ ok: true, nextTitle: "SCU Block (4.17 hours)" });
   chip.querySelector(".screen-reader").textContent = "10:15am to 2:25pm, SCU Block (4.17 hours), Calendar: Work, October 26, 2026";
   await settle();
   app.dom.window.close();
