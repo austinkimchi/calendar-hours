@@ -9,6 +9,7 @@
   let changingTitle = false;
   let timeEditedFor = null;
   let gridGesture = null;
+  let queuedGridGesture = null;
   let gridBusy = false;
   let notice = null;
   const optimisticTitles = new Map();
@@ -235,7 +236,7 @@
   }
 
   async function verifyBackgroundSave(message) {
-    if (!location.pathname.includes("/eventedit/")) return null;
+    if (!decodeURIComponent(location.pathname).endsWith(`/eventedit/${message.id}`)) return null;
     const editor = await waitFor(() => {
       const current = findEditor();
       return current?.title.matches('input[aria-label="Title"]') ? current : null;
@@ -289,11 +290,18 @@
       changingTitle = false;
       gridBusy = false;
       queueUpdate();
+      const queued = queuedGridGesture;
+      queuedGridGesture = null;
+      const current = queued && eventChip(queued.id);
+      const currentTitle = chipTitle(current);
+      if (queued && currentTitle && core.matchesAutoWords(currentTitle, settings)) {
+        syncResizedEvent({ ...queued, title: currentTitle });
+      }
     }
   }
 
   function startGridGesture(event) {
-    if (!settings.keepUpdated || gridBusy || !(event.target instanceof Element)) return;
+    if (!settings.keepUpdated || !(event.target instanceof Element)) return;
     const chip = event.target.closest('[data-eventchip][data-eventid]');
     const title = chipTitle(chip);
     if (!chip || !title || !core.matchesAutoWords(title, settings)) return;
@@ -303,7 +311,10 @@
   function finishGridGesture(event) {
     const gesture = gridGesture;
     gridGesture = null;
-    if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) >= 5) syncResizedEvent(gesture);
+    if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) >= 5) {
+      if (gridBusy) queuedGridGesture = gesture;
+      else syncResizedEvent(gesture);
+    }
   }
 
   document.addEventListener("pointerdown", startGridGesture, true);

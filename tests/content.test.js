@@ -114,6 +114,42 @@ test("keep-updated mode paints the new title without opening the editor", async 
   app.dom.window.close();
 });
 
+test("a second resize is queued while the first title is saving", async () => {
+  let finishFirst;
+  const requests = [];
+  const app = run(`<div data-eventchip data-eventid="event-1" role="button">
+    <div class="screen-reader">10:15am to 1:25pm, SCU Block (3.17 hours), Calendar: Work, October 26, 2026</div>
+    <div aria-hidden="true"><span class="I0UMhf">SCU Block (3.17 hours)</span></div>
+  </div>`, { keepUpdated: true, autoWords: "SCU Block" }, {
+    sendMessage: message => {
+      requests.push(message);
+      return requests.length === 1
+        ? new Promise(resolve => { finishFirst = resolve; })
+        : Promise.resolve({ ok: true, nextTitle: "SCU Block (5.17 hours)" });
+    }
+  });
+  const { window } = app;
+  const chip = window.document.querySelector("[data-eventchip]");
+  await settle();
+  const drag = endTime => {
+    chip.dispatchEvent(new window.MouseEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
+    chip.querySelector(".screen-reader").textContent = `10:15am to ${endTime}, SCU Block (3.17 hours), Calendar: Work, October 26, 2026`;
+    chip.dispatchEvent(new window.MouseEvent("pointerup", { bubbles: true, clientX: 10, clientY: 30 }));
+  };
+  drag("2:25pm");
+  await settle();
+  drag("3:25pm");
+  finishFirst({ ok: true, nextTitle: "SCU Block (4.17 hours)" });
+  await settle();
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].title, "SCU Block (4.17 hours)");
+  assert.equal(requests[1].endTime, "3:25pm");
+  assert.equal(chip.querySelector(".I0UMhf").textContent, "SCU Block (5.17 hours)");
+  chip.querySelector(".screen-reader").textContent = "10:15am to 3:25pm, SCU Block (5.17 hours), Calendar: Work, October 26, 2026";
+  await settle();
+  app.dom.window.close();
+});
+
 test("keep-updated mode corrects a matching title when editor times change", async () => {
   const app = run(`<input aria-label="Title" value="SCU Block (3.17 hours)">
     <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
@@ -186,7 +222,7 @@ test("background editor saves and verifies a resized one-time event", async () =
   assert.equal(result.nextTitle, "SCU Block (4.17 hours)");
   assert.equal(savedTitle, "SCU Block (4.17 hours)");
   app.window.history.pushState({}, "", url);
-  const verified = await app.send({ type: "CALENDAR_HOURS_BACKGROUND_VERIFY", title: savedTitle });
+  const verified = await app.send({ type: "CALENDAR_HOURS_BACKGROUND_VERIFY", id: "event-1", title: savedTitle });
   assert.equal(verified.ok, true);
   app.dom.window.close();
 });

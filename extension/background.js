@@ -27,7 +27,8 @@ async function sendWhenReady(tabId, message, timeout = 12000) {
 
 async function syncGridEvent(message, sender) {
   if (!sender.tab?.id || !sender.url || !/^https:\/\/calendar\.google\.com\/calendar\//.test(sender.url)
-      || !/^[A-Za-z0-9_-]+=*$/.test(message.id || "")) {
+      || typeof message.id !== "string" || message.id.length > 500
+      || !/^[A-Za-z0-9+/_-]+=*$/.test(message.id)) {
     return { ok: false, reason: "invalid request" };
   }
   const account = /^\/calendar\/u\/(\d+)\//.exec(new URL(sender.url).pathname)?.[1] || "0";
@@ -51,7 +52,7 @@ async function syncGridEvent(message, sender) {
     for (let attempt = 0; attempt < 2; attempt++) {
       if (attempt) { await pause(400); await chrome.tabs.reload(tab.id); }
       const verified = await sendWhenReady(tab.id, {
-        type: "CALENDAR_HOURS_BACKGROUND_VERIFY", title: result.nextTitle
+        type: "CALENDAR_HOURS_BACKGROUND_VERIFY", id: message.id, title: result.nextTitle
       });
       if (verified.ok) return { ok: true, nextTitle: result.nextTitle };
     }

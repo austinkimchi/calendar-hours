@@ -4,6 +4,7 @@
 
 - Show the recalculated hours on the Calendar grid as soon as a matching drag or resize finishes.
 - Save and verify the corrected title in an inactive Calendar tab so the main Calendar view stays open.
+- Queue a second grid edit if it happens before the first background save finishes.
 - Correct the grid update path using the live Calendar editor and recurrence controls observed in Edge. This build has not been submitted to the Chrome Web Store.
 
 ## 0.2.0 — October 26, 2026
