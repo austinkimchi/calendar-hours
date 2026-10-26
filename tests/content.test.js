@@ -19,8 +19,15 @@ function run(html, saved = {}, options = {}) {
   window.HTMLElement.prototype.getClientRects = function () { return [{ left: 10, top: 10, bottom: 30 }]; };
   window.HTMLElement.prototype.getBoundingClientRect = function () { return { left: 10, top: 10, bottom: 30 }; };
   let listener;
+  const hintStorage = options.hintStorage || {};
   window.chrome = {
-    storage: { sync: { get: async () => saved }, onChanged: { addListener() {} } },
+    storage: {
+      sync: {
+        get: async () => ({ ...saved, ...hintStorage }),
+        set: async values => { Object.assign(hintStorage, values); }
+      },
+      onChanged: { addListener() {} }
+    },
     runtime: { onMessage: { addListener(fn) { listener = fn; } }, sendMessage: options.sendMessage || (async () => ({ ok: false })) }
   };
   window.eval(coreScript);
@@ -91,10 +98,75 @@ test("quick composer summary offers suggestion and accepts Tab", async () => {
   await settle();
   const title = app.window.document.querySelector('[aria-label="Add title"]');
   assert.match(app.window.document.querySelector(".calendar-hours-suggestion").textContent, /3\.17 hours/);
+  assert.match(app.window.document.querySelector(".calendar-hours-suggestion").textContent, /Press Tab to add/);
   title.focus();
   title.dispatchEvent(new app.window.KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
   assert.equal(title.value, "SCU Block (3.17 hours)");
   app.dom.window.close();
+});
+
+test("Escape outside the title hides the suggestion before Calendar finishes closing the editor", async () => {
+  const app = run(`<div role="dialog"><button aria-label="Close">Close</button>
+    <input aria-label="Title" value="Work session">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="5pm">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="5:15pm"></div>`, { automatic: false });
+  await settle();
+  const document = app.window.document;
+  assert.ok(document.querySelector(".calendar-hours-suggestion"));
+  document.querySelector('[aria-label="End time"]').dispatchEvent(new app.window.KeyboardEvent("keydown", {
+    key: "Escape", bubbles: true
+  }));
+  assert.equal(document.querySelector(".calendar-hours-suggestion"), null);
+  document.querySelector('[aria-label="End time"]').dispatchEvent(new app.window.Event("change", { bubbles: true }));
+  await settle();
+  assert.equal(document.querySelector(".calendar-hours-suggestion"), null);
+  document.querySelector('[role="dialog"]').remove();
+  await settle();
+  app.dom.window.close();
+});
+
+test("the Tab instruction retires after accepting two suggestions, while duration suggestions remain", async () => {
+  const hintStorage = {};
+  const html = `<div role="dialog"><input aria-label="Title" value="Work session">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="5pm">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="5:15pm"></div>`;
+  for (let index = 0; index < 3; index++) {
+    const app = run(html, { automatic: false }, { hintStorage });
+    await settle();
+    const suggestion = app.window.document.querySelector(".calendar-hours-suggestion");
+    assert.ok(suggestion);
+    if (index < 2) {
+      assert.match(suggestion.textContent, /Press Tab to add/);
+      const title = app.window.document.querySelector('[aria-label="Title"]');
+      title.dispatchEvent(new app.window.KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+      assert.equal(title.value, "Work session (0.25 hours)");
+      await settle();
+    } else {
+      assert.equal(suggestion.textContent, "(0.25 hours)");
+    }
+    app.dom.window.close();
+  }
+});
+
+test("the Tab instruction stops repeating after three event suggestions without an acceptance", async () => {
+  const hintStorage = {};
+  const html = `<div role="dialog"><input aria-label="Title" value="Work session">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="5pm">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="5:15pm"></div>`;
+  for (let index = 0; index < 4; index++) {
+    const app = run(html, { automatic: false }, { hintStorage });
+    await settle();
+    const suggestion = app.window.document.querySelector(".calendar-hours-suggestion");
+    assert.ok(suggestion);
+    assert.equal(suggestion.textContent.includes("Press Tab to add"), index < 3);
+    app.dom.window.close();
+  }
 });
 
 test("manual message works in the full editor and automatic mode respects title words", async () => {

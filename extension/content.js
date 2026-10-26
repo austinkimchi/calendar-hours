@@ -5,6 +5,13 @@
   let chip = null;
   let preview = null;
   let dismissedFor = null;
+  let escapedEditor = null;
+  let hintedEditor = null;
+  let showInstructionForEditor = false;
+  let hintLearning = { shown: 0, accepted: 0 };
+  let hintLearningReady = false;
+  let hintSaveQueue = Promise.resolve();
+  const hintStorageKey = "calendarHoursSuggestionHint";
   let timer = null;
   let changingTitle = false;
   let timeEditedFor = null;
@@ -105,6 +112,10 @@
     changingTitle = true;
     setNativeInputValue(editor.title, result.nextTitle);
     changingTitle = false;
+    if (reason === "suggestion") {
+      hintLearning.accepted = Math.min(2, hintLearning.accepted + 1);
+      saveHintLearning();
+    }
     dismissedFor = null;
     hideChip();
     queueUpdate();
@@ -124,7 +135,26 @@
     preview = null;
   }
 
+  function saveHintLearning() {
+    const snapshot = { ...hintLearning };
+    hintSaveQueue = hintSaveQueue.then(() => chrome.storage.sync.set({ [hintStorageKey]: snapshot })).catch(() => {});
+  }
+
+  function dismissSuggestion(editor) {
+    escapedEditor = editor.title;
+    dismissedFor = preview ? `${editor.title.value}|${preview.minutes}` : null;
+    hideChip();
+  }
+
   function showChip(editor, result) {
+    if (hintedEditor !== editor.title) {
+      hintedEditor = editor.title;
+      showInstructionForEditor = hintLearning.shown < 3 && hintLearning.accepted < 2;
+      if (showInstructionForEditor) {
+        hintLearning.shown++;
+        saveHintLearning();
+      }
+    }
     if (!chip) {
       chip = document.createElement("button");
       chip.type = "button";
@@ -134,7 +164,7 @@
       chip.addEventListener("click", () => apply("suggestion"));
       document.body.append(chip);
     }
-    const label = `${result.formatted.text}  ·  Click or press Tab to add`;
+    const label = showInstructionForEditor ? `${result.formatted.text}  ·  Press Tab to add` : result.formatted.text;
     if (chip.textContent !== label) chip.textContent = label;
     chip.title = "Calendar Hours suggestion";
     const rect = editor.title.getBoundingClientRect();
@@ -146,8 +176,16 @@
   function update() {
     if (contextInvalidated) return;
     const editor = findEditor();
-    const result = editor && calculate(editor);
-    if (!editor || !result) { hideChip(); return; }
+    if (!editor) {
+      escapedEditor = null;
+      hintedEditor = null;
+      hideChip();
+      return;
+    }
+    if (escapedEditor === editor.title) { hideChip(); return; }
+    if (escapedEditor) escapedEditor = null;
+    const result = calculate(editor);
+    if (!result) { hideChip(); return; }
     if (gridBusy) { hideChip(); return; }
     const key = `${editor.title.value}|${result.minutes}`;
     const hasKeyword = editor.title.value.toLowerCase().includes(settings.keyword.toLowerCase());
@@ -161,7 +199,7 @@
         !core.hasDurationSuffix(editor.title.value, settings) && document.activeElement !== editor.title) {
       apply("automatic"); return;
     }
-    if (settings.showSuggestion && key !== dismissedFor) showChip(editor, result);
+    if (settings.showSuggestion && hintLearningReady && key !== dismissedFor) showChip(editor, result);
     else hideChip();
   }
 
@@ -447,6 +485,10 @@
   document.addEventListener("keydown", event => {
     const editor = findEditor();
     if (!editor) return;
+    if (event.key === "Escape") {
+      dismissSuggestion(editor);
+      return;
+    }
     if (event.key === "Enter" && !event.isComposing && !event.repeat &&
         (event.target === editor.title || editor.root.contains(event.target))) {
       applyPendingKeyword("keyword before Enter");
@@ -455,9 +497,14 @@
     if (event.key === "Tab" && !event.shiftKey && preview && chip) {
       event.preventDefault();
       apply("suggestion");
-    } else if (event.key === "Escape" && preview) {
-      dismissedFor = `${editor.title.value}|${preview.minutes}`;
-      hideChip();
+    }
+  }, true);
+  document.addEventListener("pointerdown", event => {
+    const editor = findEditor();
+    const button = event.target instanceof Element && event.target.closest('button,[role="button"]');
+    if (editor && button && editor.root.contains(button) &&
+        /^(close|back)$/i.test(button.getAttribute("aria-label") || button.getAttribute("title") || "")) {
+      dismissSuggestion(editor);
     }
   }, true);
   document.addEventListener("click", event => {
@@ -478,7 +525,19 @@
     childList: true, characterData: true, subtree: true
   });
 
-  settingsReady = chrome.storage.sync.get(null).then(saved => { settings = core.settingsFrom(saved); scanGridChanges(); queueUpdate(); });
+  settingsReady = chrome.storage.sync.get(null).then(saved => {
+    settings = core.settingsFrom(saved);
+    const learned = saved?.[hintStorageKey];
+    if (learned && typeof learned === "object") {
+      hintLearning = {
+        shown: Number.isSafeInteger(learned.shown) && learned.shown >= 0 ? learned.shown : 0,
+        accepted: Number.isSafeInteger(learned.accepted) && learned.accepted >= 0 ? learned.accepted : 0
+      };
+    }
+    hintLearningReady = true;
+    scanGridChanges();
+    queueUpdate();
+  });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync") return;
     const patch = Object.fromEntries(Object.entries(changes).map(([key, change]) => [key, change.newValue]));

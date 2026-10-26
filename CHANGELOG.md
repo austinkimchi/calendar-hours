@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.11 — development build, October 26, 2026
+
+- Dismiss the duration suggestion immediately when Escape starts closing an event editor or its Close button is pressed.
+- Shorten the visible instruction to “Press Tab to add.” After three event suggestions or two accepted suggestions, show only the calculated duration while keeping Tab and click available.
+
 ## 0.2.10 — October 26, 2026
 
 - Open a welcome page on first install that explains Google Calendar access and offers a one-click connection for fast grid saves.
