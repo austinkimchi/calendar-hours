@@ -2,11 +2,13 @@
 
 Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed duration between an event's start and end time and inserts hours or minutes into the event title. An optional direct Google Calendar API connection can save grid changes without opening an editor tab.
 
-Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). Version 0.2.9 adds optional direct API saves after grid moves and resizes. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
+Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). Version 0.2.10 adds a first-install welcome page for the optional Google Calendar API connection. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
 
-**Store status (verified October 26, 2026 in the publisher dashboard):** v0.1.0 is pending review; no version is published, and package upload is disabled during review. v0.2.9 is a local development build and has not been submitted. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
+**Store status (verified October 26, 2026 in the publisher dashboard):** v0.1.0 is pending review; no version is published, and package upload is disabled during review. v0.2.10 is a local development build and has not been submitted. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
 
 ## Use
+
+On first install, Calendar Hours opens a welcome page. Choose **Connect Google Calendar** to authorize fast grid saves; the extension then enables that setting automatically. You can open Calendar without connecting and connect later in Settings → Other. Updates to an installed extension do not reopen the welcome page.
 
 1. Open a timed event in Google Calendar's quick composer or full editor.
 2. Enter a title and start/end times.
@@ -51,7 +53,7 @@ npm test
 npm run package
 ```
 
-The generated `dist/calendar-hours-0.2.9.zip` has `manifest.json` at its root. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
+The generated `dist/calendar-hours-0.2.10.zip` has `manifest.json` at its root. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
 
 For a local development check only, load the `extension` folder from the browser's Extensions page. After reloading the unpacked extension, refresh any open Google Calendar tabs once so their content script uses the new version. The store package does not need Developer mode after publication.
 

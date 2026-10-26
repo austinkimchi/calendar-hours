@@ -1,5 +1,12 @@
 if (typeof importScripts === "function") importScripts("core.js", "api-sync.js", "oauth.js");
 
+chrome.runtime.onInstalled.addListener(details => {
+  if (details.reason !== "install") return;
+  chrome.tabs.create({ url: chrome.runtime.getURL("welcome.html") }).catch(error => {
+    console.warn("Calendar Hours could not open its welcome page:", error);
+  });
+});
+
 chrome.commands.onCommand.addListener(async command => {
   if (command !== "insert-hours") return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -91,18 +98,25 @@ async function syncGridEvent(message, sender) {
   return syncGridEventViaEditor(message, sender);
 }
 
+async function connectCalendar() {
+  const result = await globalThis.CalendarHoursOAuth.connect();
+  if (result.connected) await chrome.storage.sync.set({ apiSync: true });
+  return result;
+}
+
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const handlers = {
     CALENDAR_HOURS_GRID_SYNC: () => syncGridEvent(message, sender),
     CALENDAR_HOURS_API_STATUS: () => globalThis.CalendarHoursOAuth.status(),
-    CALENDAR_HOURS_API_CONNECT: () => globalThis.CalendarHoursOAuth.connect(),
+    CALENDAR_HOURS_API_CONNECT: connectCalendar,
     CALENDAR_HOURS_API_DISCONNECT: () => globalThis.CalendarHoursOAuth.disconnect()
   };
   const handle = handlers[message?.type];
   if (!handle) return;
+  const trustedPages = ["options.html", "welcome.html"].map(page => chrome.runtime.getURL(page));
   if (message.type !== "CALENDAR_HOURS_GRID_SYNC" &&
-      !(sender.url || "").startsWith(chrome.runtime.getURL("options.html"))) {
-    respond({ ok: false, reason: "Open Calendar Hours settings to manage this connection" });
+      !trustedPages.includes(sender.url)) {
+    respond({ ok: false, reason: "Open Calendar Hours settings or its welcome page to manage this connection" });
     return;
   }
   Promise.resolve().then(handle).then(respond, error => {

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get started with Calendar Hours</title>
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <main>
+    <header class="brand"><img src="icons/icon48.png" width="48" height="48" alt=""><span>Calendar Hours</span></header>
+    <section class="card" aria-labelledby="welcome-title">
+      <p class="eyebrow">Get started</p>
+      <h1 id="welcome-title">Keep event durations up to date</h1>
+      <p class="intro">Calendar Hours adds the length of a Google Calendar event to its title. Connect your Google account for faster title updates when you move or resize an event.</p>
+
+      <div class="permission">
+        <h2>What connecting allows</h2>
+        <p>Google asks for permission to view and edit events on your calendars. When you move or resize a qualifying event, Calendar Hours reads that event, waits for its new time to save, and updates its title. Event data and your access token are not sent to a Calendar Hours server.</p>
+      </div>
+
+      <div class="actions">
+        <button id="connect" type="button">Connect Google Calendar</button>
+        <a id="open-calendar" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener">Open Google Calendar</a>
+      </div>
+      <p id="status" role="status" aria-live="polite">Checking connection…</p>
+      <p class="skip">You can use keyword and title suggestions without connecting. Grid title updates will use the regular Calendar editor method. <button id="settings" type="button">Customize settings</button></p>
+    </section>
+  </main>
+  <script src="welcome.js"></script>
+</body>
+</html>

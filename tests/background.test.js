@@ -15,7 +15,8 @@ test("grid sync uses inactive Calendar tabs and confirms the saved title", async
   let handler;
   const chrome = {
     commands: { onCommand: { addListener() {} } },
-    runtime: { onMessage: { addListener(fn) { handler = fn; } } },
+    runtime: { getURL: path => `chrome-extension://example/${path}`,
+      onInstalled: { addListener() {} }, onMessage: { addListener(fn) { handler = fn; } } },
     tabs: {
       create: async options => {
         const tab = { id: created.length + 1, ...options };
@@ -54,7 +55,8 @@ test("connected API mode saves a grid resize without creating an editor tab", as
   const syncCalls = [];
   const chrome = {
     commands: { onCommand: { addListener() {} } },
-    runtime: { onMessage: { addListener(fn) { handler = fn; } } },
+    runtime: { getURL: path => `chrome-extension://example/${path}`,
+      onInstalled: { addListener() {} }, onMessage: { addListener(fn) { handler = fn; } } },
     storage: { sync: { get: async () => ({ apiSync: true, matchingPhrases: [{ phrase: "SCU Block", dynamic: true }] }) } },
     tabs: { create: async () => { created++; throw new Error("Unexpected editor tab"); } }
   };
@@ -76,4 +78,37 @@ test("connected API mode saves a grid resize without creating an editor tab", as
   assert.equal(created, 0);
   assert.equal(syncCalls.length, 1);
   assert.equal(syncCalls[0].accessToken, "test-token");
+});
+
+test("first installation opens welcome and its connect action enables fast saves", async () => {
+  let installed;
+  let handler;
+  const opened = [];
+  const saved = [];
+  let connectCalls = 0;
+  const chrome = {
+    commands: { onCommand: { addListener() {} } },
+    runtime: {
+      getURL: path => `chrome-extension://example/${path}`,
+      onInstalled: { addListener(fn) { installed = fn; } },
+      onMessage: { addListener(fn) { handler = fn; } }
+    },
+    tabs: { create: async options => { opened.push(options); } },
+    storage: { sync: { set: async value => { saved.push(value); } } }
+  };
+  vm.runInNewContext(script, { chrome, URL, setTimeout, console,
+    globalThis: { CalendarHoursOAuth: { connect: async () => { connectCalls++; return { connected: true }; } } } });
+
+  installed({ reason: "update" });
+  assert.equal(opened.length, 0);
+  installed({ reason: "install" });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(opened[0].url, "chrome-extension://example/welcome.html");
+
+  const send = (url, type) => new Promise(resolve => handler({ type }, { url }, resolve));
+  assert.equal((await send("chrome-extension://example/other.html", "CALENDAR_HOURS_API_CONNECT")).ok, false);
+  assert.equal(connectCalls, 0);
+  assert.equal((await send("chrome-extension://example/welcome.html", "CALENDAR_HOURS_API_CONNECT")).connected, true);
+  assert.equal(connectCalls, 1);
+  assert.equal(saved[0].apiSync, true);
 });
