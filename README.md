@@ -2,9 +2,9 @@
 
 Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed hours between an event's start and end time and inserts the result into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
 
-Source and releases are kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.1.0 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.1.0) includes the packaged ZIP. The [Chrome Web Store submission notes](STORE_LISTING.md) record the current unlisted listing.
+Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.0 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.0) includes the packaged ZIP. The [Chrome Web Store submission notes](STORE_LISTING.md) record the current unlisted listing.
 
-**Store status (October 26, 2026):** v0.1.0 is pending Chrome Web Store review. The unlisted store link will become installable in Edge after approval and automatic publication. Developer mode is not needed for the store version.
+**Store status (October 26, 2026):** v0.1.0 is pending Chrome Web Store review. Version 0.2.0 adds automatic title updates after grid edits and needs a new store review. The unlisted store link will become installable in Edge after approval and automatic publication. Developer mode is not needed for the store version.
 
 ## Use
 
@@ -19,6 +19,7 @@ Other ways to insert or update hours:
 - Press **Ctrl+Shift+H** on Windows/Linux or **Command+Shift+H** on macOS while an event editor is open. Browser shortcut conflicts can be resolved at `chrome://extensions/shortcuts` or `edge://extensions/shortcuts`.
 - Click the extension icon, then **Add hours to open event**.
 - In Settings, enable **Automatically insert for matching titles**. The default match word is `block`; add comma separated words or phrases as needed.
+- In Settings, enable **Keep matching event hours updated and saved**. After you drag or resize a matching timed event on the Calendar grid, the extension opens that one-time event, recalculates its title, and saves it. The same setting updates a matching title when you change its start or end fields in the editor; use Calendar's Save button for those manual edits. Set **Matching title words or phrases** to `SCU Block` to target only that phrase. Matching ignores case and respects word boundaries.
 
 ## Formatting
 
@@ -28,9 +29,9 @@ The initial settings use nearest rounding to two decimal places, a one minute in
 
 ## Privacy and scope
 
-The extension has access only to `calendar.google.com/calendar/*` and asks for the `storage` permission to save settings. It reads visible event title and time fields, calculates locally, and changes the draft title only when a trigger is used or optional automatic mode is enabled. It never clicks Calendar's Save button. It does not make network requests or collect event data. See [PRIVACY.md](PRIVACY.md).
+The extension has access only to `calendar.google.com/calendar/*` and asks for the `storage` permission to save settings. It reads visible event title and time fields and calculates locally. When **Keep matching event hours updated and saved** is enabled, it uses Calendar's own Save button after a matching grid move or resize. It does not make its own network requests or collect event data. See [PRIVACY.md](PRIVACY.md).
 
-The current implementation supports Google Calendar's English quick composer and full event editor. Calendar changes to those page controls may require an extension update. All-day events, invalid times, and events longer than seven days are skipped. Elapsed time uses the browser's local time zone, so use the same time zone in Google Calendar for correct cross-day and daylight-saving calculations.
+The current implementation supports Google Calendar's English quick composer and full event editor. Calendar changes to those page controls may require an extension update. All-day events, invalid times, events longer than seven days, and recurring events are skipped by grid auto-save. If Calendar asks for further confirmation, the extension leaves that decision to you. Elapsed time uses the browser's local time zone, so use the same time zone in Google Calendar for correct cross-day and daylight-saving calculations.
 
 ## Development and packaging
 
@@ -40,7 +41,7 @@ npm test
 npm run package
 ```
 
-The generated `dist/calendar-hours-0.1.0.zip` has `manifest.json` at its root and is ready to upload to the Chrome Web Store developer dashboard. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
+The generated `dist/calendar-hours-0.2.0.zip` has `manifest.json` at its root and is ready to upload to the Chrome Web Store developer dashboard. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
 
 For a local development check only, load the `extension` folder from the browser's Extensions page. The store package does not need Developer mode after publication.
 

@@ -36,4 +36,8 @@ test("automatic insertion requires a configured title word", () => {
   assert.equal(core.matchesAutoWords("SCU Block", {}), true);
   assert.equal(core.matchesAutoWords("Doctor appointment", {}), false);
   assert.equal(core.matchesAutoWords("Focus session", { autoWords: "block, focus" }), true);
+  assert.equal(core.matchesAutoWords("SCU Block (3.17 hours)", { autoWords: "scu block" }), true);
+  assert.equal(core.matchesAutoWords("SCU Blocked", { autoWords: "SCU Block" }), false);
+  assert.equal(core.matchesAutoWords("Unblocked time", { autoWords: "block" }), false);
+  assert.equal(core.settingsFrom({ keepUpdated: true, replaceExisting: false }).replaceExisting, true);
 });

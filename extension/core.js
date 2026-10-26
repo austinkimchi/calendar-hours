@@ -17,6 +17,7 @@
     showSuggestion: true,
     automatic: false,
     autoWords: "block",
+    keepUpdated: false,
     replaceExisting: true
   });
 
@@ -34,7 +35,8 @@
       showSuggestion: typeof source.showSuggestion === "boolean" ? source.showSuggestion : defaults.showSuggestion,
       automatic: typeof source.automatic === "boolean" ? source.automatic : defaults.automatic,
       autoWords: typeof source.autoWords === "string" ? source.autoWords.slice(0, 200) : defaults.autoWords,
-      replaceExisting: typeof source.replaceExisting === "boolean" ? source.replaceExisting : defaults.replaceExisting
+      keepUpdated: typeof source.keepUpdated === "boolean" ? source.keepUpdated : defaults.keepUpdated,
+      replaceExisting: source.keepUpdated === true ? true : (typeof source.replaceExisting === "boolean" ? source.replaceExisting : defaults.replaceExisting)
     };
   }
 
@@ -121,7 +123,10 @@
   function matchesAutoWords(title, settings) {
     const cfg = settingsFrom(settings);
     const words = cfg.autoWords.split(/[,\n]/).map(item => item.trim().toLowerCase()).filter(Boolean);
-    return words.length > 0 && words.some(word => title.toLowerCase().includes(word));
+    return words.length > 0 && words.some(word => {
+      const pattern = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegExp(word)}(?=$|[^\\p{L}\\p{N}])`, "iu");
+      return pattern.test(title);
+    });
   }
 
   return { defaults, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords };

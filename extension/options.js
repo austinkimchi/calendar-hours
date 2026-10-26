@@ -28,6 +28,12 @@
     preview();
   });
   form.addEventListener("input", preview);
+  form.elements.namedItem("keepUpdated").addEventListener("change", event => {
+    if (event.target.checked) form.elements.namedItem("replaceExisting").checked = true;
+  });
+  form.elements.namedItem("replaceExisting").addEventListener("change", event => {
+    if (form.elements.namedItem("keepUpdated").checked) event.target.checked = true;
+  });
   form.addEventListener("submit", async event => {
     event.preventDefault();
     try {
