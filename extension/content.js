@@ -171,6 +171,12 @@
     return chip?.firstElementChild?.textContent?.trim() || chip?.getAttribute("aria-label") || "";
   }
 
+  function detailsHeading(id) {
+    const dialog = [...document.querySelectorAll('[role="dialog"]')].find(element => visible(element) &&
+      [...element.querySelectorAll("[data-eventid]")].some(child => child.getAttribute("data-eventid") === id));
+    return dialog?.querySelector('[role="heading"][aria-level="1"]') || null;
+  }
+
   function waitForGridChange(id, previousSummary) {
     return new Promise(resolve => {
       let observer;
@@ -195,12 +201,17 @@
 
   function paintOptimisticTitles() {
     if (typeof document === "undefined") return;
-    for (const [id, title] of optimisticTitles) {
+    for (const [id, { original, next }] of optimisticTitles) {
       const chip = eventChip(id);
       if (!chip) continue;
-      if (chipSummary(chip).includes(title)) { optimisticTitles.delete(id); continue; }
+      const heading = detailsHeading(id);
+      if (heading?.textContent?.trim() === original) heading.textContent = next;
+      if (chipSummary(chip).includes(next)) {
+        if (!heading) optimisticTitles.delete(id);
+        continue;
+      }
       const label = chip.querySelector("span.I0UMhf");
-      if (label && label.textContent.trim() !== title) label.textContent = title;
+      if (label && label.textContent.trim() !== next) label.textContent = next;
     }
   }
 
@@ -209,6 +220,8 @@
     const chip = eventChip(id);
     const label = chip?.querySelector("span.I0UMhf");
     if (label?.textContent?.trim() === expected && !chipSummary(chip).includes(expected)) label.textContent = original;
+    const heading = detailsHeading(id);
+    if (heading?.textContent?.trim() === expected && !chipSummary(chip).includes(expected)) heading.textContent = original;
   }
 
   function gridRange(summary) {
@@ -275,8 +288,7 @@
       const changedChip = await waitForGridChange(gesture.id, gesture.summary);
       if (!changedChip) return;
       const chip = eventChip(gesture.id);
-      if (!chip || chipTitle(chip) !== gesture.title || !core.matchesAutoWords(gesture.title, settings) || findEditor()
-          || [...document.querySelectorAll('[role="dialog"]')].some(visible)) return;
+      if (!chip || chipTitle(chip) !== gesture.title || !core.matchesAutoWords(gesture.title, settings) || findEditor()) return;
       const range = gridRange(chipSummary(chip));
       if (range) {
         const minutes = core.durationMinutes({
@@ -286,7 +298,7 @@
         const formatted = minutes == null ? null : core.formattedDuration(minutes, settings);
         expectedTitle = core.titleWithDuration(gesture.title, formatted, settings);
         if (expectedTitle && expectedTitle !== gesture.title) {
-          optimisticTitles.set(gesture.id, expectedTitle);
+          optimisticTitles.set(gesture.id, { original: gesture.title, next: expectedTitle });
           paintOptimisticTitles();
         }
       }
@@ -297,7 +309,7 @@
       if (!response?.ok) throw new Error(response?.reason || "Background save failed");
       if (response.nextTitle) {
         expectedTitle = response.nextTitle;
-        optimisticTitles.set(gesture.id, expectedTitle);
+        optimisticTitles.set(gesture.id, { original: gesture.title, next: expectedTitle });
         paintOptimisticTitles();
       }
     } catch (error) {

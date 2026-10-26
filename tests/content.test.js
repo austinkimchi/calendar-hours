@@ -120,6 +120,41 @@ test("keep-updated mode paints the new title without opening the editor", async 
   app.dom.window.close();
 });
 
+test("grid resize still saves when Calendar opens its event details popup", async () => {
+  const requests = [];
+  let finishSave;
+  const app = run(`<div data-eventchip data-eventid="event-1" role="button">
+    <div>10:15am to 1:25pm, SCU Block (3.17 hours), Calendar: Work, October 26, 2026</div>
+    <div aria-hidden="true"><span class="I0UMhf">SCU Block (3.17 hours)</span></div>
+  </div>`, { keepUpdated: true, autoWords: "SCU Block" }, {
+    sendMessage: message => {
+      requests.push(message);
+      return new Promise(resolve => { finishSave = resolve; });
+    }
+  });
+  const { window } = app;
+  await settle();
+  const chip = window.document.querySelector("[data-eventchip]");
+  chip.dispatchEvent(new window.MouseEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
+  chip.firstElementChild.textContent = "10:15am to 2:25pm, SCU Block (3.17 hours), Calendar: Work, October 26, 2026";
+  chip.dispatchEvent(new window.MouseEvent("pointerup", { bubbles: true, clientX: 10, clientY: 30 }));
+  const popup = window.document.createElement("div");
+  popup.setAttribute("role", "dialog");
+  popup.innerHTML = '<span role="heading" aria-level="1">SCU Block (3.17 hours)</span><div data-eventid="event-1"></div>';
+  window.document.body.append(popup);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(requests.length, 1);
+  assert.equal(chip.querySelector(".I0UMhf").textContent, "SCU Block (4.17 hours)");
+  assert.equal(popup.querySelector('[role="heading"]').textContent, "SCU Block (4.17 hours)");
+  finishSave({ ok: true, nextTitle: "SCU Block (4.17 hours)" });
+  chip.firstElementChild.textContent = "10:15am to 2:25pm, SCU Block (4.17 hours), Calendar: Work, October 26, 2026";
+  await settle();
+  popup.querySelector('[role="heading"]').firstChild.nodeValue = "SCU Block (3.17 hours)";
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(popup.querySelector('[role="heading"]').textContent, "SCU Block (4.17 hours)");
+  app.dom.window.close();
+});
+
 test("a second resize is queued while the first title is saving", async () => {
   let finishFirst;
   const requests = [];
