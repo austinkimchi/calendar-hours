@@ -1,10 +1,10 @@
 # Changelog
 
-## 0.2.10 — development build, October 26, 2026
+## 0.2.10 — October 26, 2026
 
 - Open a welcome page on first install that explains Google Calendar access and offers a one-click connection for fast grid saves.
 - Enable the direct API save setting after a successful connection. Keep keyword, suggestion, and editor-based features available when the user skips or cannot connect.
-- Keep this build private; no Chrome Web Store update was submitted.
+- Prepare the first-install flow and optional Calendar API access for an unlisted Chrome Web Store update.
 
 ## 0.2.9 — development build, October 26, 2026
 
