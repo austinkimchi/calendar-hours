@@ -10,6 +10,10 @@
   let minutesTemplateInitialized = false;
   let lastHoursUnit = core.defaults.unit;
   let lastMinutesUnit = core.defaults.minutesUnit;
+  let saveTimer = null;
+  let saveRevision = 0;
+  let savedRevision = 0;
+  let saveQueue = Promise.resolve();
 
   function addRule(phrase = "", dynamic = false) {
     const row = document.querySelector("#rule-template").content.firstElementChild.cloneNode(true);
@@ -90,6 +94,39 @@
     }
   }
 
+  function saveSettings() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    const revision = saveRevision;
+    if (!form.checkValidity() || !form.elements.namedItem("template").value.includes("{value}") ||
+        !form.elements.namedItem("minutesTemplate").value.includes("{value}")) {
+      status.textContent = "Finish the title template to save changes";
+      return saveQueue;
+    }
+    const cfg = values();
+    if (!minutesTemplateInitialized) delete cfg.minutesTemplate;
+    status.textContent = "Saving…";
+    saveQueue = saveQueue.catch(() => {}).then(async () => {
+      if (revision !== saveRevision) return;
+      await chrome.storage.sync.set(cfg);
+      await chrome.storage.sync.remove(["autoWords", "keepUpdated"]);
+      savedRevision = revision;
+      if (revision === saveRevision) status.textContent = "Saved";
+    }).catch(error => {
+      if (revision === saveRevision) status.textContent = `Could not save: ${error.message}`;
+      throw error;
+    });
+    return saveQueue;
+  }
+
+  function changed(immediate = false) {
+    saveRevision++;
+    status.textContent = "Unsaved changes";
+    clearTimeout(saveTimer);
+    if (immediate) void saveSettings().catch(() => {});
+    else saveTimer = setTimeout(() => { void saveSettings().catch(() => {}); }, 350);
+  }
+
   chrome.storage.sync.get(null).then(saved => {
     const cfg = core.settingsFrom(saved);
     minutesTemplateInitialized = typeof saved.minutesTemplate === "string" && saved.minutesTemplate.includes("{value}");
@@ -126,16 +163,18 @@
   document.querySelector("#add-rule").addEventListener("click", () => {
     const row = addRule();
     row.querySelector(".rule-phrase").focus();
-    status.textContent = "";
   });
   rules.addEventListener("click", event => {
     if (!event.target.closest(".remove-rule")) return;
     event.target.closest(".rule-row").remove();
     preview();
-    status.textContent = "";
+    changed(true);
   });
-  form.addEventListener("input", () => { preview(); status.textContent = ""; });
-  form.addEventListener("change", () => { preview(); status.textContent = ""; });
+  form.addEventListener("input", () => { preview(); changed(); });
+  form.addEventListener("change", () => { preview(); changed(true); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && saveTimer) void saveSettings().catch(() => {});
+  });
 
   const helpButton = document.querySelector("#dynamic-help-button");
   const help = document.querySelector("#dynamic-help");
@@ -150,17 +189,7 @@
 
   form.addEventListener("submit", async event => {
     event.preventDefault();
-    try {
-      const cfg = values();
-      if (!minutesTemplateInitialized) delete cfg.minutesTemplate;
-      await chrome.storage.sync.set(cfg);
-      await chrome.storage.sync.remove(["autoWords", "keepUpdated"]);
-      rules.replaceChildren();
-      for (const rule of cfg.matchingPhrases) addRule(rule.phrase, rule.dynamic);
-      updateReplaceExisting();
-      status.textContent = "Saved";
-    } catch (error) {
-      status.textContent = `Could not save: ${error.message}`;
-    }
+    if (saveRevision === savedRevision) saveRevision++;
+    await saveSettings().catch(() => {});
   });
 })();

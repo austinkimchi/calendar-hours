@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.7 — development build, October 26, 2026
+
+- Apply `/hours` before Calendar handles Enter, Save, or form submission, closing the fast-save race.
+- Save settings changes automatically, so enabling minutes below one hour takes effect without a second Save click. Keep the Save settings button available.
+- Cover a rapid Allergy Shot edit that should save as `Allergy Shot (30 minutes)`.
+
 ## 0.2.6 — development build, October 26, 2026
 
 - Show a small information button beside the replacement checkbox when Dynamic or automatic time-change updates keep it enabled. The explanation names the setting that locks it.

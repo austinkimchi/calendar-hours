@@ -41,6 +41,48 @@ test("keyword replaces itself in the full editor without saving the event", asyn
   app.dom.window.close();
 });
 
+test("rapid Enter after editing an event applies the saved under-hour minutes setting before Calendar saves", async () => {
+  const app = run(`<div role="dialog"><input aria-label="Title" value="Allergy Shot">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="4pm">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="4:45pm"></div>`, {
+    minutesBelowHour: true,
+    matchingPhrases: [{ phrase: "SCU Block", dynamic: true }]
+  });
+  await Promise.resolve();
+  const title = app.window.document.querySelector('[aria-label="Title"]');
+  const end = app.window.document.querySelector('[aria-label="End time"]');
+  end.value = "4:30pm";
+  end.dispatchEvent(new app.window.Event("input", { bubbles: true }));
+  title.value = "Allergy Shot /hours";
+  title.dispatchEvent(new app.window.Event("input", { bubbles: true }));
+  let titleAtSave;
+  app.window.document.addEventListener("keydown", event => {
+    if (event.key === "Enter") titleAtSave = title.value;
+  });
+  title.dispatchEvent(new app.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  assert.equal(titleAtSave, "Allergy Shot (30 minutes)");
+  assert.equal(title.value, "Allergy Shot (30 minutes)");
+  app.dom.window.close();
+});
+
+test("clicking Calendar Save immediately after a keyword applies the duration first", async () => {
+  const app = run(`<div role="dialog"><input aria-label="Title" value="Allergy Shot /hours">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="4pm">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="4:30pm">
+    <button type="button">Save</button></div>`, { minutesBelowHour: true });
+  await Promise.resolve();
+  let titleAtSave;
+  const save = app.window.document.querySelector("button");
+  save.addEventListener("click", () => { titleAtSave = app.window.document.querySelector('[aria-label="Title"]').value; });
+  save.click();
+  assert.equal(titleAtSave, "Allergy Shot (30 minutes)");
+  app.dom.window.close();
+});
+
 test("quick composer summary offers suggestion and accepts Tab", async () => {
   const app = run(`<div role="dialog"><input aria-label="Add title" value="SCU Block">
     <span data-key="startDate">Sunday, October 18</span>

@@ -109,6 +109,12 @@
     return { ok: true, message: `Added ${result.formatted.text} to the title. Save the event in Calendar.`, reason };
   }
 
+  function applyPendingKeyword(reason) {
+    const editor = findEditor();
+    if (!editor || !settings.keyword || !editor.title.value.toLowerCase().includes(settings.keyword.toLowerCase())) return;
+    apply(reason);
+  }
+
   function hideChip() {
     if (chip) chip.remove();
     chip = null;
@@ -407,7 +413,12 @@
   }, true);
   document.addEventListener("keydown", event => {
     const editor = findEditor();
-    if (!editor || event.target !== editor.title) return;
+    if (!editor) return;
+    if (event.key === "Enter" && !event.isComposing && !event.repeat &&
+        (event.target === editor.title || editor.root.contains(event.target))) {
+      applyPendingKeyword("keyword before Enter");
+    }
+    if (event.target !== editor.title) return;
     if (event.key === "Tab" && !event.shiftKey && preview && chip) {
       event.preventDefault();
       apply("suggestion");
@@ -416,6 +427,13 @@
       hideChip();
     }
   }, true);
+  document.addEventListener("click", event => {
+    const button = event.target instanceof Element && event.target.closest('button,[role="button"]');
+    if (button && (button.getAttribute("aria-label") === "Save" || button.textContent.trim() === "Save")) {
+      applyPendingKeyword("keyword before Save");
+    }
+  }, true);
+  document.addEventListener("submit", () => applyPendingKeyword("keyword before submit"), true);
   window.addEventListener("resize", queueUpdate);
   window.addEventListener("scroll", queueUpdate, true);
   new MutationObserver(changes => {

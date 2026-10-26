@@ -79,6 +79,26 @@ test("first-time options enable both defaults while saved off choices stay off",
   }
 });
 
+test("turning on minutes below an hour saves the setting without an extra Save click", async () => {
+  const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
+  const { window } = dom;
+  let saved;
+  window.chrome = { storage: { sync: {
+    get: async () => ({}),
+    set: async value => { saved = value; },
+    remove: async () => {}
+  } } };
+  window.eval(core);
+  window.eval(options);
+  await settle();
+  window.document.querySelector('[name="minutesBelowHour"]').click();
+  await settle();
+  assert.equal(saved.minutesBelowHour, true);
+  assert.equal(saved.minutesTemplate, "({value} {unit})");
+  assert.equal(window.document.querySelector("#status").textContent, "Saved");
+  dom.window.close();
+});
+
 test("the locked replacement setting explains which update option requires it", async () => {
   const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
   const { window } = dom;

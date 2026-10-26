@@ -2,9 +2,9 @@
 
 Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed duration between an event's start and end time and inserts hours or minutes into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
 
-Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.6 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.6) is the latest private GitHub release. It adds minute display, singular unit labels, updated first-time defaults, and clearer setting help. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
+Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). Version 0.2.7 fixes fast `/hours` saves and saves settings changes automatically. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
 
-**Store status (verified October 26, 2026 in the publisher dashboard):** v0.1.0 is pending review; no version is published, and package upload is disabled during review. v0.2.6 is prepared for a later submission. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
+**Store status (verified October 26, 2026 in the publisher dashboard):** v0.1.0 is pending review; no version is published, and package upload is disabled during review. v0.2.7 is prepared for a later submission. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
 
 ## Use
 
@@ -27,6 +27,8 @@ Other ways to insert or update the duration:
 
 Settings → Hours lets you display every duration in hours or minutes, or display minutes only when the actual duration is under one hour. The first time you enable minutes, its title template starts with your current Hours template; you can then change the Minutes template separately. Each unit has customizable plural and singular text, so the defaults produce `1 hour`, `2 hours`, `1 minute`, and `2 minutes`. The same section controls nearest, down, up, or truncation rounding and 1/5/10/15/30/60 minute increments. Hours also support 0–4 decimal places and fixed or trimmed trailing zeros. Templates use `{value}` and `{unit}`.
 
+Settings changes save automatically. The Save settings button remains available for an explicit save; wait for the Saved status before using the new format in Calendar.
+
 The initial settings use hours, nearest rounding to two decimal places, a one minute increment, and `({value} {unit})`. Minutes display is off by default.
 
 ## Privacy and scope
@@ -43,7 +45,7 @@ npm test
 npm run package
 ```
 
-The generated `dist/calendar-hours-0.2.4.zip` has `manifest.json` at its root. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
+The generated `dist/calendar-hours-0.2.7.zip` has `manifest.json` at its root. Chrome Web Store extensions can also be installed in Microsoft Edge; Edge may ask you to allow extensions from other stores.
 
 For a local development check only, load the `extension` folder from the browser's Extensions page. The store package does not need Developer mode after publication.
 
