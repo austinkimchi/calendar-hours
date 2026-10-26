@@ -4,6 +4,8 @@ Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Micr
 
 Source and releases are kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.1.0 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.1.0) includes the packaged ZIP. The [Chrome Web Store submission notes](STORE_LISTING.md) record the current unlisted listing.
 
+**Store status (October 26, 2026):** v0.1.0 is pending Chrome Web Store review. The unlisted store link will become installable in Edge after approval and automatic publication. Developer mode is not needed for the store version.
+
 ## Use
 
 1. Open a timed event in Google Calendar's quick composer or full editor.

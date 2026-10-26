@@ -20,4 +20,4 @@ Calendar Hours turns event start and end times into a title suffix such as `SCU 
 
 **Distribution:** Free, Unlisted, all regions, English (US). After approval, the listing can be installed in Edge through its Chrome Web Store link.
 
-**Dashboard:** [Calendar Hours draft](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. The package, listing, privacy details, and distribution are saved. Submission awaits the three required data-use certifications.
+**Dashboard:** [Calendar Hours item](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. Version 0.1.0 was submitted on October 26, 2026; the dashboard shows **Pending review**. Automatic publication after approval is enabled. The unlisted store link will become installable once Google approves and publishes it.
