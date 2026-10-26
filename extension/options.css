@@ -35,6 +35,8 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid #3b82f6; ou
 .info-panel[hidden] { display: none; }
 .secondary-button, .remove-rule { color: #1d56ac; background: white; border: 1px solid #c7d6eb; border-radius: 7px; padding: 8px 10px; cursor: pointer; font: 600 13px Arial, sans-serif; }
 .secondary-button:hover, .remove-rule:hover { background: #edf4ff; }
+.api-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 8px; }
+.api-controls #api-status { color: #5b6676; font-size: 12px; }
 .remove-rule { color: #596579; border-color: transparent; padding: 8px 3px; }
 footer { display: flex; align-items: center; gap: 14px; }
 .primary-button { background: #2463d6; color: white; border: 0; border-radius: 8px; padding: 11px 18px; font: 600 13px Arial, sans-serif; cursor: pointer; }

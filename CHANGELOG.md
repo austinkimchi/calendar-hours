@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.9 — development build, October 26, 2026
+
+- Add an optional Google Calendar API connection for fast, tab-free title saves after a one-time event is moved or resized.
+- Verify the event's new times and version before changing only its title, and retain the inactive editor fallback if direct saving is unavailable.
+- Keep the OAuth access token in restricted local extension storage. Live-tested in Edge with a resize and restore of today's SCU Block; Calendar confirmed both title and time changes.
+- This development build has not been submitted to the Chrome Web Store.
+
 ## 0.2.8 — development build, October 26, 2026
 
 - Recognize an invalidated extension context after an unpacked extension reload. Stop the stale Calendar tab's grid updates and show a refresh prompt without recording a resize error.

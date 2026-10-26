@@ -1,3 +1,5 @@
+if (typeof importScripts === "function") importScripts("core.js", "api-sync.js", "oauth.js");
+
 chrome.commands.onCommand.addListener(async command => {
   if (command !== "insert-hours") return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -25,12 +27,14 @@ async function sendWhenReady(tabId, message, timeout = 12000) {
   throw new Error("The background Calendar tab did not become ready");
 }
 
-async function syncGridEvent(message, sender) {
-  if (!sender.tab?.id || !sender.url || !/^https:\/\/calendar\.google\.com\/calendar\//.test(sender.url)
-      || typeof message.id !== "string" || message.id.length > 500
-      || !/^[A-Za-z0-9+/_-]+=*$/.test(message.id)) {
-    return { ok: false, reason: "invalid request" };
-  }
+function validGridRequest(message, sender) {
+  return !!sender.tab?.id && !!sender.url && /^https:\/\/calendar\.google\.com\/calendar\//.test(sender.url)
+    && typeof message.id === "string" && message.id.length <= 500
+    && /^[A-Za-z0-9+/_-]+=*$/.test(message.id)
+    && typeof message.title === "string" && message.title.length <= 1000;
+}
+
+async function syncGridEventViaEditor(message, sender) {
   const account = /^\/calendar\/u\/(\d+)\//.exec(new URL(sender.url).pathname)?.[1] || "0";
   const editorUrl = `https://calendar.google.com/calendar/u/${account}/r/eventedit/${encodeURIComponent(message.id)}`;
   const tab = await chrome.tabs.create({ url: editorUrl, active: false, windowId: sender.tab.windowId });
@@ -62,9 +66,46 @@ async function syncGridEvent(message, sender) {
   }
 }
 
+async function syncGridEvent(message, sender) {
+  if (!validGridRequest(message, sender)) return { ok: false, reason: "invalid request" };
+  const settings = globalThis.CalendarHoursCore?.settingsFrom(await chrome.storage.sync.get(null));
+  if (settings && !globalThis.CalendarHoursCore.shouldUpdateDuration(message.title, settings)) {
+    return { ok: false, reason: "Automatic updates are off for this title" };
+  }
+  if (settings?.apiSync && message.startIso && message.endIso) {
+    try {
+      const accessToken = await globalThis.CalendarHoursOAuth.getAccessToken();
+      if (accessToken) {
+        const result = await globalThis.CalendarHoursApiSync.syncTitle({
+          gridId: message.id, title: message.title, startIso: message.startIso,
+          endIso: message.endIso, settings, accessToken,
+          core: globalThis.CalendarHoursCore
+        });
+        if (result.ok) return result;
+        console.warn("Calendar Hours API save unavailable; trying the Calendar editor:", result.reason);
+      }
+    } catch (error) {
+      console.warn("Calendar Hours API save unavailable; trying the Calendar editor:", error);
+    }
+  }
+  return syncGridEventViaEditor(message, sender);
+}
+
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
-  if (message?.type !== "CALENDAR_HOURS_GRID_SYNC") return;
-  syncGridEvent(message, sender).then(respond, error => {
+  const handlers = {
+    CALENDAR_HOURS_GRID_SYNC: () => syncGridEvent(message, sender),
+    CALENDAR_HOURS_API_STATUS: () => globalThis.CalendarHoursOAuth.status(),
+    CALENDAR_HOURS_API_CONNECT: () => globalThis.CalendarHoursOAuth.connect(),
+    CALENDAR_HOURS_API_DISCONNECT: () => globalThis.CalendarHoursOAuth.disconnect()
+  };
+  const handle = handlers[message?.type];
+  if (!handle) return;
+  if (message.type !== "CALENDAR_HOURS_GRID_SYNC" &&
+      !(sender.url || "").startsWith(chrome.runtime.getURL("options.html"))) {
+    respond({ ok: false, reason: "Open Calendar Hours settings to manage this connection" });
+    return;
+  }
+  Promise.resolve().then(handle).then(respond, error => {
     console.warn("Calendar Hours background update failed:", error);
     respond({ ok: false, reason: error.message });
   });

@@ -250,6 +250,20 @@
     return range ? `${range.date}|${range.startTime}|${range.endTime}` : null;
   }
 
+  function gridRangeIso(range) {
+    if (!range) return null;
+    const date = core.parseCalendarDate(range.date);
+    const startClock = core.parseClock(range.startTime);
+    const endClock = core.parseClock(range.endTime);
+    if (!date || !startClock || !endClock) return null;
+    const at = clock => new Date(date.year, date.month - 1, date.day, clock.hour, clock.minute);
+    const start = at(startClock);
+    const end = at(endClock);
+    if (start.getFullYear() !== date.year || start.getMonth() + 1 !== date.month || start.getDate() !== date.day ||
+        end <= start || end.getFullYear() !== date.year || end.getMonth() + 1 !== date.month || end.getDate() !== date.day) return null;
+    return { startIso: start.toISOString(), endIso: end.toISOString() };
+  }
+
   function scanGridChanges() {
     if (typeof document === "undefined" || contextInvalidated) return;
     for (const chip of document.querySelectorAll('[data-eventchip][data-eventid]')) {
@@ -345,7 +359,8 @@
       }
       const response = await chrome.runtime.sendMessage({
         type: "CALENDAR_HOURS_GRID_SYNC", id: gesture.id, title: gesture.title,
-        startTime: range?.startTime || "", endTime: range?.endTime || ""
+        startTime: range?.startTime || "", endTime: range?.endTime || "",
+        ...gridRangeIso(range)
       });
       if (!response?.ok) throw new Error(response?.reason || "Background save failed");
       if (response.nextTitle) {

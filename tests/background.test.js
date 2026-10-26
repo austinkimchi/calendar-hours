@@ -47,3 +47,33 @@ test("grid sync uses inactive Calendar tabs and confirms the saved title", async
   assert.deepEqual(reloaded, [1, 1, 1]);
   assert.deepEqual(removed, [1]);
 });
+
+test("connected API mode saves a grid resize without creating an editor tab", async () => {
+  let handler;
+  let created = 0;
+  const syncCalls = [];
+  const chrome = {
+    commands: { onCommand: { addListener() {} } },
+    runtime: { onMessage: { addListener(fn) { handler = fn; } } },
+    storage: { sync: { get: async () => ({ apiSync: true, matchingPhrases: [{ phrase: "SCU Block", dynamic: true }] }) } },
+    tabs: { create: async () => { created++; throw new Error("Unexpected editor tab"); } }
+  };
+  const core = require("../extension/core.js");
+  vm.runInNewContext(script, { chrome, URL, setTimeout, console,
+    globalThis: {
+      CalendarHoursCore: core,
+      CalendarHoursOAuth: { getAccessToken: async () => "test-token" },
+      CalendarHoursApiSync: { syncTitle: async input => {
+        syncCalls.push(input);
+        return { ok: true, nextTitle: "SCU Block (2.33 hours)" };
+      } }
+    } });
+  const response = await new Promise(resolve => handler({
+    type: "CALENDAR_HOURS_GRID_SYNC", id: "event-1", title: "SCU Block (1.83 hours)",
+    startIso: "2026-10-26T17:55:00.000Z", endIso: "2026-10-26T20:15:00.000Z"
+  }, { tab: { id: 10, windowId: 5 }, url: "https://calendar.google.com/calendar/u/0/r/customday" }, resolve));
+  assert.equal(response.ok, true);
+  assert.equal(created, 0);
+  assert.equal(syncCalls.length, 1);
+  assert.equal(syncCalls[0].accessToken, "test-token");
+});

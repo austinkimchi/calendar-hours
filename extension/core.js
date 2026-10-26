@@ -24,6 +24,7 @@
     automatic: true,
     matchingPhrases: [{ phrase: "block", dynamic: false }],
     updateExistingHours: true,
+    apiSync: false,
     replaceExisting: true
   });
 
@@ -69,6 +70,7 @@
       automatic: typeof source.automatic === "boolean" ? source.automatic : defaults.automatic,
       matchingPhrases,
       updateExistingHours,
+      apiSync: source.apiSync === true,
       replaceExisting: updateExistingHours || matchingPhrases.some(item => item.dynamic) ? true
         : (typeof source.replaceExisting === "boolean" ? source.replaceExisting : defaults.replaceExisting)
     };
