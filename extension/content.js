@@ -11,6 +11,8 @@
   let gridGesture = null;
   let gridBusy = false;
   let notice = null;
+  const optimisticTitles = new Map();
+  let settingsReady;
 
   const visible = element => !!element && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden";
   const firstVisible = (root, selector) => [...root.querySelectorAll(selector)].find(visible) || null;
@@ -168,59 +170,121 @@
     return chip?.firstElementChild?.textContent?.trim() || chip?.getAttribute("aria-label") || "";
   }
 
+  function paintOptimisticTitles() {
+    if (typeof document === "undefined") return;
+    for (const [id, title] of optimisticTitles) {
+      const chip = eventChip(id);
+      if (!chip) continue;
+      if (chipSummary(chip).includes(title)) { optimisticTitles.delete(id); continue; }
+      const label = chip.querySelector("span.I0UMhf");
+      if (label && label.textContent.trim() !== title) label.textContent = title;
+    }
+  }
+
+  function restoreChipTitle(id, original, expected) {
+    optimisticTitles.delete(id);
+    const chip = eventChip(id);
+    const label = chip?.querySelector("span.I0UMhf");
+    if (label?.textContent?.trim() === expected && !chipSummary(chip).includes(expected)) label.textContent = original;
+  }
+
+  function gridRange(summary) {
+    const times = /^([^,]+?) to ([^,]+?),/.exec(summary);
+    const date = /,\s*([A-Za-z]+ \d{1,2}, \d{4})$/.exec(summary)?.[1];
+    if (!times || !date || !core.parseClock(times[1]) || !core.parseClock(times[2])) return null;
+    return { startTime: times[1], endTime: times[2], date };
+  }
+
+  function sameClock(left, right) {
+    const a = core.parseClock(left);
+    const b = core.parseClock(right);
+    return !!a && !!b && a.hour === b.hour && a.minute === b.minute;
+  }
+
+  function oneTimeEvent() {
+    const recurrence = firstVisible(document, '[role="combobox"][aria-label="Recurrence"]');
+    return recurrence?.textContent?.trim() === "Does not repeat";
+  }
+
+  async function saveInBackground(message) {
+    await settingsReady;
+    if (!settings.keepUpdated || !core.matchesAutoWords(message.title, settings)) return { ok: false, reason: "Automatic updates are off" };
+    if (!decodeURIComponent(location.pathname).endsWith(`/eventedit/${message.id}`)) return { ok: false, reason: "Wrong event editor" };
+    const editor = await waitFor(() => {
+      const current = findEditor();
+      return current?.title.matches('input[aria-label="Title"]') && readFields(current).endTime ? current : null;
+    }, 10000);
+    if (!editor) return { ok: false, reason: "Event editor did not load" };
+    if (editor.title.value !== message.title) return { ok: false, reason: "Event title changed" };
+    const fields = readFields(editor);
+    if (message.startTime && message.endTime &&
+        (!sameClock(fields.startTime, message.startTime) || !sameClock(fields.endTime, message.endTime))) {
+      return { ok: false, retry: true, reason: "Waiting for Calendar's resize save" };
+    }
+    if (!oneTimeEvent()) return { ok: false, reason: "recurring event" };
+    const result = calculate(editor);
+    if (!result) return { ok: false, reason: "Duration was not available or already current" };
+    changingTitle = true;
+    setNativeInputValue(editor.title, result.nextTitle);
+    changingTitle = false;
+    const save = labelledButton(document, "Save");
+    if (!save) return { ok: false, reason: "Calendar Save button was unavailable" };
+    save.click();
+    const saved = await waitFor(() => !location.pathname.includes("/eventedit/"), 10000);
+    return saved ? { ok: true, nextTitle: result.nextTitle } : { ok: false, reason: "Calendar did not leave the editor after Save" };
+  }
+
+  async function verifyBackgroundSave(message) {
+    if (!location.pathname.includes("/eventedit/")) return null;
+    const editor = await waitFor(() => {
+      const current = findEditor();
+      return current?.title.matches('input[aria-label="Title"]') ? current : null;
+    }, 10000);
+    return { ok: !!editor && editor.title.value === message.title };
+  }
+
   async function syncResizedEvent(gesture) {
     if (gridBusy || !settings.keepUpdated) return;
     gridBusy = true;
-    let changedEditor = false;
+    let expectedTitle = null;
     try {
       const changedChip = await waitFor(() => {
         const chip = eventChip(gesture.id);
         return chip && chipSummary(chip) !== gesture.summary ? chip : null;
       }, 7000);
       if (!changedChip) return;
-      await pause(650); // Allow Calendar to finish its own drag save and redraw.
       const chip = eventChip(gesture.id);
       if (!chip || chipTitle(chip) !== gesture.title || !core.matchesAutoWords(gesture.title, settings) || findEditor()
           || [...document.querySelectorAll('[role="dialog"]')].some(visible)) return;
-
-      chip.click();
-      const popup = await waitFor(() => [...document.querySelectorAll('[role="dialog"]')].find(dialog =>
-        dialog.querySelector("h1")?.textContent?.trim() === gesture.title && labelledButton(dialog, "Edit event")
-      ), 2500);
-      if (popup) labelledButton(popup, "Edit event").click();
-      else chip.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, detail: 2 }));
-      const editor = await waitFor(() => {
-        const current = findEditor();
-        return current?.title.matches('input[aria-label="Title"]') && readFields(current).endTime ? current : null;
+      const range = gridRange(chipSummary(chip));
+      if (range) {
+        const minutes = core.durationMinutes({
+          startDate: range.date, endDate: range.date,
+          startTime: range.startTime, endTime: range.endTime
+        });
+        const formatted = minutes == null ? null : core.formattedDuration(minutes, settings);
+        expectedTitle = core.titleWithDuration(gesture.title, formatted, settings);
+        if (expectedTitle && expectedTitle !== gesture.title) {
+          optimisticTitles.set(gesture.id, expectedTitle);
+          paintOptimisticTitles();
+        }
+      }
+      const response = await chrome.runtime.sendMessage({
+        type: "CALENDAR_HOURS_GRID_SYNC", id: gesture.id, title: gesture.title,
+        startTime: range?.startTime || "", endTime: range?.endTime || ""
       });
-      if (!editor || editor.title.value !== gesture.title) throw new Error("Event editor did not open for the changed event");
-
-      const oneTimeEvent = [...document.querySelectorAll('main [role="combobox"], main [aria-label="Recurrence"]')].some(element =>
-        visible(element) && (element.textContent || element.getAttribute("aria-label") || "").includes("Does not repeat")
-      ) || [...document.querySelectorAll("main")].some(element => visible(element) && element.textContent.includes("Does not repeat"));
-      if (!oneTimeEvent) {
-        labelledButton(document, "Cancel event changes")?.click();
-        showNotice("Calendar Hours: recurring event needs a manual title update.");
-        return;
+      if (!response?.ok) throw new Error(response?.reason || "Background save failed");
+      if (response.nextTitle) {
+        expectedTitle = response.nextTitle;
+        optimisticTitles.set(gesture.id, expectedTitle);
+        paintOptimisticTitles();
       }
-
-      const result = calculate(editor);
-      if (!result) {
-        labelledButton(document, "Cancel event changes")?.click();
-        return;
-      }
-      changingTitle = true;
-      setNativeInputValue(editor.title, result.nextTitle);
-      changingTitle = false;
-      changedEditor = true;
-      const save = labelledButton(document, "Save");
-      if (!save) throw new Error("Calendar Save button was unavailable");
-      save.click();
-      const saved = await waitFor(() => chipTitle(eventChip(gesture.id)) === result.nextTitle, 7000);
-      if (!saved) throw new Error("Calendar did not confirm the updated title");
     } catch (error) {
-      showNotice(`Calendar Hours could not save the updated title. Open the event and use ${settings.keyword} or the shortcut.`);
-      if (!changedEditor) labelledButton(document, "Cancel event changes")?.click();
+      console.warn("Calendar Hours could not update a resized event:", error);
+      if (expectedTitle) restoreChipTitle(gesture.id, gesture.title, expectedTitle);
+      const recurring = error.message === "recurring event";
+      showNotice(recurring ? "Calendar Hours: recurring event needs a manual title update."
+        : `Calendar Hours could not save the updated title. Open the event and use ${settings.keyword} or the shortcut.`);
     } finally {
       changingTitle = false;
       gridBusy = false;
@@ -276,9 +340,9 @@
   }, true);
   window.addEventListener("resize", queueUpdate);
   window.addEventListener("scroll", queueUpdate, true);
-  new MutationObserver(queueUpdate).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(() => { paintOptimisticTitles(); queueUpdate(); }).observe(document.documentElement, { childList: true, subtree: true });
 
-  chrome.storage.sync.get(null).then(saved => { settings = core.settingsFrom(saved); queueUpdate(); });
+  settingsReady = chrome.storage.sync.get(null).then(saved => { settings = core.settingsFrom(saved); queueUpdate(); });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync") return;
     const patch = Object.fromEntries(Object.entries(changes).map(([key, change]) => [key, change.newValue]));
@@ -287,6 +351,14 @@
   });
   chrome.runtime.onMessage.addListener((message, sender, respond) => {
     if (message?.type === "CALENDAR_HOURS_APPLY") respond(apply(message.reason || "manual"));
+    if (message?.type === "CALENDAR_HOURS_BACKGROUND_SYNC") {
+      saveInBackground(message).then(respond, error => respond({ ok: false, reason: error.message }));
+      return true;
+    }
+    if (message?.type === "CALENDAR_HOURS_BACKGROUND_VERIFY") {
+      verifyBackgroundSave(message).then(respond, error => respond({ ok: false, reason: error.message }));
+      return true;
+    }
   });
   queueUpdate();
 })();

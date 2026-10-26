@@ -9,9 +9,9 @@ const coreScript = fs.readFileSync(path.join(extension, "core.js"), "utf8");
 const contentScript = fs.readFileSync(path.join(extension, "content.js"), "utf8");
 const settle = () => new Promise(resolve => setTimeout(resolve, 220));
 
-function run(html, saved = {}) {
+function run(html, saved = {}, options = {}) {
   const dom = new JSDOM(html, {
-    url: "https://calendar.google.com/calendar/u/0/r/week/2026/10/18",
+    url: options.url || "https://calendar.google.com/calendar/u/0/r/week/2026/10/18",
     runScripts: "outside-only",
     pretendToBeVisual: true
   });
@@ -21,7 +21,7 @@ function run(html, saved = {}) {
   let listener;
   window.chrome = {
     storage: { sync: { get: async () => saved }, onChanged: { addListener() {} } },
-    runtime: { onMessage: { addListener(fn) { listener = fn; } } }
+    runtime: { onMessage: { addListener(fn) { listener = fn; } }, sendMessage: options.sendMessage || (async () => ({ ok: false })) }
   };
   window.eval(coreScript);
   window.eval(contentScript);
@@ -85,47 +85,32 @@ test("manual message works in the full editor and automatic mode respects title 
   matching.dom.window.close();
 });
 
-test("keep-updated mode saves a matching resized grid event", async () => {
+test("keep-updated mode paints the new title without opening the editor", async () => {
+  const requests = [];
   const app = run(`<div data-eventchip data-eventid="event-1" role="button">
     <div class="screen-reader">10:15am to 1:25pm, SCU Block (3.17 hours), Calendar: Work, October 26, 2026</div>
     <div aria-hidden="true"><span class="I0UMhf">SCU Block (3.17 hours)</span></div>
-  </div>`, { keepUpdated: true, autoWords: "SCU Block" });
+  </div>`, { keepUpdated: true, autoWords: "SCU Block" }, {
+    sendMessage: async message => {
+      requests.push(message);
+      return { ok: true, nextTitle: "SCU Block (4.17 hours)" };
+    }
+  });
   const { window } = app;
   const chip = window.document.querySelector("[data-eventchip]");
   await settle();
-  let saves = 0;
-  chip.addEventListener("click", () => {
-    const popup = window.document.createElement("div");
-    popup.setAttribute("role", "dialog");
-    popup.innerHTML = '<h1>SCU Block (3.17 hours)</h1><button aria-label="Edit event"></button>';
-    window.document.body.append(popup);
-    popup.querySelector("button").addEventListener("click", () => {
-      popup.remove();
-      const page = window.document.createElement("main");
-      page.innerHTML = `<input aria-label="Title" value="SCU Block (3.17 hours)">
-        <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
-        <input aria-label="Start time" value="10:15am">
-        <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
-        <input aria-label="End time" value="2:25pm">
-        <div role="combobox">Does not repeat</div>
-        <button>Save</button>`;
-      window.document.body.append(page);
-      page.querySelector("button").addEventListener("click", () => {
-        saves++;
-        const title = page.querySelector('[aria-label="Title"]').value;
-        chip.querySelector(".I0UMhf").textContent = title;
-        chip.querySelector(".screen-reader").textContent = `10:15am to 2:25pm, ${title}, Calendar: Work, October 26, 2026`;
-        page.remove();
-      });
-    });
-  });
-
+  let opened = 0;
+  chip.addEventListener("click", () => opened++);
   chip.dispatchEvent(new window.MouseEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
   chip.querySelector(".screen-reader").textContent = "10:15am to 2:25pm, SCU Block (3.17 hours), Calendar: Work, October 26, 2026";
   chip.dispatchEvent(new window.MouseEvent("pointerup", { bubbles: true, clientX: 10, clientY: 30 }));
-  await new Promise(resolve => setTimeout(resolve, 1100));
-  assert.equal(saves, 1);
+  await settle();
+  assert.equal(opened, 0);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].endTime, "2:25pm");
   assert.equal(chip.querySelector(".I0UMhf").textContent, "SCU Block (4.17 hours)");
+  chip.querySelector(".screen-reader").textContent = "10:15am to 2:25pm, SCU Block (4.17 hours), Calendar: Work, October 26, 2026";
+  await settle();
   app.dom.window.close();
 });
 
@@ -162,39 +147,46 @@ test("grid changes do not auto-save while keep-updated mode is disabled", async 
   app.dom.window.close();
 });
 
-test("keep-updated mode leaves recurring events for manual review", async () => {
-  const app = run(`<div data-eventchip data-eventid="recurring-1" role="button">
-    <div class="screen-reader">10:15am to 1:25pm, SCU Block (3.17 hours), October 26, 2026</div>
-    <div aria-hidden="true"><span class="I0UMhf">SCU Block (3.17 hours)</span></div>
-  </div>`, { keepUpdated: true, autoWords: "SCU Block" });
+test("background editor skips recurring events", async () => {
+  const app = run(`<div><input aria-label="Title" value="SCU Block (3.17 hours)">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="10:15am">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="2:25pm">
+    <div role="combobox" aria-label="Recurrence">Every week</div><button>Save</button></div>`,
+  { keepUpdated: true, autoWords: "SCU Block" },
+  { url: "https://calendar.google.com/calendar/u/0/r/eventedit/recurring-1" });
   await settle();
-  const chip = app.window.document.querySelector("[data-eventchip]");
   let saves = 0;
-  chip.addEventListener("click", () => {
-    const popup = app.window.document.createElement("div");
-    popup.setAttribute("role", "dialog");
-    popup.innerHTML = '<h1>SCU Block (3.17 hours)</h1><button aria-label="Edit event"></button>';
-    app.window.document.body.append(popup);
-    popup.querySelector("button").addEventListener("click", () => {
-      popup.remove();
-      const page = app.window.document.createElement("main");
-      page.innerHTML = `<input aria-label="Title" value="SCU Block (3.17 hours)">
-        <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
-        <input aria-label="Start time" value="10:15am">
-        <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
-        <input aria-label="End time" value="2:25pm">
-        <div role="combobox">Every week</div>
-        <button aria-label="Cancel event changes"></button><button>Save</button>`;
-      app.window.document.body.append(page);
-      page.querySelector("button[aria-label]").addEventListener("click", () => page.remove());
-      page.querySelector("button:last-child").addEventListener("click", () => saves++);
-    });
-  });
-  chip.dispatchEvent(new app.window.MouseEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10 }));
-  chip.querySelector(".screen-reader").textContent = "10:15am to 2:25pm, SCU Block (3.17 hours), October 26, 2026";
-  chip.dispatchEvent(new app.window.MouseEvent("pointerup", { bubbles: true, clientX: 10, clientY: 30 }));
-  await new Promise(resolve => setTimeout(resolve, 1100));
+  app.window.document.querySelector("button").addEventListener("click", () => saves++);
+  const result = await app.send({ type: "CALENDAR_HOURS_BACKGROUND_SYNC", id: "recurring-1", title: "SCU Block (3.17 hours)", startTime: "10:15am", endTime: "2:25pm" });
   assert.equal(saves, 0);
-  assert.match(app.window.document.querySelector(".calendar-hours-notice").textContent, /recurring event/i);
+  assert.equal(result.reason, "recurring event");
+  app.dom.window.close();
+});
+
+test("background editor saves and verifies a resized one-time event", async () => {
+  const url = "https://calendar.google.com/calendar/u/0/r/eventedit/event-1";
+  const app = run(`<div><input aria-label="Title" value="SCU Block (3.17 hours)">
+    <input aria-label="Start date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="Start time" value="10:15am">
+    <input aria-label="End date" data-date="20261026" value="Oct 26, 2026">
+    <input aria-label="End time" value="2:25pm">
+    <div role="combobox" aria-label="Recurrence">Does not repeat</div><button>Save</button></div>`,
+  { keepUpdated: true, autoWords: "SCU Block" }, { url });
+  await settle();
+  let savedTitle = "";
+  app.window.document.querySelector("button").addEventListener("click", () => {
+    savedTitle = app.window.document.querySelector('[aria-label="Title"]').value;
+    app.window.history.pushState({}, "", "/calendar/u/0/r/week/2026/10/26");
+  });
+  const result = await app.send({ type: "CALENDAR_HOURS_BACKGROUND_SYNC", id: "event-1",
+    title: "SCU Block (3.17 hours)", startTime: "10:15am", endTime: "2:25pm" });
+  assert.equal(result.ok, true);
+  assert.equal(result.nextTitle, "SCU Block (4.17 hours)");
+  assert.equal(savedTitle, "SCU Block (4.17 hours)");
+  app.window.history.pushState({}, "", url);
+  const verified = await app.send({ type: "CALENDAR_HOURS_BACKGROUND_VERIFY", title: savedTitle });
+  assert.equal(verified.ok, true);
   app.dom.window.close();
 });
