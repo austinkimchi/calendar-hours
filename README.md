@@ -2,7 +2,7 @@
 
 Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed duration between an event's start and end time and inserts hours or minutes into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
 
-Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.2 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.2) is the latest published release; v0.2.6 is prepared as a draft release. This development build adds minute display, singular unit labels, updated first-time defaults, and clearer setting help. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
+Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.6 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.6) is the latest private GitHub release. It adds minute display, singular unit labels, updated first-time defaults, and clearer setting help. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
 
 **Store status (verified October 26, 2026 in the publisher dashboard):** v0.1.0 is pending review; no version is published, and package upload is disabled during review. v0.2.6 is prepared for a later submission. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
 
