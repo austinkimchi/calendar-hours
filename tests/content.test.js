@@ -110,6 +110,10 @@ test("keep-updated mode paints the new title without opening the editor", async 
   assert.equal(requests.length, 1);
   assert.equal(requests[0].endTime, "2:25pm");
   assert.equal(chip.querySelector(".I0UMhf").textContent, "SCU Block (4.17 hours)");
+  chip.querySelector(".I0UMhf").firstChild.nodeValue = "SCU Block (3.17 hours)";
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(chip.querySelector(".I0UMhf").textContent, "SCU Block (4.17 hours)",
+    "Calendar's in-place text repaint must not flash the old hours");
   finishSave({ ok: true, nextTitle: "SCU Block (4.17 hours)" });
   chip.querySelector(".screen-reader").textContent = "10:15am to 2:25pm, SCU Block (4.17 hours), Calendar: Work, October 26, 2026";
   await settle();

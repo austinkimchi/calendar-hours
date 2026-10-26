@@ -371,7 +371,12 @@
   }, true);
   window.addEventListener("resize", queueUpdate);
   window.addEventListener("scroll", queueUpdate, true);
-  new MutationObserver(() => { paintOptimisticTitles(); queueUpdate(); }).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(changes => {
+    if (optimisticTitles.size) paintOptimisticTitles();
+    if (changes.some(change => change.type === "childList")) queueUpdate();
+  }).observe(document.documentElement, {
+    childList: true, characterData: true, subtree: true
+  });
 
   settingsReady = chrome.storage.sync.get(null).then(saved => { settings = core.settingsFrom(saved); queueUpdate(); });
   chrome.storage.onChanged.addListener((changes, area) => {
