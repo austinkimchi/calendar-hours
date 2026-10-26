@@ -2,6 +2,8 @@
 
 Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed hours between an event's start and end time and inserts the result into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
 
+Source and releases are kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.1.0 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.1.0) includes the packaged ZIP. The [Chrome Web Store submission notes](STORE_LISTING.md) record the current unlisted listing.
+
 ## Use
 
 1. Open a timed event in Google Calendar's quick composer or full editor.

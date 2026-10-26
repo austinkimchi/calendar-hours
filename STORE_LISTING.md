@@ -14,8 +14,10 @@ Calendar Hours turns event start and end times into a title suffix such as `SCU 
 
 **Data disclosure:** The extension processes event title and time fields locally in the browser. It does not collect or transmit user data. Preferences use browser extension storage and may be synced by the browser if the user enabled browser sync.
 
-**Privacy policy:** Publish `PRIVACY.md` at a publicly accessible URL, then enter that URL in the developer dashboard if requested.
+**Privacy policy:** [Public policy](https://gist.github.com/austinkimchi/6069defb02ecb9c38b5b2c7d4feb65c7), mirrored in `PRIVACY.md`. Only the policy is public; the source repository is private.
 
-**Assets still needed for dashboard:** A genuine screenshot of the extension working in Google Calendar, and any account or listing fields required by the dashboard. The package already includes icons and a short description.
+**Listing assets:** `store-assets/settings-screenshot.png` shows the extension's actual settings page at 1280 × 800. The package includes the icon and short description.
 
-**Distribution:** Select the visibility chosen by the owner in the dashboard. An unlisted listing is installable in Edge through its Chrome Web Store link.
+**Distribution:** Free, Unlisted, all regions, English (US). After approval, the listing can be installed in Edge through its Chrome Web Store link.
+
+**Dashboard:** [Calendar Hours draft](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. The package, listing, privacy details, and distribution are saved. Submission awaits the three required data-use certifications.
