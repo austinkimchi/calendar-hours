@@ -42,6 +42,17 @@ test("automatic insertion requires a configured title word", () => {
   assert.equal(core.settingsFrom({ keepUpdated: true, replaceExisting: false }).replaceExisting, true);
 });
 
+test("new installations enable matching-title insertion and existing-duration updates without overriding saved choices", () => {
+  const fresh = core.settingsFrom({});
+  assert.equal(fresh.automatic, true);
+  assert.equal(fresh.updateExistingHours, true);
+  assert.equal(core.shouldUpdateDuration("Allergy Shot (1 hour)", fresh), true);
+  const savedOff = core.settingsFrom({ automatic: false, updateExistingHours: false });
+  assert.equal(savedOff.automatic, false);
+  assert.equal(savedOff.updateExistingHours, false);
+  assert.equal(core.shouldUpdateDuration("Allergy Shot (1 hour)", savedOff), false);
+});
+
 test("each matching phrase controls Dynamic mode independently", () => {
   const cfg = core.settingsFrom({
     matchingPhrases: [

@@ -147,7 +147,8 @@
       apply("time edit");
       return;
     }
-    if (settings.automatic && core.matchesAutoWords(editor.title.value, settings) && document.activeElement !== editor.title) {
+    if (settings.automatic && core.matchesAutoWords(editor.title.value, settings) &&
+        !core.hasDurationSuffix(editor.title.value, settings) && document.activeElement !== editor.title) {
       apply("automatic"); return;
     }
     if (settings.showSuggestion && key !== dismissedFor) showChip(editor, result);

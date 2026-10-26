@@ -57,13 +57,26 @@ test("settings migrate phrases into rows and save each Dynamic choice", async ()
   assert.equal(window.document.querySelector("#status").textContent, "Saved");
 
   window.document.querySelectorAll(".rule-dynamic input")[0].click();
-  window.document.querySelector('[name="updateExistingHours"]').click();
   assert.equal(window.document.querySelector('[name="replaceExisting"]').disabled, true);
   window.document.querySelector("#settings").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
   await settle();
   assert.equal(saved.updateExistingHours, true);
   assert.equal(saved.replaceExisting, true);
   dom.window.close();
+});
+
+test("first-time options enable both defaults while saved off choices stay off", async () => {
+  for (const [saved, expected] of [[{}, true], [{ automatic: false, updateExistingHours: false }, false]]) {
+    const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
+    const { window } = dom;
+    window.chrome = { storage: { sync: { get: async () => saved, set: async () => {}, remove: async () => {} } } };
+    window.eval(core);
+    window.eval(options);
+    await settle();
+    assert.equal(window.document.querySelector('[name="automatic"]').checked, expected);
+    assert.equal(window.document.querySelector('[name="updateExistingHours"]').checked, expected);
+    dom.window.close();
+  }
 });
 
 test("enabling minutes starts with the current hours template and keeps later customization", async () => {

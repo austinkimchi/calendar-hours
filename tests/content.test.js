@@ -45,7 +45,7 @@ test("quick composer summary offers suggestion and accepts Tab", async () => {
   const app = run(`<div role="dialog"><input aria-label="Add title" value="SCU Block">
     <span data-key="startDate">Sunday, October 18</span>
     <span data-key="startTime">10:15am</span>
-    <span data-key="endTime">1:25pm</span></div>`);
+    <span data-key="endTime">1:25pm</span></div>`, { automatic: false });
   await settle();
   const title = app.window.document.querySelector('[aria-label="Add title"]');
   assert.match(app.window.document.querySelector(".calendar-hours-suggestion").textContent, /3\.17 hours/);

@@ -2,9 +2,9 @@
 
 Calendar Hours is a Manifest V3 extension for Google Calendar in Chrome and Microsoft Edge. It calculates the elapsed duration between an event's start and end time and inserts hours or minutes into the event title. It runs in the Calendar page, without a server or Google Calendar API access.
 
-Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.2 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.2) is the latest published release. This v0.2.4 development build adds minute display and singular unit labels. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
+Source is kept in the [private GitHub repository](https://github.com/austinkimchi/calendar-hours). The [v0.2.2 release](https://github.com/austinkimchi/calendar-hours/releases/tag/v0.2.2) is the latest published release. This v0.2.5 development build adds minute display, singular unit labels, and updated first-time defaults. The [Chrome Web Store submission notes](STORE_LISTING.md) record the unlisted listing.
 
-**Store status (last verified October 26, 2026):** v0.1.0 was pending Chrome Web Store review. v0.2.2 was packaged for submission but dashboard access was blocked in this session. v0.2.4 is a development build. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
+**Store status (last verified October 26, 2026):** v0.1.0 was pending Chrome Web Store review. v0.2.2 was packaged for submission but dashboard access was blocked in this session. v0.2.5 is a development build. The unlisted store link will become installable in Edge after Google approves and publishes an accepted version. Developer mode is not needed for the store version.
 
 ## Use
 
@@ -18,9 +18,9 @@ Other ways to insert or update the duration:
 - Type `/hours` anywhere in the title. It is replaced when the times are valid.
 - Press **Ctrl+Shift+H** on Windows/Linux or **Command+Shift+H** on macOS while an event editor is open. Browser shortcut conflicts can be resolved at `chrome://extensions/shortcuts` or `edge://extensions/shortcuts`.
 - Click the extension icon, then **Add duration to open event**.
-- In Settings → General, add one row for each matching phrase. Enable **Automatically add duration to matching titles** to insert it when a matching event is composed. The default phrase is `block`.
+- In Settings → General, add one row for each matching phrase. **Automatically add duration to matching titles** starts on for a new installation and inserts the duration when a matching event is composed. The default phrase is `block`.
 - Turn on **Dynamic** for any phrase whose matching events should stay current. After you drag or resize a matching timed event on the Calendar grid, the extension shows the new duration immediately and saves the title from an inactive Calendar tab. Dynamic also updates the title when you change start or end fields in the editor; use Calendar's Save button for those manual edits. Matching ignores case and respects word boundaries. Existing phrase lists and the prior global keep-updated setting migrate to these rows automatically.
-- In Settings → Other, turn on **Automatically keep titles with a duration suffix updated after time changes** to cover events where you inserted a duration with `/hours` or a suggestion but did not configure a matching phrase. It detects the current Hours and Minutes templates plus older `hours`, `hrs`, `hr`, `minutes`, `mins`, and `min` endings. Grid moves and resizes of one-time events update and save automatically; editor time changes update the title for you to save. If an event matches a configured phrase, that phrase's Dynamic switch takes precedence. This broader option is off by default.
+- In Settings → Other, **Update hours or minutes when times change** starts on for a new installation. It covers events where you inserted a duration with `/hours` or a suggestion but did not configure a matching phrase. It detects the current Hours and Minutes templates plus older `hours`, `hrs`, `hr`, `minutes`, `mins`, and `min` endings. Grid moves and resizes of one-time events update and save automatically; editor time changes update the title for you to save. If an event matches a configured phrase, that phrase's Dynamic switch takes precedence. Saved off choices remain off.
 
 ## Formatting
 
@@ -30,7 +30,7 @@ The initial settings use hours, nearest rounding to two decimal places, a one mi
 
 ## Privacy and scope
 
-The extension has access only to `calendar.google.com/calendar/*` and asks for the `storage` permission to save settings. It reads visible event title and time fields and calculates locally. When Dynamic or the hours-suffix update setting applies, it opens an inactive Calendar tab and uses Calendar's own Save button after a matching grid move or resize. It does not make its own network requests or collect event data. The public [store privacy policy](https://gist.github.com/austinkimchi/6069defb02ecb9c38b5b2c7d4feb65c7) describes the submitted version; [PRIVACY.md](PRIVACY.md) describes this development build.
+The extension has access only to `calendar.google.com/calendar/*` and asks for the `storage` permission to save settings. It reads visible event title and time fields and calculates locally. When Dynamic or the existing-duration update setting applies, it opens an inactive Calendar tab and uses Calendar's own Save button after a matching grid move or resize. It does not make its own network requests or collect event data. The public [store privacy policy](https://gist.github.com/austinkimchi/6069defb02ecb9c38b5b2c7d4feb65c7) describes the submitted version; [PRIVACY.md](PRIVACY.md) describes this development build.
 
 The current implementation supports Google Calendar's English quick composer and full event editor. Calendar changes to those page controls may require an extension update. All-day events, invalid times, events longer than seven days, and recurring events are skipped by grid auto-save. If Calendar asks for further confirmation, the extension leaves that decision to you. Elapsed time uses the browser's local time zone, so use the same time zone in Google Calendar for correct cross-day and daylight-saving calculations.
 

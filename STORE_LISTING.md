@@ -12,7 +12,7 @@ Calendar Hours turns event start and end times into a title suffix such as `Work
 
 **Permission justification:** `storage` stores the user's formatting and trigger preferences. The `calendar.google.com/calendar/*` content-script match is necessary to read the event editor's visible title and time fields and insert the resulting title text. No other site is accessed.
 
-**Data disclosure:** The extension processes event title and time fields locally in the browser. It does not collect event data or send it to the developer or a separate service. With the optional keep-updated setting, it uses Google Calendar's Save button to save a corrected event under the user's Google account. Preferences use browser extension storage and may be synced by the browser if the user enabled browser sync.
+**Data disclosure:** The extension processes event title and time fields locally in the browser. It does not collect event data or send it to the developer or a separate service. With the existing-duration update setting, which starts on for new installations, it uses Google Calendar's Save button to save a corrected event under the user's Google account. Preferences use browser extension storage and may be synced by the browser if the user enabled browser sync.
 
 **Privacy policy:** [Public policy](https://gist.github.com/austinkimchi/6069defb02ecb9c38b5b2c7d4feb65c7), matching `PRIVACY.md`. Only the public policy is visible outside the private source repository.
 
@@ -22,4 +22,4 @@ Calendar Hours turns event start and end times into a title suffix such as `Work
 
 **Dashboard:** [Calendar Hours item](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. Version 0.1.0 was submitted on October 26, 2026; the dashboard showed **Pending review** with automatic publication after approval enabled. The unlisted store link will become installable once Google approves and publishes it.
 
-**Next submission:** Version 0.2.4 adds opt-in updates for titles with a recognized duration suffix, minute display options, separate minutes formatting, and singular units. Update the dashboard copy, screenshot, and public privacy policy before its submission. Dashboard access was blocked in the Codex browser session; confirm its current review status before uploading, then verify the uploaded version and submission state there.
+**Next submission:** Version 0.2.5 adds updates for titles with a recognized duration suffix, minute display options, separate minutes formatting, singular units, and updated first-time defaults. Update the dashboard copy, screenshot, and public privacy policy before its submission. Dashboard access was blocked in the Codex browser session; confirm its current review status before uploading, then verify the uploaded version and submission state there.

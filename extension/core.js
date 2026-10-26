@@ -21,9 +21,9 @@
     minutesTemplate: "({value} {unit})",
     keyword: "/hours",
     showSuggestion: true,
-    automatic: false,
+    automatic: true,
     matchingPhrases: [{ phrase: "block", dynamic: false }],
-    updateExistingHours: false,
+    updateExistingHours: true,
     replaceExisting: true
   });
 

@@ -21,7 +21,7 @@
         <div id="rules" aria-label="Matching phrases"></div>
         <button type="button" id="add-rule" class="secondary-button">+ Add phrase</button>
         <p class="hint after-rules">Matching ignores case and uses whole words or phrases.</p>
-        <label class="check"><input type="checkbox" name="automatic"> Automatically add duration to matching titles</label>
+        <label class="check"><input type="checkbox" name="automatic" checked> Automatically add duration to matching titles</label>
       </section>
 
       <section aria-labelledby="hours-heading">
@@ -62,8 +62,8 @@
         <p class="hint">Type this in an event title to replace it with the calculated duration.</p>
         <label class="check"><input type="checkbox" name="showSuggestion" checked> Show a suggestion beside the title; click it or press Tab to accept</label>
         <label class="check"><input type="checkbox" name="replaceExisting" checked> Replace a previous duration when I add it again</label>
-        <label class="check"><input type="checkbox" name="updateExistingHours"> Automatically keep titles with a duration suffix updated after time changes</label>
-        <p class="hint">Includes hours or minutes added with the keyword or suggestion when no matching phrase is configured for that title. A matching phrase uses its own Dynamic switch. One-time grid moves and resizes save automatically; editor changes still need Calendar's Save.</p>
+        <label class="check"><input type="checkbox" name="updateExistingHours" checked> Update hours or minutes when times change</label>
+        <p class="hint">Applies to titles that already end in a duration, including one added with the keyword or suggestion. Matching phrases use their own Dynamic switch. Grid changes save automatically; editor changes need Calendar's Save.</p>
       </section>
       <footer><button type="submit" class="primary-button">Save settings</button><span id="status" role="status"></span></footer>
     </form>

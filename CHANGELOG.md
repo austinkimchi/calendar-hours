@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.5 — development build, October 26, 2026
+
+- Enable automatic insertion for matching titles and updates for existing duration suffixes by default on first setup. Explicitly saved off choices remain off.
+- Shorten the existing-duration update setting's label and explanation.
+- Keep automatic insertion from replacing an existing suffix, so a matching phrase with Dynamic off stays unchanged after time edits.
+
 ## 0.2.4 — development build, October 26, 2026
 
 - Add a choice to show every duration in minutes or use minutes only for events under one hour.
