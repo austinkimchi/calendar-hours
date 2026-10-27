@@ -12,6 +12,7 @@
     "gkhggalcelmdidfdnllmdpaaapjiegig"  // Chrome Web Store item
   ]);
   const scope = "https://www.googleapis.com/auth/calendar.events";
+  const calendarListScope = "https://www.googleapis.com/auth/calendar.calendarlist.readonly";
   const storageKey = "calendarHoursOAuth";
   let accessLevelReady;
   let renewalInFlight;
@@ -23,10 +24,10 @@
     return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
-  function authorizationUrl({ clientId, redirectUri, state, interactive }) {
+  function authorizationUrl({ clientId, redirectUri, state, interactive, scopes = [scope] }) {
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.search = new URLSearchParams({
-      client_id: clientId, redirect_uri: redirectUri, response_type: "token", scope,
+      client_id: clientId, redirect_uri: redirectUri, response_type: "token", scope: scopes.join(" "),
       state, prompt: interactive ? "consent select_account" : "none"
     }).toString();
     return url.href;
@@ -46,12 +47,12 @@
     return (await chromeApi.storage.local.get(storageKey))[storageKey] || null;
   }
 
-  async function authorize(chromeApi = chrome, cryptoApi = crypto, interactive = true) {
+  async function authorize(chromeApi = chrome, cryptoApi = crypto, interactive = true, scopes = [scope]) {
     const clientId = clientIdFor(chromeApi.runtime.id);
     if (!clientId) throw new Error("This extension ID has no Calendar Hours OAuth client");
     const redirectUri = chromeApi.identity.getRedirectURL();
     const state = randomState(cryptoApi);
-    const url = authorizationUrl({ clientId, redirectUri, state, interactive });
+    const url = authorizationUrl({ clientId, redirectUri, state, interactive, scopes });
     const responseUrl = await chromeApi.identity.launchWebAuthFlow({ url, interactive });
     if (!responseUrl) throw new Error("Google sign-in was cancelled");
     const response = new URL(responseUrl);
@@ -63,16 +64,23 @@
     const expiresIn = Number(values.get("expires_in"));
     if (!accessToken || values.get("token_type")?.toLowerCase() !== "bearer" ||
         !Number.isFinite(expiresIn) || expiresIn <= 0) throw new Error("Google did not return a usable access token");
+    const grantedScopes = (values.get("scope") || scopes.join(" ")).split(/\s+/);
+    if (scopes.some(s => !grantedScopes.includes(s))) throw new Error("Google did not grant all requested Calendar permissions");
     await trustedStorage(chromeApi);
     await chromeApi.storage.local.set({ [storageKey]: {
       accessToken, expiresAt: Date.now() + Math.max(0, expiresIn - 60) * 1000,
-      extensionId: chromeApi.runtime.id
+      extensionId: chromeApi.runtime.id, scopes: grantedScopes
     } });
     return { connected: true };
   }
 
   async function connect(chromeApi = chrome, cryptoApi = crypto) {
-    return authorize(chromeApi, cryptoApi, true);
+    const value = await stored(chromeApi);
+    return authorize(chromeApi, cryptoApi, true, value?.scopes?.includes(calendarListScope) ? [scope, calendarListScope] : [scope]);
+  }
+
+  async function connectWorkday(chromeApi = chrome, cryptoApi = crypto) {
+    return authorize(chromeApi, cryptoApi, true, [scope, calendarListScope]);
   }
 
   async function getAccessToken(chromeApi = chrome, cryptoApi = crypto) {
@@ -80,7 +88,7 @@
     if (!value || value.extensionId !== chromeApi.runtime.id) return null;
     if (value.accessToken && value.expiresAt > Date.now()) return value.accessToken;
     if (!renewalInFlight) {
-      renewalInFlight = authorize(chromeApi, cryptoApi, false)
+      renewalInFlight = authorize(chromeApi, cryptoApi, false, value.scopes || [scope])
         .then(() => stored(chromeApi).then(next => next.accessToken))
         .catch(() => null)
         .finally(() => { renewalInFlight = null; });
@@ -91,7 +99,8 @@
   async function status(chromeApi = chrome) {
     const value = await stored(chromeApi);
     return { configured: !!clientIdFor(chromeApi.runtime.id),
-      connected: !!value?.accessToken && value.extensionId === chromeApi.runtime.id };
+      connected: !!value?.accessToken && value.extensionId === chromeApi.runtime.id,
+      calendarListAccess: !!value?.accessToken && value.extensionId === chromeApi.runtime.id && !!value.scopes?.includes(calendarListScope) };
   }
 
   async function disconnect(chromeApi = chrome, fetcher = fetch) {
@@ -106,5 +115,5 @@
     return { connected: false };
   }
 
-  return { clientIdFor, authorizationUrl, connect, getAccessToken, status, disconnect };
+  return { clientIdFor, authorizationUrl, connect, connectWorkday, getAccessToken, status, disconnect };
 });

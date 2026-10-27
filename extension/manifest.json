@@ -1,22 +1,54 @@
 {
   "manifest_version": 3,
-  "name": "Calendar Hours",
+  "name": "Calendar Hours \u2014 Developer",
   "version": "0.2.11",
   "description": "Add calculated hours or minutes to Google Calendar event titles.",
-  "permissions": ["storage", "identity"],
-  "host_permissions": ["https://www.googleapis.com/*", "https://oauth2.googleapis.com/*"],
+  "permissions": [
+    "storage",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*",
+    "https://oauth2.googleapis.com/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://calendar.google.com/calendar/*"],
-      "js": ["core.js", "content.js"],
-      "css": ["content.css"],
+      "matches": [
+        "https://calendar.google.com/calendar/*"
+      ],
+      "js": [
+        "core.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.myworkday.com/*"
+      ],
+      "js": [
+        "core.js",
+        "workday-core.js",
+        "workday-content.js"
+      ],
+      "css": [
+        "workday.css"
+      ],
       "run_at": "document_idle"
     }
   ],
-  "background": { "service_worker": "background.js" },
+  "background": {
+    "service_worker": "background.js"
+  },
   "commands": {
     "insert-hours": {
-      "suggested_key": { "default": "Ctrl+Shift+H", "mac": "Command+Shift+H" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+H",
+        "mac": "Command+Shift+H"
+      },
       "description": "Insert or update the duration in the open event"
     }
   },
@@ -29,5 +61,6 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "version_name": "0.2.11-workday-dev"
 }

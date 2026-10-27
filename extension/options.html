@@ -80,6 +80,31 @@
       </section>
       <footer><button type="submit" class="primary-button">Save settings</button><span id="status" role="status">Changes save automatically.</span></footer>
     </form>
+    <form id="workday-settings">
+      <section id="workday" aria-labelledby="workday-heading">
+        <h2 id="workday-heading">Workday calendar import <span class="dev-badge">Developer preview</span></h2>
+        <p class="section-intro">In Workday Enter Time, choose Actions → Auto-fill from Calendar to add matching blocks to the day or week you are viewing.</p>
+        <ol class="setup-steps"><li>Connect Google Calendar and choose the calendar that contains your work blocks.</li><li>Set a matching phrase and the time zone used by your Workday calendar.</li><li>Save, then return to Workday and choose Auto-fill from Calendar.</li></ol>
+        <div class="api-controls">
+          <button type="button" id="workday-connect" class="secondary-button">Connect for calendar import</button>
+          <button type="button" id="workday-refresh" class="secondary-button">Refresh calendars</button>
+        </div>
+        <p id="workday-connection" role="status">Checking calendar access…</p>
+        <label>Import from Google calendar <select name="calendarId" required><option value="">Connect to choose a calendar</option></select></label>
+        <label>Import matching phrase <input name="keyword" maxlength="80" placeholder="e.g. SCU Block" required></label>
+        <p class="hint">Uses the same whole-word or phrase matching as event titles, ignoring case. This phrase is separate from your title-formatting rules.</p>
+        <label>Workday time zone <input name="timeZone" placeholder="e.g. America/Los_Angeles" required></label>
+        <p class="hint">Calendar start and end times are converted to this zone. Confirm it matches the times shown in Workday.</p>
+        <div class="grid">
+          <label>Time Type <input name="timeType" value="Hours" maxlength="80" required></label>
+          <label>Out Reason <input name="outReason" value="Out" maxlength="80" required></label>
+        </div>
+        <label class="check"><input name="includeFuture" type="checkbox"> Include blocks that have not finished yet</label>
+        <label class="check"><input name="enabled" type="checkbox"> Enable Workday calendar import</label>
+        <p class="hint">Imports exact start and end times with the event title as the comment. Existing matching entries are skipped. Other overlaps are reported for manual correction. Lunch gaps stay empty. Overnight and daylight-saving transition blocks require manual entry. Entries are saved unsubmitted; this feature never reviews or submits a time card.</p>
+        <footer><button type="submit" class="primary-button">Save import settings</button><span id="workday-status" role="status"></span></footer>
+      </section>
+    </form>
   </main>
   <template id="rule-template">
     <div class="rule-row">
@@ -90,5 +115,7 @@
   </template>
   <script src="core.js"></script>
   <script src="options.js"></script>
+  <script src="workday-core.js"></script>
+  <script src="workday-options.js"></script>
 </body>
 </html>

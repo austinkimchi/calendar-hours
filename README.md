@@ -6,6 +6,19 @@
 
 Calendar Hours adds the elapsed time to Google Calendar event titles. A 10:15am–1:25pm event can become **Work session (3.17 hours)**. It works in Chrome and Microsoft Edge.
 
+## Workday developer preview
+
+The `workday-integration` branch adds **Actions → Auto-fill from Calendar** to **Enter Time** on `www.myworkday.com`. This is an unpacked developer build, not a store release. Workday interfaces vary by organization; the adapter currently supports the English Day/Week calendar and In/Out time-entry form.
+
+1. Load or reload `extension/` in Chrome or Edge, allow its Workday site access, and refresh the Workday tab.
+2. Open extension settings → **Workday calendar import** (or choose the new Actions item for guided setup).
+3. Connect Google Calendar, choose a calendar, enter an independent matching phrase such as `Work block`, confirm the Workday time zone, and enable/save the import settings. Calendar selection requests an additional read-only calendar-list permission. OAuth remains limited to the registered developer extension IDs and Google test accounts.
+4. In Workday, display the desired week, previous week, or single day and choose **Actions → Auto-fill from Calendar**. The extension fetches that exact date range and saves matching blocks through Workday's normal **OK** action. The status banner reports results.
+
+Matching ignores case and uses the same whole-word/phrase mechanism as title formatting. Calendar start/end times are used without duration rounding; lunch gaps remain gaps. Only completed blocks are included by default, with an opt-in for unfinished/future blocks. Repeating calendar events are expanded into their instances.
+
+Exact existing entries are skipped on rerun. Other overlaps are reported and kept unchanged; this is an importer, not reconciliation of later edits or deleted calendar events. Overlapping source blocks are merged to avoid double-counting; adjacent blocks remain separate. Overnight, sub-minute and daylight-saving transition blocks require manual entry. A changed view or unexpected form stops the import. Successfully saved entries remain unsubmitted, including after a partial failure. **The extension never clicks Review or submits a time card.**
+
 ## Features
 
 - Add a duration with a title suggestion, `/hours`, a keyboard shortcut, or the extension popup.
