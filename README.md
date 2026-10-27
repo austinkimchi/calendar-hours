@@ -52,6 +52,8 @@ Repeated or nonexistent clocks during a daylight-saving transition cannot be res
 
 ## Development
 
+The [Workday request workflow experiment](experiments/WORKDAY_PERFORMANCE.md) measures saving drafts without rendering their dialogs. It is opt-in developer code, excluded from the extension package; the measured request path was slower and the regular importer remains active.
+
 ```bash
 npm ci
 npm test
