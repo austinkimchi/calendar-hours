@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.11 — development build, October 26, 2026
+## 0.2.11 — October 27, 2026
 
 - Let Option-drag copies finish without waiting for the unchanged source event, so a copied block can update its duration immediately when resized.
 - Dismiss the duration suggestion immediately when Escape starts closing an event editor or its Close button is pressed.
