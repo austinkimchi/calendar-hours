@@ -17,7 +17,7 @@ The `workday-integration` branch adds **Auto-fill from Calendar** as the first i
 
 Matching ignores case and uses the same whole-word/phrase mechanism as title formatting. Calendar start/end times are used without duration rounding; lunch gaps remain gaps. Only completed blocks are included by default, with an opt-in for unfinished/future blocks. Repeating calendar events are expanded into their instances.
 
-Exact existing entries are skipped on rerun. Turn on **Update overlapping entries** to replace an overlapping, unsubmitted Workday draft's times with the Calendar block's times. Each update must match exactly one draft of the configured Time Type to one calendar block. Submitted entries, other time types, and overlaps involving multiple existing or calendar blocks remain for manual correction. The setting starts off. Deleted calendar events and blocks moved entirely outside their previous times do not remove old Workday entries.
+Exact existing entries are skipped on rerun. **Overwrite existing times to match calendar** replaces an overlapping, unsubmitted Workday draft's times with the Calendar block's times. It is on by default; a previously saved off choice is preserved. Each update must match exactly one draft of the configured Time Type to one calendar block. Submitted entries, other time types, and overlaps involving multiple existing or calendar blocks remain for manual correction. Deleted calendar events and blocks moved entirely outside their previous times do not remove old Workday entries.
 
 New entries have **blank comments by default**. **Import event descriptions as comments** optionally copies Google Calendar's Description field as plain text, up to 1,000 characters, when adding or updating an entry. With it off, updates preserve existing comments. With it on, the description replaces the comment, including clearing it when the description is empty. Event titles are used for matching, never as comments.
 
@@ -38,7 +38,7 @@ Overlapping source blocks are merged to avoid double-counting; adjacent blocks r
 
 To try the current source build, load [`extension/`](extension/) as an unpacked extension in Chrome or Edge. Refresh any open Google Calendar tabs after reloading the extension. [Store publication details](STORE_LISTING.md) are tracked separately.
 
-Open a timed event, enter its start and end times, then type `/hours` in the title or press **Tab** to accept the suggested duration. Save the event in Calendar. Settings let you customize the format and matching phrases. Hover over a setting label or focus its field for routine help; key actions keep an ⓘ button. Tooltips do not shift the page. Press Escape or tap elsewhere to dismiss them.
+Open a timed event, enter its start and end times, then type `/hours` in the title or press **Tab** to accept the suggested duration. Save the event in Calendar. Settings let you customize the format and matching phrases. Hover over a setting label or focus its field for routine help; key actions keep an ⓘ button. Tooltips do not shift the page and close immediately when the pointer leaves their label or icon. Press Escape or tap elsewhere to dismiss them.
 
 Google Calendar connection requests use one authorization flow for both permissions and do not force repeat consent. Google may still require account selection, a missing permission, or renewed authorization. Disconnecting removes the shared connection for all features without erasing their settings.
 

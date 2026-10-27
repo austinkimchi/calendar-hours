@@ -32,7 +32,7 @@ test('settings help is collapsed, accessible, and does not submit or change form
   dom.window.close();
 });
 
-test('hover and keyboard focus show one tooltip at a time, with Escape dismissal', async () => {
+test('help closes immediately on pointer exit, including over the panel, and supports keyboard focus', () => {
   const dom = new JSDOM(fs.readFileSync('extension/options.html', 'utf8'), {runScripts:'outside-only'});
   const { window } = dom;
   window.eval(fs.readFileSync('extension/settings-help.js', 'utf8'));
@@ -44,16 +44,29 @@ test('hover and keyboard focus show one tooltip at a time, with Escape dismissal
   assert.equal(panel.getAttribute('role'), 'tooltip');
   button.dispatchEvent(new window.MouseEvent('mouseenter'));
   assert.equal(panel.hidden, false, 'hover opens without clicking');
-  button.dispatchEvent(new window.MouseEvent('mouseleave'));
-  await new Promise(resolve => setTimeout(resolve, 175));
-  assert.equal(panel.hidden, true);
+  button.dispatchEvent(new window.MouseEvent('mouseleave', {relatedTarget:panel}));
+  panel.dispatchEvent(new window.MouseEvent('mouseenter', {relatedTarget:button}));
+  assert.equal(panel.hidden, true, 'moving onto the help box closes it immediately');
   control.focus();
   assert.equal(panel.hidden, false, 'keyboard focus opens help');
+  button.dispatchEvent(new window.MouseEvent('mouseenter'));
+  button.dispatchEvent(new window.MouseEvent('mouseleave', {relatedTarget:panel}));
+  assert.equal(panel.hidden, true, 'a focused field does not pin hover help open');
+  assert.equal(window.document.activeElement, control, 'pointer exit keeps keyboard focus');
   window.document.querySelector('#workday-phrase').focus();
   assert.equal(panel.hidden, true, 'moving focus closes previous tooltip');
   assert.equal(window.document.querySelector('#workday-phrase-help').hidden, false);
   window.document.dispatchEvent(new window.KeyboardEvent('keydown', {key:'Escape'}));
   assert.equal(window.document.querySelector('#workday-phrase-help').hidden, true);
+  const icon = window.document.querySelector('[aria-controls="workday-overlap-help"]');
+  const iconPanel = window.document.querySelector('#workday-overlap-help');
+  icon.focus();
+  icon.click();
+  assert.equal(iconPanel.hidden, false);
+  icon.dispatchEvent(new window.MouseEvent('mouseleave', {relatedTarget:iconPanel}));
+  iconPanel.dispatchEvent(new window.MouseEvent('mouseenter', {relatedTarget:icon}));
+  assert.equal(iconPanel.hidden, true, 'clicked info icons also close on pointer exit');
+  assert.equal(icon.getAttribute('aria-expanded'), 'false');
   dom.window.close();
 });
 

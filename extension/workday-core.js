@@ -32,7 +32,7 @@
       timeType: typeof value.timeType === "string" && value.timeType.trim() ? value.timeType.trim().slice(0, 80) : "Hours",
       outReason: typeof value.outReason === "string" && value.outReason.trim() ? value.outReason.trim().slice(0, 80) : "Out",
       includeFuture: value.includeFuture === true,
-      updateOverlaps: value.updateOverlaps === true,
+      updateOverlaps: value.updateOverlaps !== false,
       importComments: value.importComments === true
     };
   }

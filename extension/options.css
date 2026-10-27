@@ -42,6 +42,7 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid #3b82f6; ou
 .help-label:focus-visible { outline: 2px solid #3b82f6; outline-offset: 3px; border-radius: 2px; }
 .check.help-label { width: fit-content; max-width: 100%; }
 .info-panel { position: fixed; z-index: 1000; box-sizing: border-box; width: 360px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); overflow: auto; margin: 0; padding: 13px 15px; background: #f4f8ff; border: 1px solid #c7d6eb; border-radius: 10px; box-shadow: 0 5px 20px rgb(25 45 75 / 16%); color: #34445a; font-size: 13px; font-weight: 400; line-height: 1.5; }
+.info-panel { pointer-events: none; }
 .info-panel[hidden] { display: none; }
 .secondary-button, .remove-rule { color: #1d56ac; background: white; border: 1px solid #c7d6eb; border-radius: 7px; padding: 8px 10px; cursor: pointer; font: 600 13px Arial, sans-serif; }
 .secondary-button:hover, .remove-rule:hover { background: #edf4ff; }

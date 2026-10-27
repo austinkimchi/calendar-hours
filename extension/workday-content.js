@@ -111,7 +111,7 @@
     return entry;
   }
   async function updateBlock(doc, core, base, block, settings) {
-    if (!settings.updateOverlaps) throw settingsError("Enable Update overlapping entries before updating a Workday draft.");
+    if (!settings.updateOverlaps) throw settingsError("Enable ‘Overwrite existing times to match calendar’ before updating a Workday draft.");
     if (!block.previous?.eventId) throw new Error("The existing Workday entry could not be identified. Correct this block manually.");
     assertView(doc, core, base);
     if (doc.querySelector('[role="dialog"][aria-modal="true"]')) throw new Error("Close the open Workday dialog before importing");

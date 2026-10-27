@@ -7,7 +7,7 @@
 The new tests cover:
 
 - Configuring a readable Google calendar and an independent import phrase in settings.
-- Time zone dropdown persistence, aliases, and settings help on label hover or keyboard focus. Label clicks keep their normal checkbox behavior; Escape dismisses help without changing values or field focus.
+- Time zone dropdown persistence, aliases, and settings help on label hover or keyboard focus. Help closes immediately when the pointer leaves the label or icon, including when moving over the help box or after focusing its control. Label clicks keep their normal checkbox behavior; Escape dismisses help without changing values or field focus.
 - Actions defaults to Calendar on every opening. Arrow keys, Home/End, typeahead, and pointer hover keep the highlight and active descendant aligned; Enter activates only that option, including after Workday's delayed focus update.
 - First-use setup routing, revoked permissions, removed calendars, and invalid settings.
 - Trusted message senders; Google access tokens stay in the service worker.
@@ -17,7 +17,7 @@ The new tests cover:
 - Day/week date extraction, previous dates, cross-year weeks, and DST query boundaries.
 - Exact minute times, lunch gaps, cancelled/all-day/future exclusions, duplicate reruns, source overlaps, and existing-entry conflicts.
 - Individual entry form saves; wrong-date/existing-entry dialogs and navigation changes stop before saving.
-- Optional one-to-one overlap updates edit unsubmitted drafts in place, recheck the target before saving, and skip the matching interval on rerun. Submitted/unknown statuses, different time types, split/merge ambiguity, and concurrent entry changes are rejected.
+- Overwrite existing times to match calendar defaults on and preserves explicitly saved off choices. One-to-one overlap updates edit unsubmitted drafts in place, recheck the target before saving, and skip the matching interval on rerun. Submitted/unknown statuses, different time types, split/merge ambiguity, and concurrent entry changes are rejected.
 - Comments start blank on new entries. Optional Calendar descriptions are converted from inert rich text to plain text; titles are never used as comments. Existing comments are preserved with the option off and replaced with the option on.
 - Workday zero-padded times, delayed edit-form fields/buttons, asynchronous duration calculation, and Discard Changes cleanup for unsaved drafts.
 - Explicitly no Review, Submit, Next or Delete action in the import adapter.

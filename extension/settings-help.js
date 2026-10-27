@@ -2,10 +2,7 @@
 (function () {
   "use strict";
   let active = null;
-  let closeTimer = null;
-  const cancelClose = () => { clearTimeout(closeTimer); };
   function close() {
-    cancelClose();
     if (!active) return;
     active.panel.hidden = true;
     if (active.trigger.matches(".info-button")) active.trigger.setAttribute("aria-expanded", "false");
@@ -24,22 +21,12 @@
     panel.style.top = `${top}px`;
   }
   function show(trigger, panel, focusTarget) {
-    cancelClose();
     if (active?.trigger === trigger && !panel.hidden) return;
     close();
     active = {trigger, panel, focusTarget};
     panel.hidden = false;
     if (trigger.matches(".info-button")) trigger.setAttribute("aria-expanded", "true");
     position();
-  }
-  function scheduleClose() {
-    cancelClose();
-    closeTimer = setTimeout(() => {
-      if (!active) return;
-      const {trigger, panel, focusTarget} = active;
-      if (trigger.matches(":hover") || panel.matches(":hover") || document.activeElement === focusTarget) return;
-      close();
-    }, 150);
   }
   for (const trigger of document.querySelectorAll(".info-button[aria-controls], .help-label[data-help]")) {
     const panel = document.getElementById(trigger.getAttribute("aria-controls") || trigger.dataset.help);
@@ -55,10 +42,11 @@
     panel.setAttribute("role", "tooltip");
     trigger.addEventListener("mouseenter", () => show(trigger, panel, focusTarget));
     focusTarget.addEventListener("focus", () => show(trigger, panel, focusTarget));
-    trigger.addEventListener("mouseleave", scheduleClose);
-    focusTarget.addEventListener("blur", scheduleClose);
-    panel.addEventListener("mouseenter", cancelClose);
-    panel.addEventListener("mouseleave", scheduleClose);
+    // Leaving the label/icon dismisses help immediately, including after a
+    // click focused its control. The help box itself never keeps it open.
+    const dismiss = () => { if (active?.trigger === trigger) close(); };
+    trigger.addEventListener("mouseleave", dismiss);
+    focusTarget.addEventListener("blur", dismiss);
     if (trigger.matches(".info-button")) trigger.addEventListener("click", () => {
       // A first tap focuses the button before click. Keep that tooltip open;
       // a second tap dismisses it. Hover and keyboard focus need no click.

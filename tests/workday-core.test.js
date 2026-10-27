@@ -15,12 +15,13 @@ test('existing equal entries are skipped; edits and partial overlaps require cor
   const r=plan([event('09:00','12:00'),event('13:00','15:00'),event('16:00','17:00')],{existing:[{date:dates[0],start:540,end:720,type:'Hours'},{date:dates[0],start:780,end:840,type:'Hours'}]});
   assert.equal(r.skipped[0].reason,'already-entered');assert.equal(r.conflicts.length,1);assert.equal(r.add.length,1);
 });
-test('overlap updates are opt-in and replace one unsubmitted entry with the calendar interval',()=>{
+test('overlap updates default on, respect an explicit off choice, and replace one unsubmitted entry',()=>{
   const existing=[{date:dates[0],start:780,end:900,type:'Hours',status:'Not Submitted',eventId:'draft-1'}];
   const events=[event('12:30','15:00')];
-  assert.equal(wd.settingsFrom().updateOverlaps,false);
-  assert.equal(plan(events,{existing}).update.length,0);
-  const r=plan(events,{existing,settings:{...settings,updateOverlaps:true}});
+  assert.equal(wd.settingsFrom().updateOverlaps,true);
+  assert.equal(wd.settingsFrom({updateOverlaps:false}).updateOverlaps,false);
+  assert.equal(plan(events,{existing,settings:{...settings,updateOverlaps:false}}).update.length,0);
+  const r=plan(events,{existing});
   assert.equal(r.add.length,0);assert.equal(r.conflicts.length,0);
   assert.deepEqual(r.update.map(b=>[b.start,b.end,b.previous.start,b.previous.eventId]),[[750,900,780,'draft-1']]);
   const rerun=plan(events,{existing:[{...existing[0],start:750}],settings:{...settings,updateOverlaps:true}});
