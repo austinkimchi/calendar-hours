@@ -37,6 +37,10 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid #3b82f6; ou
 .rule-dynamic input { width: 18px; height: 18px; margin: 0; }
 .info-button { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; padding: 0; border: 1px solid #9aabc5; border-radius: 50%; background: white; color: #355a91; font: 700 12px Arial, sans-serif; cursor: pointer; }
 .info-button:hover, .info-button[aria-expanded=true] { background: #edf4ff; border-color: #355a91; }
+.help-label { cursor: help; }
+.help-label:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+.help-label:focus-visible { outline: 2px solid #3b82f6; outline-offset: 3px; border-radius: 2px; }
+.check.help-label { width: fit-content; max-width: 100%; }
 .info-panel { position: fixed; z-index: 1000; box-sizing: border-box; width: 360px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); overflow: auto; margin: 0; padding: 13px 15px; background: #f4f8ff; border: 1px solid #c7d6eb; border-radius: 10px; box-shadow: 0 5px 20px rgb(25 45 75 / 16%); color: #34445a; font-size: 13px; font-weight: 400; line-height: 1.5; }
 .info-panel[hidden] { display: none; }
 .secondary-button, .remove-rule { color: #1d56ac; background: white; border: 1px solid #c7d6eb; border-radius: 7px; padding: 8px 10px; cursor: pointer; font: 600 13px Arial, sans-serif; }

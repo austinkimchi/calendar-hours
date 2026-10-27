@@ -8,13 +8,13 @@
     cancelClose();
     if (!active) return;
     active.panel.hidden = true;
-    active.button.setAttribute("aria-expanded", "false");
+    if (active.trigger.matches(".info-button")) active.trigger.setAttribute("aria-expanded", "false");
     active = null;
   }
   function position() {
     if (!active) return;
-    const {button, panel} = active;
-    const anchor = button.getBoundingClientRect();
+    const {trigger, panel} = active;
+    const anchor = trigger.getBoundingClientRect();
     const box = panel.getBoundingClientRect();
     const margin = 16;
     const left = Math.max(margin, Math.min(anchor.left, innerWidth - box.width - margin));
@@ -23,47 +23,54 @@
     panel.style.left = `${left}px`;
     panel.style.top = `${top}px`;
   }
-  function show(button, panel) {
+  function show(trigger, panel, focusTarget) {
     cancelClose();
-    if (active?.button === button && !panel.hidden) return;
+    if (active?.trigger === trigger && !panel.hidden) return;
     close();
-    active = {button, panel};
+    active = {trigger, panel, focusTarget};
     panel.hidden = false;
-    button.setAttribute("aria-expanded", "true");
+    if (trigger.matches(".info-button")) trigger.setAttribute("aria-expanded", "true");
     position();
   }
   function scheduleClose() {
     cancelClose();
     closeTimer = setTimeout(() => {
       if (!active) return;
-      const {button, panel} = active;
-      if (button.matches(":hover") || panel.matches(":hover") || document.activeElement === button) return;
+      const {trigger, panel, focusTarget} = active;
+      if (trigger.matches(":hover") || panel.matches(":hover") || document.activeElement === focusTarget) return;
       close();
     }, 150);
   }
-  for (const button of document.querySelectorAll(".info-button[aria-controls]")) {
-    const panel = document.getElementById(button.getAttribute("aria-controls"));
+  for (const trigger of document.querySelectorAll(".info-button[aria-controls], .help-label[data-help]")) {
+    const panel = document.getElementById(trigger.getAttribute("aria-controls") || trigger.dataset.help);
     if (!panel) continue;
-    button.setAttribute("aria-describedby", panel.id);
+    // Labels keep their normal focus/toggle behavior. Reuse the associated
+    // control for keyboard help instead of adding another stop to the form.
+    const focusTarget = trigger.control || trigger;
+    for (const element of new Set([trigger, focusTarget])) {
+      const descriptions = new Set((element.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean));
+      descriptions.add(panel.id);
+      element.setAttribute("aria-describedby", [...descriptions].join(" "));
+    }
     panel.setAttribute("role", "tooltip");
-    button.addEventListener("mouseenter", () => show(button, panel));
-    button.addEventListener("focus", () => show(button, panel));
-    button.addEventListener("mouseleave", scheduleClose);
-    button.addEventListener("blur", scheduleClose);
+    trigger.addEventListener("mouseenter", () => show(trigger, panel, focusTarget));
+    focusTarget.addEventListener("focus", () => show(trigger, panel, focusTarget));
+    trigger.addEventListener("mouseleave", scheduleClose);
+    focusTarget.addEventListener("blur", scheduleClose);
     panel.addEventListener("mouseenter", cancelClose);
     panel.addEventListener("mouseleave", scheduleClose);
-    button.addEventListener("click", () => {
+    if (trigger.matches(".info-button")) trigger.addEventListener("click", () => {
       // A first tap focuses the button before click. Keep that tooltip open;
       // a second tap dismisses it. Hover and keyboard focus need no click.
-      if (active?.button === button && active.tapped) close();
-      else { show(button, panel); active.tapped = true; }
+      if (active?.trigger === trigger && active.tapped) close();
+      else { show(trigger, panel, focusTarget); active.tapped = true; }
     });
   }
   document.addEventListener("keydown", event => {
     if (event.key === "Escape") close();
   });
   document.addEventListener("click", event => {
-    if (active && !active.button.contains(event.target) && !active.panel.contains(event.target)) close();
+    if (active && !active.trigger.contains(event.target) && !active.focusTarget.contains(event.target) && !active.panel.contains(event.target)) close();
   });
   window.addEventListener("resize", position);
   window.addEventListener("scroll", position, true);

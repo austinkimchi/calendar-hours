@@ -2,12 +2,12 @@
 
 ## Automated checks
 
-`npm test`: 88 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
+`npm test`: 89 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
 
 The new tests cover:
 
 - Configuring a readable Google calendar and an independent import phrase in settings.
-- Time zone dropdown persistence, aliases, and settings help on hover or keyboard focus.
+- Time zone dropdown persistence, aliases, and settings help on label hover or keyboard focus. Label clicks keep their normal checkbox behavior; Escape dismisses help without changing values or field focus.
 - Actions defaults to Calendar on every opening. Arrow keys, Home/End, typeahead, and pointer hover keep the highlight and active descendant aligned; Enter activates only that option, including after Workday's delayed focus update.
 - First-use setup routing, revoked permissions, removed calendars, and invalid settings.
 - Trusted message senders; Google access tokens stay in the service worker.
