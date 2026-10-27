@@ -695,3 +695,23 @@ test("background verification compares absolute dates and instants instead of gr
   assert.equal((await app.send({...message,startIso:'2026-10-26T16:00:00Z'})).retry,true);
   app.dom.window.close();
 });
+
+test("confirming separate quick-composer zones updates an existing duration without changing the clocks", async () => {
+  const app=run(`<script id="initialdata" type="application/json">[["timezone","America/Los_Angeles"]]</script>
+    <script id="timezonedata" type="application/json">[[["Asia/Tokyo","(GMT+09:00) Japan Standard Time"],["America/Los_Angeles","(GMT-07:00) Pacific Time - Los Angeles"]]]</script>
+    <div role="dialog"><input aria-label="Add title" value="Planning (1 hour)">
+      <input aria-label="Start date" value="2026-10-27"><input aria-label="Start time" value="2pm">
+      <input aria-label="End date" value="2026-10-27"><input aria-label="End time" value="3pm">
+      <div jsname="KhmQBe">(GMT+09:00)</div><div jsname="SWIt6d">(GMT-07:00)</div>
+    </div><div role="dialog" id="zone-picker">
+      <input aria-label="Event start time zone" value="(GMT+09:00) Japan Standard Time">
+      <input aria-label="Event end time zone" value="(GMT-07:00) Pacific Time - Los Angeles"><button>OK</button></div>`);
+  await settle();
+  const title=app.window.document.querySelector('[aria-label="Add title"]');
+  assert.equal(title.value,'Planning (1 hour)');
+  app.window.document.querySelector('button').click();
+  app.window.document.getElementById('zone-picker').remove();
+  await settle();
+  assert.equal(title.value,'Planning (17 hours)');
+  app.dom.window.close();
+});
