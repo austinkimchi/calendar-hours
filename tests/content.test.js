@@ -182,6 +182,26 @@ test("inline suggestions respect focus, caret edits, composition and the saved o
   }
 });
 
+test("a hint clipped outside a long title does not consume Enter or Tab", async () => {
+  const app = run(suggestionHtml, {automatic:false});
+  app.window.HTMLElement.prototype.getBoundingClientRect = function () {
+    return this.classList.contains("calendar-hours-suggestion-suffix")
+      ? {left:650,right:730,top:10,bottom:50,width:80,height:40}
+      : {left:10,right:610,top:10,bottom:50,width:600,height:40};
+  };
+  await settle();
+  const doc = app.window.document, title = doc.querySelector('[aria-label="Title"]');
+  assert.equal(doc.querySelector(".calendar-hours-suggestion").style.visibility, "hidden");
+  assert.equal(doc.querySelector("#calendar-hours-inline-description").textContent, "");
+  for (const key of ["Enter","Tab"]) {
+    const event = new app.window.KeyboardEvent("keydown", {key,bubbles:true,cancelable:true});
+    title.dispatchEvent(event);
+    assert.equal(event.defaultPrevented,false);
+  }
+  assert.equal(title.value,"Work session");
+  app.dom.window.close();
+});
+
 test("typing invalidates stale ghost text and time edits refresh its exact duration", async () => {
   const app = run(suggestionHtml, {automatic:false});
   await settle();
