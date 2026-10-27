@@ -20,6 +20,6 @@ Calendar Hours turns event start and end times into a title suffix such as `Work
 
 **Distribution:** Free, Unlisted, all regions, English (US). After approval, the listing can be installed in Edge through its Chrome Web Store link.
 
-**Dashboard:** [Calendar Hours item](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. Distribution was set to Free, Unlisted, and All regions. Verify the current published version and submission controls in the dashboard before uploading 0.2.11.
+**Dashboard:** [Calendar Hours item](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. Distribution was set to Free, Unlisted, and All regions. The [public listing](https://chromewebstore.google.com/detail/calendar-hours/gkhggalcelmdidfdnllmdpaaapjiegig) showed version 0.1.0 on October 27, 2026. Verify submission controls in the signed-in dashboard before uploading 0.2.11.
 
 **0.2.11 submission:** Upload `dist/calendar-hours-0.2.11.zip` when the dashboard permits a new package. Update the Store listing and Privacy practices with the optional Google Calendar API and OAuth access above; the public privacy policy must match `PRIVACY.md`. Confirm Google's OAuth review requirements before distributing direct API mode beyond the project's listed test users. Verify the dashboard shows the submitted version and review or publication state.
