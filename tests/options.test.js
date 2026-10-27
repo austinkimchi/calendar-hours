@@ -8,6 +8,7 @@ const extension = path.join(__dirname, "..", "extension");
 const html = fs.readFileSync(path.join(extension, "options.html"), "utf8");
 const core = fs.readFileSync(path.join(extension, "core.js"), "utf8");
 const options = fs.readFileSync(path.join(extension, "options.js"), "utf8");
+const helpScript = fs.readFileSync(path.join(extension, "settings-help.js"), "utf8");
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 
 test("settings migrate phrases into rows and save each Dynamic choice", async () => {
@@ -23,10 +24,11 @@ test("settings migrate phrases into rows and save each Dynamic choice", async ()
     } }
   };
   window.eval(core);
+  window.eval(helpScript);
   window.eval(options);
   await settle();
 
-  assert.deepEqual([...window.document.querySelectorAll("section h2")].map(node => node.textContent), ["General", "Hours", "Other", "Workday calendar import Developer preview"]);
+  assert.deepEqual([...window.document.querySelectorAll("section h2")].map(node => node.textContent), ["Event titles", "Duration format", "More options", "Workday import Preview"]);
   const rows = window.document.querySelectorAll(".rule-row");
   assert.deepEqual([...rows].map(row => row.querySelector(".rule-phrase").value), ["SCU Block", "Study session"]);
   assert.equal(rows[0].querySelector(".rule-dynamic input").checked, true);
@@ -71,6 +73,7 @@ test("first-time options enable both defaults while saved off choices stay off",
     const { window } = dom;
     window.chrome = { storage: { sync: { get: async () => saved, set: async () => {}, remove: async () => {} } } };
     window.eval(core);
+    window.eval(helpScript);
     window.eval(options);
     await settle();
     assert.equal(window.document.querySelector('[name="automatic"]').checked, expected);
@@ -89,6 +92,7 @@ test("turning on minutes below an hour saves the setting without an extra Save c
     remove: async () => {}
   } } };
   window.eval(core);
+  window.eval(helpScript);
   window.eval(options);
   await settle();
   window.document.querySelector('[name="minutesBelowHour"]').click();
@@ -107,6 +111,7 @@ test("the locked replacement setting explains which update option requires it", 
     set: async () => {}, remove: async () => {}
   } } };
   window.eval(core);
+  window.eval(helpScript);
   window.eval(options);
   await settle();
 
@@ -117,7 +122,7 @@ test("the locked replacement setting explains which update option requires it", 
   assert.equal(icon.hidden, false);
   icon.click();
   assert.equal(icon.getAttribute("aria-expanded"), "true");
-  assert.match(help.textContent, /Dynamic needs to replace/);
+  assert.match(help.textContent, /Auto-update needs to replace/);
 
   window.document.querySelector(".rule-dynamic input").click();
   assert.equal(field.disabled, false);
@@ -129,7 +134,7 @@ test("the locked replacement setting explains which update option requires it", 
   assert.equal(field.disabled, true);
   assert.equal(icon.hidden, false);
   icon.click();
-  assert.match(help.textContent, /Automatic time-change updates need to replace/);
+  assert.match(help.textContent, /Updates to existing durations need to replace/);
   dom.window.close();
 });
 
@@ -143,6 +148,7 @@ test("enabling minutes starts with the current hours template and keeps later cu
     remove: async () => {}
   } } };
   window.eval(core);
+  window.eval(helpScript);
   window.eval(options);
   await settle();
 

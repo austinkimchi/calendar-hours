@@ -12,6 +12,48 @@
   let saved = core.settingsFrom();
   let ready = false;
 
+  function populateTimeZones() {
+    const select = field("timeZone");
+    const common = [
+      ["America/Los_Angeles", "Pacific Time — Los Angeles"],
+      ["America/Denver", "Mountain Time — Denver"],
+      ["America/Phoenix", "Arizona — Phoenix"],
+      ["America/Chicago", "Central Time — Chicago"],
+      ["America/New_York", "Eastern Time — New York"],
+      ["America/Anchorage", "Alaska — Anchorage"],
+      ["Pacific/Honolulu", "Hawaii — Honolulu"],
+      ["UTC", "UTC"]
+    ];
+    const commonGroup = document.createElement("optgroup");
+    commonGroup.label = "Common time zones";
+    for (const [value, label] of common) commonGroup.append(new Option(label, value));
+    select.append(commonGroup);
+    const included = new Set(common.map(([value]) => value));
+    const groups = new Map();
+    for (const zone of (Intl.supportedValuesOf?.("timeZone") || []).sort()) {
+      if (included.has(zone)) continue;
+      const [region, ...city] = zone.split("/");
+      if (!groups.has(region)) {
+        const group = document.createElement("optgroup");
+        group.label = region;
+        select.append(group);
+        groups.set(region, group);
+      }
+      groups.get(region).append(new Option((city.join(" / ") || region).replaceAll("_", " "), zone));
+    }
+  }
+
+  function selectTimeZone(zone) {
+    if (!core.validZone(zone)) return;
+    const select = field("timeZone");
+    // Calendar metadata and older saved settings can use valid IANA aliases
+    // that Intl.supportedValuesOf does not list. Preserve their exact values.
+    if (![...select.options].some(option => option.value === zone)) select.append(new Option(zone.replaceAll("_", " "), zone));
+    select.value = zone;
+  }
+
+  populateTimeZones();
+
   async function loadCalendars(interactive = false) {
     connect.disabled = refresh.disabled = true;
     connection.textContent = interactive ? "Connecting to Google Calendar…" : "Loading calendars…";
@@ -24,7 +66,7 @@
       for (const c of calendars) field("calendarId").append(new Option(c.name + (c.primary ? " (primary)" : ""), c.id));
       if (calendars.some(c => c.id === chosen)) field("calendarId").value = chosen;
       else if (chosen) status.textContent = "Your saved calendar is unavailable. Choose another and save.";
-      connection.textContent = "Connected. Choose a calendar, then save your import settings.";
+      connection.textContent = "Connected to Google Calendar";
       connect.textContent = "Reconnect Google Calendar";
       ready = true;
     } catch (error) {
@@ -35,7 +77,7 @@
 
   field("calendarId").addEventListener("change", () => {
     const c = calendars.find(c => c.id === field("calendarId").value);
-    if (core.validZone(c?.timeZone)) field("timeZone").value = c.timeZone;
+    selectTimeZone(c?.timeZone);
     status.textContent = "Unsaved changes";
   });
   form.addEventListener("input", () => { status.textContent = "Unsaved changes"; });
@@ -47,7 +89,7 @@
     if (field("enabled").checked && (!ready || !selected)) { status.textContent = "Connect and choose an available calendar first."; return; }
     const value = core.settingsFrom(Object.fromEntries([...form.elements].filter(e => e.name).map(e => [e.name, e.type === "checkbox" ? e.checked : e.value])));
     value.calendarName = selected?.name || saved.calendarName;
-    if (value.enabled && !core.configured(value)) { status.textContent = "Enter a matching phrase and a valid time zone, such as America/Los_Angeles."; return; }
+    if (value.enabled && !core.configured(value)) { status.textContent = "Enter a phrase to match event titles and choose a time zone."; return; }
     try {
       await chrome.storage.sync.set({ [core.settingsKey]: value });
       saved = value;
@@ -58,11 +100,11 @@
     saved = core.settingsFrom(data[core.settingsKey]);
     for (const [name, value] of Object.entries(saved)) {
       const input = field(name);
-      if (!input || name === "calendarId") continue;
+      if (!input || name === "calendarId" || name === "timeZone") continue;
       if (input.type === "checkbox") input.checked = value;
       else input.value = value;
     }
-    if (!saved.timeZone) field("timeZone").value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    selectTimeZone(saved.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone);
     await loadCalendars();
     if (location.hash === "#workday") document.querySelector("#workday").scrollIntoView({ block: "start" });
   }).catch(error => { status.textContent = `Could not load settings: ${error.message}`; });
