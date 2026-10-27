@@ -58,8 +58,8 @@ test('help closes immediately on pointer exit, including over the panel, and sup
   assert.equal(window.document.querySelector('#workday-phrase-help').hidden, false);
   window.document.dispatchEvent(new window.KeyboardEvent('keydown', {key:'Escape'}));
   assert.equal(window.document.querySelector('#workday-phrase-help').hidden, true);
-  const icon = window.document.querySelector('[aria-controls="workday-overlap-help"]');
-  const iconPanel = window.document.querySelector('#workday-overlap-help');
+  const icon = window.document.querySelector('[aria-controls="dynamic-help"]');
+  const iconPanel = window.document.querySelector('#dynamic-help');
   icon.focus();
   icon.click();
   assert.equal(iconPanel.hidden, false);
