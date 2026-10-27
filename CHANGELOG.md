@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.14 — Workday developer preview, October 27, 2026
+
+- Select multiple calendars for Workday imports, with bounded concurrent reads and migration of saved single-calendar choices.
+- Add optional unpaid meals from independent calendar phrases, with Breakfast, Lunch, Dinner, and Meal Break defaults.
+- Add an optional configurable automatic meal after five worked hours, lasting thirty minutes by default. Both meal features start off; calendar meals take priority.
+- Set the preceding entry’s Out Reason to Meal, safely split exact unsubmitted drafts, and avoid saving unchanged entries on rerun.
+- Stop before writes when selected calendars cannot be read or meal times are unsafe to interpret.
+
 ## 0.2.13 — October 27, 2026
 
 - Follow Google Calendar’s primary and event-specific time zones automatically, with the current device zone as fallback. No additional connection or permission is required.

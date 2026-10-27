@@ -28,3 +28,16 @@ test('Calendar descriptions are forwarded to Workday only when comment importing
     assert.equal(events[0].attendees,undefined);
   }
 });
+test('multiple calendars are paginated independently with at most three concurrent reads',async()=>{
+ let active=0,peak=0;const calls=[];
+ const events=await api.listEvents({accessToken:'test',core,settings:{calendarIds:['a','b','c','d','a'],timeZone:'UTC'},dates:['2026-10-19'],fetcher:async url=>{
+  active++;peak=Math.max(peak,active);const u=new URL(url),id=u.pathname.split('/').at(-2);calls.push([id,u.searchParams.get('pageToken')]);
+  await new Promise(r=>setTimeout(r,5));active--;
+  return {ok:true,json:async()=>({items:[{summary:id}],...(id==='a'&&!u.searchParams.has('pageToken')?{nextPageToken:'a2'}:{})})};
+ }});
+ assert.equal(peak,3);assert.equal(calls.length,5);assert.deepEqual(calls.filter(x=>x[0]==='a'),[['a',null],['a','a2']]);assert.deepEqual(events.map(e=>e.summary),['a','a','b','c','d']);
+});
+test('one missing meal calendar aborts the complete multi-calendar read',async()=>{
+ await assert.rejects(api.listEvents({accessToken:'test',core,settings:{calendarIds:['work','meals'],timeZone:'UTC'},dates:['2026-10-19'],fetcher:async url=>
+  url.includes('/meals/')?{ok:false,status:404}:{ok:true,json:async()=>({items:[{summary:'Work block'}]})}}),e=>e.needsSetup===true);
+});

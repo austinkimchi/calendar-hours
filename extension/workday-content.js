@@ -173,15 +173,27 @@
       const typeList = [...dialog.querySelectorAll('[role="listbox"]')].find(e => label(e) === "items selected for Time Type");
       const selected = typeList?.querySelector('[role="option"]')?.textContent.trim();
       if (selected !== settings.timeType) throw settingsError(`Workday selected ${selected || "no time type"}. Choose the matching Time Type in import settings.`);
+      const reason = block.outReason || settings.outReason;
+      const outReasonField = () => [...dialog.querySelectorAll('[role="combobox"]')].find(e => label(e).startsWith("Out Reason"));
+      const reasonValue = () => {
+        const el = outReasonField();
+        return (el?.querySelector(aid("selectSelectedOption"))?.textContent ?? el?.textContent ?? "").replace(/\s+selected\s*$/, "").trim().replace(/^Out Reason\s*/, "").trim();
+      };
+      if (updating && block.previous.start === block.start && block.previous.end === block.end && reasonValue() === reason &&
+          (!settings.importComments || field(dialog, "Comment").value === commentText(doc, block.descriptions))) {
+        await cancelDraft(doc, dialog);
+        return "already-entered";
+      }
       setInput(field(dialog, "In"), core.clock(block.start));
       setInput(field(dialog, "Out"), core.clock(block.end));
       const outReason = [...dialog.querySelectorAll('[role="combobox"]')].find(e => label(e).startsWith("Out Reason"));
       if (!outReason) throw new Error("Workday's Out Reason field is unavailable");
-      if (!outReason.textContent.replace(/\s+selected\s*$/, "").trim().endsWith(settings.outReason)) {
+      if (reasonValue() !== reason) {
         outReason.click();
-        const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === settings.outReason), settingsError("The configured Out Reason was not found. Check Out Reason in import settings."));
+        const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === reason), settingsError(reason === "Meal" ? "Workday does not offer Meal as an Out Reason. Check the meal options in import settings." : "The configured Out Reason was not found. Check Out Reason in import settings."));
         option.click();
       }
+      await waitFor(() => reasonValue() === reason, "Workday did not accept the requested Out Reason. Nothing was saved.");
       if (settings.importComments || !updating) {
         const comment = settings.importComments ? commentText(doc, block.descriptions) : "";
         setInput(field(dialog, "Comment"), comment);
@@ -256,8 +268,8 @@
         let already = plan.skipped.filter(e => e.reason === "already-entered").length;
         for (const block of plan.update) {
           showStatus(`Updating ${view.title}: ${updated + 1} of ${plan.update.length}…`);
-          await updateBlock(doc, core, view, block, response.settings);
-          updated++;
+          const result = await updateBlock(doc, core, view, block, response.settings);
+          if (result === "updated") updated++; else already++;
         }
         for (const block of plan.add) {
           showStatus(`Importing ${view.title}: ${added + 1} of ${plan.add.length}…`);

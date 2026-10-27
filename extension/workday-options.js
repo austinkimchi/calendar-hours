@@ -8,6 +8,9 @@
   const manageConnection = document.querySelector("#workday-manage-connection");
   const refresh = document.querySelector("#workday-refresh");
   const field = name => form.elements.namedItem(name);
+  const calendarList = document.querySelector("#workday-calendars");
+  const chosenIds = () => [...calendarList.querySelectorAll("input:checked")].map(input => input.value);
+  let renderedCalendars = false;
   let calendars = [];
   let saved = core.settingsFrom();
   let ready = false;
@@ -68,11 +71,17 @@
       if (revision !== loadRevision) return;
       if (!result?.ok) throw Object.assign(new Error(result?.reason || "Google Calendar is unavailable"), { needsSetup: !!result?.needsSetup });
       calendars = result.calendars;
-      const chosen = field("calendarId").value || saved.calendarId;
-      field("calendarId").replaceChildren(new Option("Choose a calendar", ""));
-      for (const c of calendars) field("calendarId").append(new Option(c.name + (c.primary ? " (primary)" : ""), c.id));
-      if (calendars.some(c => c.id === chosen)) field("calendarId").value = chosen;
-      else if (chosen) status.textContent = "Your saved calendar is unavailable. Choose another and save.";
+      const chosen = renderedCalendars ? chosenIds() : saved.calendarIds;
+      calendarList.replaceChildren();
+      const items = [...calendars, ...chosen.filter(id => !calendars.some(c => c.id === id)).map(id => ({ id, name: "Saved calendar (unavailable)", unavailable: true }))];
+      for (const c of items) {
+        const label = document.createElement("label"); label.className = "check" + (c.unavailable ? " unavailable" : "");
+        const input = document.createElement("input"); input.type = "checkbox"; input.name = "calendarIds"; input.value = c.id; input.checked = chosen.includes(c.id);
+        label.append(input, document.createTextNode(c.name + (c.primary ? " (primary)" : "")));
+        calendarList.append(label);
+      }
+      renderedCalendars = true;
+      if (items.some(c => c.unavailable)) status.textContent = "A saved calendar is unavailable. Restore access or deselect it before saving.";
       connection.textContent = "";
       connection.hidden = true;
       ready = true;
@@ -85,20 +94,33 @@
     } finally { if (revision === loadRevision) refresh.disabled = false; }
   }
 
-  field("calendarId").addEventListener("change", () => {
-    const c = calendars.find(c => c.id === field("calendarId").value);
-    selectTimeZone(c?.timeZone);
+  calendarList.addEventListener("change", event => {
+    const chosen = chosenIds();
+    if (chosen.length > 10) { event.target.checked = false; status.textContent = "Select at most 10 calendars."; return; }
+    if (event.target.checked && chosen.length === 1) selectTimeZone(calendars.find(c => c.id === chosen[0])?.timeZone);
     status.textContent = "Unsaved changes";
   });
+  function mealOptions() {
+    for (const [toggle, id, names] of [["calendarMeals", "calendar-meal-options", ["mealWords"]], ["autoMeal", "auto-meal-options", ["mealAfterHours", "mealDurationMinutes"]]]) {
+      const enabled = field(toggle).checked;
+      document.getElementById(id).hidden = !enabled;
+      for (const name of names) field(name).disabled = !enabled;
+    }
+  }
+  field("calendarMeals").addEventListener("change", mealOptions);
+  field("autoMeal").addEventListener("change", mealOptions);
   form.addEventListener("input", () => { status.textContent = "Unsaved changes"; });
   refresh.addEventListener("click", () => { void loadCalendars(); });
   document.addEventListener("calendar-hours-connection-changed", () => { if (initialized) void loadCalendars(); });
   form.addEventListener("submit", async event => {
     event.preventDefault();
-    const selected = calendars.find(c => c.id === field("calendarId").value);
-    if (field("enabled").checked && (!ready || !selected)) { status.textContent = "Connect Google Calendar in General, then choose an available calendar here."; return; }
-    const value = core.settingsFrom(Object.fromEntries([...form.elements].filter(e => e.name).map(e => [e.name, e.type === "checkbox" ? e.checked : e.value])));
-    value.calendarName = selected?.name || saved.calendarName;
+    const ids = chosenIds();
+    if (field("enabled").checked && (!ready || !ids.length || ids.some(id => !calendars.some(c => c.id === id)))) { status.textContent = "Connect Google Calendar in General, then select available calendars here."; return; }
+    if (field("calendarMeals").checked && !field("mealWords").value.trim()) { status.textContent = "Enter at least one meal phrase."; return; }
+    if (field("autoMeal").checked && ["mealAfterHours", "mealDurationMinutes"].some(name => !field(name).checkValidity())) { status.textContent = "Choose valid meal timing and duration."; return; }
+    const raw = Object.fromEntries([...form.elements].filter(e => e.name && e.name !== "calendarIds").map(e => [e.name, e.type === "checkbox" ? e.checked : e.value]));
+    const value = core.settingsFrom({ ...raw, calendarIds: ids });
+    value.calendarName = calendars.filter(c => ids.includes(c.id)).map(c => c.name).join(", ").slice(0, 200);
     if (value.enabled && !core.configured(value)) { status.textContent = "Enter a phrase to match event titles and choose a time zone."; return; }
     try {
       await chrome.storage.sync.set({ [core.settingsKey]: value });
@@ -110,10 +132,11 @@
     saved = core.settingsFrom(data[core.settingsKey]);
     for (const [name, value] of Object.entries(saved)) {
       const input = field(name);
-      if (!input || name === "calendarId" || name === "timeZone") continue;
+      if (!input || name === "calendarId" || name === "calendarIds" || name === "timeZone") continue;
       if (input.type === "checkbox") input.checked = value;
-      else input.value = value;
+      else input.value = name === "mealWords" ? value.join(", ") : value;
     }
+    mealOptions();
     selectTimeZone(saved.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone);
     initialized = true;
     await loadCalendars();

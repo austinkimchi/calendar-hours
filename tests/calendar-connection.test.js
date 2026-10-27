@@ -31,7 +31,7 @@ test('one shared connect populates Workday without a second OAuth call or prefer
  f.doc.querySelector('#workday-phrase').value='Unsaved phrase';
  button.click();await settle();await settle();
  assert.equal(f.messages.filter(type=>type.endsWith('_CONNECT')).length,1);
- assert.equal(f.doc.querySelector('#workday-calendar').value,'work-test');
+ assert.deepEqual([...f.doc.querySelectorAll('#workday-calendars input:checked')].map(el=>el.value),['work-test']);
  assert.equal(f.doc.querySelector('#workday-phrase').value,'Unsaved phrase');
  assert.equal(f.doc.querySelector('#workday-connection').hidden,true);
  assert.equal(f.doc.querySelector('#workday-manage-connection').hidden,true);
@@ -47,7 +47,7 @@ test('shared disconnect removes calendar access without erasing saved import cho
  const f=await harness({connected:true,calendarListAccess:true});
  f.doc.querySelector('#disconnect-api').click();await settle();await settle();
  assert.equal(f.doc.querySelector('#workday-manage-connection').hidden,false);
- assert.equal(f.doc.querySelector('#workday-calendar').value,'work-test');
+ assert.deepEqual([...f.doc.querySelectorAll('#workday-calendars input:checked')].map(el=>el.value),['work-test']);
  assert.equal(f.doc.querySelector('#workday-phrase').value,'Work block');
  f.doc.querySelector('#workday-settings').dispatchEvent(new f.window.Event('submit',{cancelable:true}));await settle();
  assert.equal(f.writes.length,0,'disconnected import cannot be enabled/saved as ready');

@@ -6,12 +6,12 @@ async function harness(available=true,saved={},calendarZone="America/Los_Angeles
  return {dom,writes,form:dom.window.document.querySelector('#workday-settings')};
 }
 test('setup persists selected calendar and independent import keyword, without changing title settings',async()=>{
- const f=await harness(),el=n=>f.form.elements.namedItem(n);el('calendarId').value='work-test';el('calendarId').dispatchEvent(new f.dom.window.Event('change'));el('keyword').value='Work block';el('enabled').checked=true;
+ const f=await harness(),el=n=>f.form.elements.namedItem(n);f.form.querySelector('[name=calendarIds]').checked=true;f.form.querySelector('[name=calendarIds]').dispatchEvent(new f.dom.window.Event('change',{bubbles:true}));el('keyword').value='Work block';el('enabled').checked=true;
  f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,10));
  assert.equal(f.writes.length,1);assert.deepEqual(Object.keys(f.writes[0]),['workdayIntegration']);assert.equal(f.writes[0].workdayIntegration.calendarId,'work-test');assert.equal(f.writes[0].workdayIntegration.keyword,'Work block');assert.equal(f.writes[0].workdayIntegration.timeZone,'America/Los_Angeles');f.dom.window.close();
 });
 test('missing calendar access and invalid time zones cannot enable an import',async()=>{
- for(const available of [false,true]){const f=await harness(available);f.form.elements.namedItem('enabled').checked=true;f.form.elements.namedItem('calendarId').value='work-test';f.form.elements.namedItem('keyword').value='Work block';f.form.elements.namedItem('timeZone').value='invalid';f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,5));assert.equal(f.writes.length,0);f.dom.window.close()}
+ for(const available of [false,true]){const f=await harness(available);f.form.elements.namedItem('enabled').checked=true;if(f.form.querySelector('[name=calendarIds]'))f.form.querySelector('[name=calendarIds]').checked=true;f.form.elements.namedItem('keyword').value='Work block';f.form.elements.namedItem('timeZone').value='invalid';f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,5));assert.equal(f.writes.length,0);f.dom.window.close()}
 });
 
 test('time zone dropdown preserves saved zones and saves a new choice without resetting preferences', async () => {
@@ -39,9 +39,9 @@ test('time zone dropdown preserves saved zones and saves a new choice without re
 
 test('choosing a calendar supports time zone aliases missing from the standard list', async () => {
  const f = await harness(true, {timeZone:'America/New_York'}, 'US/Pacific');
- const calendar = f.form.elements.namedItem('calendarId');
+ const calendar = f.form.querySelector('[name=calendarIds]');
  assert.equal(f.form.elements.namedItem('timeZone').value, 'America/New_York');
- calendar.value = 'work-test';
+ calendar.checked = true;
  calendar.dispatchEvent(new f.dom.window.Event('change', {bubbles:true}));
  assert.equal(f.form.elements.namedItem('timeZone').value, 'US/Pacific');
  f.dom.window.close();
@@ -64,4 +64,20 @@ test('overlap updates default on and an explicitly saved off choice survives reo
  assert.equal(reopened.form.elements.namedItem('updateOverlaps').checked,false);
  assert.equal(reopened.form.elements.namedItem('importComments').checked,true);
  reopened.dom.window.close();f.dom.window.close();
+});
+test('meal controls default off and disabled, then persist independent meal preferences',async()=>{
+ const f=await harness(true,{enabled:true,calendarId:'work-test',keyword:'SCU Block',timeZone:'UTC'}),el=n=>f.form.elements.namedItem(n);
+ for(const n of ['calendarMeals','autoMeal'])assert.equal(el(n).checked,false);
+ for(const n of ['mealWords','mealAfterHours','mealDurationMinutes'])assert.equal(el(n).disabled,true);
+ assert.equal(el('mealWords').value,'Breakfast, Lunch, Dinner, Meal Break');assert.equal(el('mealAfterHours').value,'5');assert.equal(el('mealDurationMinutes').value,'30');
+ el('calendarMeals').click();el('autoMeal').click();assert.equal(el('mealWords').disabled,false);assert.equal(el('mealAfterHours').disabled,false);
+ el('mealWords').value='Pause, LUNCH';el('mealAfterHours').value='4.5';el('mealDurationMinutes').value='45';
+ f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,0));
+ const value=f.writes[0].workdayIntegration;assert.equal(value.keyword,'SCU Block');assert.deepEqual(Array.from(value.mealWords),['Pause','LUNCH']);assert.equal(value.mealAfterHours,4.5);assert.equal(value.mealDurationMinutes,45);
+ const g=await harness(true,value);assert.equal(g.form.elements.namedItem('calendarMeals').checked,true);assert.equal(g.form.elements.namedItem('mealWords').disabled,false);g.dom.window.close();f.dom.window.close();
+});
+test('unavailable saved calendars remain checked and cannot be silently dropped on save',async()=>{
+ const f=await harness(true,{enabled:true,calendarIds:['work-test','missing-meals'],keyword:'SCU Block',timeZone:'UTC'});
+ assert.equal(f.form.querySelectorAll('[name=calendarIds]:checked').length,2);
+ f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,0));assert.equal(f.writes.length,0);f.dom.window.close();
 });
