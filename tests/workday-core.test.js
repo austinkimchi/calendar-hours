@@ -71,3 +71,33 @@ test('query midnights follow DST rather than fixed 24-hour arithmetic',()=>{
   assert.equal(wd.midnight('2026-03-09',settings.timeZone)-wd.midnight('2026-03-08',settings.timeZone),23*3600000);
   assert.equal(wd.clock(825),'1:45 PM');assert.equal(wd.configured({...settings,timeZone:'bad'}),false);
 });
+
+test('both occurrences of repeated DST clocks require manual entry even within one offset',()=>{
+  for(const offset of ['-07:00','-08:00']) {
+    const r=plan([{summary:'Work block',start:{dateTime:`2026-11-01T01:15:00${offset}`},end:{dateTime:`2026-11-01T01:45:00${offset}`}}],
+      {dates:['2026-11-01'],now:Infinity});
+    assert.equal(r.add.length,0);assert.equal(r.update.length,0);assert.equal(r.warnings.length,1);
+  }
+});
+
+test('traveling device and source-event zones do not change the saved Workday zone or day',()=>{
+  const old=process.env.TZ;
+  try {
+    for(const zone of ['UTC','Asia/Tokyo','America/New_York']) {
+      process.env.TZ=zone;
+      const r=plan([{summary:'Work block',start:{dateTime:'2026-10-20T01:00:00+09:00',timeZone:'Asia/Tokyo'},end:{dateTime:'2026-10-20T03:00:00+09:00',timeZone:'Asia/Tokyo'}}]);
+      assert.deepEqual(r.add.map(b=>[b.date,b.start,b.end]),[['2026-10-19',540,660]]);
+      assert.equal(wd.settingsFrom(settings).timeZone,'America/Los_Angeles');
+      assert.equal(new Date(wd.midnight('2026-10-19',settings.timeZone)).toISOString(),'2026-10-19T07:00:00.000Z');
+    }
+  } finally {if(old===undefined)delete process.env.TZ;else process.env.TZ=old;}
+});
+
+test('DST transition days allow ordinary unambiguous hours; spanning blocks are reported',()=>{
+  for(const [date,offset] of [['2026-03-08','-07:00'],['2026-11-01','-08:00']]) {
+    const r=plan([{summary:'Work block',start:{dateTime:`${date}T09:00:00${offset}`},end:{dateTime:`${date}T10:00:00${offset}`}}],{dates:[date],now:Infinity});
+    assert.deepEqual(r.add.map(b=>[b.start,b.end]),[[540,600]]);assert.equal(r.warnings.length,0);
+  }
+  const r=plan([{summary:'Work block',start:{dateTime:'2026-10-18T23:00:00-07:00'},end:{dateTime:'2026-10-20T01:00:00-07:00'}}]);
+  assert.equal(r.add.length,0);assert.equal(r.warnings.length,1);
+});

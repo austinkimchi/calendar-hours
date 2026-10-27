@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-`npm test`: the suite passes, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.12-workday-dev.zip`.
+`npm test`: the suite passes, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.13-workday-dev.zip`.
 
 The new tests cover:
 
@@ -15,6 +15,7 @@ The new tests cover:
 - General connection changes refresh the Workday picker without another authorization flow or preference changes. Legacy connections upgrade only on request; disconnect blocks imports while preserving their saved choices.
 - Paginated Google Calendar reads with recurrence expansion and the displayed range's time-zone boundaries.
 - Day/week date extraction, previous dates, cross-year weeks, and DST query boundaries.
+- Saved Workday zones remain fixed across device travel and source-event zones. Both occurrences of a repeated DST clock require manual entry, even when a block lies wholly within one occurrence. Ordinary daytime blocks on transition days remain importable. A multi-day block spanning the entire requested day is reported rather than silently ignored.
 - Exact minute times, lunch gaps, cancelled/all-day/future exclusions, duplicate reruns, source overlaps, and existing-entry conflicts.
 - Individual entry form saves; wrong-date/existing-entry dialogs and navigation changes stop before saving.
 - Overwrite existing times to match calendar defaults on and preserves explicitly saved off choices. One-to-one overlap updates edit unsubmitted drafts in place, recheck the target before saving, and skip the matching interval on rerun. Submitted/unknown statuses, different time types, split/merge ambiguity, and concurrent entry changes are rejected.

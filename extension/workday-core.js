@@ -95,9 +95,12 @@
       if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) { warnings.push("A matching event has invalid times."); continue; }
       if (!s.includeFuture && end > now) { skipped.push({ reason: "future", title: event.summary }); continue; }
       const a = parts(start, s.timeZone), b = parts(end, s.timeZone);
-      if (!wanted.has(a.date) && !wanted.has(b.date)) continue;
+      if (a.date > dates.at(-1) || b.date < dates[0]) continue;
+      const uniqueInstant = p => core.wallTimeInstant(core.parseCalendarDate(p.date),
+        { hour: Math.floor(p.minute / 60), minute: p.minute % 60 }, s.timeZone);
       // Workday's In/Out dialog has no date/offset fields. Fail closed on overnight or DST-ambiguous shifts.
-      if (a.date !== b.date || a.second || b.second || (end - start) / 60000 !== b.minute - a.minute) {
+      if (a.date !== b.date || a.second || b.second || (end - start) / 60000 !== b.minute - a.minute ||
+          uniqueInstant(a) !== start || uniqueInstant(b) !== end) {
         warnings.push(`${event.summary}: overnight, sub-minute or daylight-saving time block needs manual entry.`); continue;
       }
       if (!wanted.has(a.date)) continue;
