@@ -7,6 +7,7 @@
   const cached = new Map();
   let observedPrimary = null;
   let account = null;
+  const chosenEventZones = new WeakMap();
   const visible = element => !!element && !element.hidden && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden";
   const labelKey = value => String(value || "").replace(/^\(GMT[^)]*\)\s*/, "").trim();
 
@@ -68,14 +69,41 @@
       return element ? zoneFromLabel(element.getAttribute("data-text") || element.textContent.trim()) : undefined;
     };
     // A common zone is beside End time. Separate zones also add a Start label.
-    const start = label('[jsname="PH80Af"]');
-    const end = label('#xTmZn, [jsname="yxQRke"]');
+    let start = label('[jsname="PH80Af"]');
+    let end = label('#xTmZn, [jsname="yxQRke"]');
+    const title = root.querySelector('input[aria-label="Add title"]');
+    if (title) {
+      // Quick composer keeps these controls mounted when the time row folds.
+      // Its separate-zone buttons expose only seasonal offsets, not IANA IDs.
+      const separate = root.querySelector('[jsname="KhmQBe"]')?.textContent.includes("(GMT");
+      if (separate) {
+        const chosen = chosenEventZones.get(title);
+        start = chosen?.start ?? null;
+        end = chosen?.end ?? null;
+      } else {
+        const text = root.querySelector('[jsname="hf42V"]')?.textContent.trim() ||
+          [...(root.querySelector('[data-key="startTime"]')?.closest("button")?.querySelectorAll("li") || [])]
+            .map(item => item.textContent.trim()).find(text => text.startsWith("(GMT"));
+        if (text?.startsWith("(GMT")) start = end = zoneFromLabel(text);
+      }
+    }
     return {
       timeZone,
       startTimeZone: start === undefined ? (end === undefined ? timeZone : end) : start,
       endTimeZone: end === undefined ? timeZone : end
     };
   }
+
+  document.addEventListener("click", event => {
+    const button = event.target instanceof Element && event.target.closest('button,[role="button"]');
+    const dialog = button?.closest('[role="dialog"]');
+    if (button?.textContent.trim() !== "OK" || !dialog?.querySelector('input[aria-label="Event start time zone"]')) return;
+    const title = document.querySelector('input[aria-label="Add title"]');
+    if (!title) return;
+    const start = zoneFromLabel(dialog.querySelector('input[aria-label="Event start time zone"]').value);
+    const endInput = dialog.querySelector('input[aria-label="Event end time zone"]');
+    chosenEventZones.set(title, { start, end: endInput?.disabled ? start : zoneFromLabel(endInput?.value) });
+  }, true);
 
   globalThis.CalendarHoursZones = { primary, forEditor };
 })();

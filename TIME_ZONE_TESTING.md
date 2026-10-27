@@ -13,6 +13,8 @@
 3. When no Calendar zone is available, call `Intl.DateTimeFormat().resolvedOptions().timeZone` for the current device zone. No location service, new OAuth scope, or persisted zone preference is needed.
 4. A present but unrecognized explicit event zone prevents a calculation. Do not substitute the computer zone for it.
 
+The quick composer exposes a full name for a common zone, but only GMT offsets for separate zones. When the user confirms its Time zone dialog, retain that named pair for the current unsaved editor. For an existing separate-zone event whose names are unavailable in the quick composer, leave the title unchanged until the zones are confirmed or More options is opened. Never infer an IANA zone from an offset alone.
+
 Calendar's JSON layout and editor labels are private UI details, observed in the live English Google Calendar editor. The adapter uses a named preference rather than numeric JSON positions, but changes to Google's UI can still require maintenance. Existing English date/time parsing limitations remain. The extension follows Calendar; it does not enable Google's travel prompt or alter account time zones.
 
 ## Calculation and persistence

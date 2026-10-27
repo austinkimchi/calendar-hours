@@ -85,3 +85,19 @@ test("Calendar display-zone URL and changes in its primary-zone picker are follo
   assert.equal(zones.primary(),null);
   dom.window.close();
 });
+
+test("quick composer follows common zones and only uses named confirmed separate zones", () => {
+  const {dom,w,zones}=page('<div role="dialog" id="editor"><input aria-label="Add title"><div jsname="hf42V">(GMT+09:00) Japan Standard Time</div></div>');
+  const root=w.document.getElementById('editor');
+  assert.equal(zones.forEditor(root).startTimeZone,'Asia/Tokyo');
+  root.insertAdjacentHTML('beforeend','<div jsname="KhmQBe">(GMT+09:00)</div><div jsname="SWIt6d">(GMT-07:00)</div>');
+  assert.equal(zones.forEditor(root).startTimeZone,null,'bare offsets must not be treated as IANA zones');
+  w.document.body.insertAdjacentHTML('beforeend','<div role="dialog" id="picker"><input aria-label="Event start time zone" value="(GMT+09:00) Japan Standard Time"><input aria-label="Event end time zone" value="(GMT-07:00) Pacific Time - Los Angeles"><button>Cancel</button><button>OK</button></div>');
+  w.document.querySelector('#picker button').click();
+  assert.equal(zones.forEditor(root).startTimeZone,null,'Cancel cannot confirm the pair');
+  w.document.querySelector('#picker button:last-child').click();
+  w.document.getElementById('picker').remove();
+  assert.equal(zones.forEditor(root).startTimeZone,'Asia/Tokyo');
+  assert.equal(zones.forEditor(root).endTimeZone,'America/Los_Angeles');
+  dom.window.close();
+});
