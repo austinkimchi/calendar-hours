@@ -5,12 +5,14 @@
   const form = document.querySelector("#workday-settings");
   const connection = document.querySelector("#workday-connection");
   const status = document.querySelector("#workday-status");
-  const connect = document.querySelector("#workday-connect");
+  const manageConnection = document.querySelector("#workday-manage-connection");
   const refresh = document.querySelector("#workday-refresh");
   const field = name => form.elements.namedItem(name);
   let calendars = [];
   let saved = core.settingsFrom();
   let ready = false;
+  let initialized = false;
+  let loadRevision = 0;
 
   function populateTimeZones() {
     const select = field("timeZone");
@@ -54,25 +56,33 @@
 
   populateTimeZones();
 
-  async function loadCalendars(interactive = false) {
-    connect.disabled = refresh.disabled = true;
-    connection.textContent = interactive ? "Connecting to Google Calendar…" : "Loading calendars…";
+  async function loadCalendars() {
+    const revision = ++loadRevision;
+    ready = false;
+    refresh.disabled = true;
+    connection.hidden = false;
+    manageConnection.hidden = true;
+    connection.textContent = "Loading calendars…";
     try {
-      const result = await chrome.runtime.sendMessage({ type: interactive ? "CALENDAR_HOURS_WORKDAY_CONNECT" : "CALENDAR_HOURS_WORKDAY_CALENDARS" });
-      if (!result?.ok) throw new Error(result?.reason || "Google Calendar is unavailable");
+      const result = await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_WORKDAY_CALENDARS" });
+      if (revision !== loadRevision) return;
+      if (!result?.ok) throw Object.assign(new Error(result?.reason || "Google Calendar is unavailable"), { needsSetup: !!result?.needsSetup });
       calendars = result.calendars;
       const chosen = field("calendarId").value || saved.calendarId;
       field("calendarId").replaceChildren(new Option("Choose a calendar", ""));
       for (const c of calendars) field("calendarId").append(new Option(c.name + (c.primary ? " (primary)" : ""), c.id));
       if (calendars.some(c => c.id === chosen)) field("calendarId").value = chosen;
       else if (chosen) status.textContent = "Your saved calendar is unavailable. Choose another and save.";
-      connection.textContent = "Connected to Google Calendar";
-      connect.textContent = "Reconnect Google Calendar";
+      connection.textContent = "";
+      connection.hidden = true;
       ready = true;
     } catch (error) {
+      if (revision !== loadRevision) return;
       ready = false;
       connection.textContent = error.message;
-    } finally { connect.disabled = refresh.disabled = false; }
+      manageConnection.hidden = !error.needsSetup;
+      if (error.needsSetup) document.dispatchEvent(new CustomEvent("calendar-hours-connection-required"));
+    } finally { if (revision === loadRevision) refresh.disabled = false; }
   }
 
   field("calendarId").addEventListener("change", () => {
@@ -81,12 +91,12 @@
     status.textContent = "Unsaved changes";
   });
   form.addEventListener("input", () => { status.textContent = "Unsaved changes"; });
-  connect.addEventListener("click", () => { void loadCalendars(true); });
   refresh.addEventListener("click", () => { void loadCalendars(); });
+  document.addEventListener("calendar-hours-connection-changed", () => { if (initialized) void loadCalendars(); });
   form.addEventListener("submit", async event => {
     event.preventDefault();
     const selected = calendars.find(c => c.id === field("calendarId").value);
-    if (field("enabled").checked && (!ready || !selected)) { status.textContent = "Connect and choose an available calendar first."; return; }
+    if (field("enabled").checked && (!ready || !selected)) { status.textContent = "Connect Google Calendar in General, then choose an available calendar here."; return; }
     const value = core.settingsFrom(Object.fromEntries([...form.elements].filter(e => e.name).map(e => [e.name, e.type === "checkbox" ? e.checked : e.value])));
     value.calendarName = selected?.name || saved.calendarName;
     if (value.enabled && !core.configured(value)) { status.textContent = "Enter a phrase to match event titles and choose a time zone."; return; }
@@ -105,6 +115,7 @@
       else input.value = value;
     }
     selectTimeZone(saved.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+    initialized = true;
     await loadCalendars();
     if (location.hash === "#workday") document.querySelector("#workday").scrollIntoView({ block: "start" });
   }).catch(error => { status.textContent = `Could not load settings: ${error.message}`; });

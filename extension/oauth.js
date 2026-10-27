@@ -13,9 +13,11 @@
   ]);
   const scope = "https://www.googleapis.com/auth/calendar.events";
   const calendarListScope = "https://www.googleapis.com/auth/calendar.calendarlist.readonly";
+  const sharedScopes = [scope, calendarListScope];
   const storageKey = "calendarHoursOAuth";
   let accessLevelReady;
   let renewalInFlight;
+  let connectionInFlight;
 
   function clientIdFor(extensionId) { return extensionIds.has(extensionId) ? webClientId : null; }
 
@@ -24,11 +26,11 @@
     return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
-  function authorizationUrl({ clientId, redirectUri, state, interactive, scopes = [scope] }) {
+  function authorizationUrl({ clientId, redirectUri, state, interactive, scopes = sharedScopes }) {
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.search = new URLSearchParams({
       client_id: clientId, redirect_uri: redirectUri, response_type: "token", scope: scopes.join(" "),
-      state, prompt: interactive ? "consent select_account" : "none"
+      state, prompt: interactive ? "select_account" : "none"
     }).toString();
     return url.href;
   }
@@ -47,7 +49,7 @@
     return (await chromeApi.storage.local.get(storageKey))[storageKey] || null;
   }
 
-  async function authorize(chromeApi = chrome, cryptoApi = crypto, interactive = true, scopes = [scope]) {
+  async function authorize(chromeApi = chrome, cryptoApi = crypto, interactive = true, scopes = sharedScopes) {
     const clientId = clientIdFor(chromeApi.runtime.id);
     if (!clientId) throw new Error("This extension ID has no Calendar Hours OAuth client");
     const redirectUri = chromeApi.identity.getRedirectURL();
@@ -71,16 +73,15 @@
       accessToken, expiresAt: Date.now() + Math.max(0, expiresIn - 60) * 1000,
       extensionId: chromeApi.runtime.id, scopes: grantedScopes
     } });
-    return { connected: true };
+    return { connected: true, calendarListAccess: grantedScopes.includes(calendarListScope) };
   }
 
   async function connect(chromeApi = chrome, cryptoApi = crypto) {
-    const value = await stored(chromeApi);
-    return authorize(chromeApi, cryptoApi, true, value?.scopes?.includes(calendarListScope) ? [scope, calendarListScope] : [scope]);
-  }
-
-  async function connectWorkday(chromeApi = chrome, cryptoApi = crypto) {
-    return authorize(chromeApi, cryptoApi, true, [scope, calendarListScope]);
+    if (!connectionInFlight) {
+      connectionInFlight = authorize(chromeApi, cryptoApi, true, sharedScopes)
+        .finally(() => { connectionInFlight = null; });
+    }
+    return connectionInFlight;
   }
 
   async function getAccessToken(chromeApi = chrome, cryptoApi = crypto) {
@@ -115,5 +116,5 @@
     return { connected: false };
   }
 
-  return { clientIdFor, authorizationUrl, connect, connectWorkday, getAccessToken, status, disconnect };
+  return { clientIdFor, authorizationUrl, connect, getAccessToken, status, disconnect };
 });

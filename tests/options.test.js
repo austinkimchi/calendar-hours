@@ -28,7 +28,7 @@ test("settings migrate phrases into rows and save each Dynamic choice", async ()
   window.eval(options);
   await settle();
 
-  assert.deepEqual([...window.document.querySelectorAll("section h2")].map(node => node.textContent), ["Event titles", "Duration format", "More options", "Workday import Preview"]);
+  assert.deepEqual([...window.document.querySelectorAll("section h2")].map(node => node.textContent), ["General", "Event titles", "Duration format", "More options", "Workday import Preview"]);
   const rows = window.document.querySelectorAll(".rule-row");
   assert.deepEqual([...rows].map(row => row.querySelector(".rule-phrase").value), ["SCU Block", "Study session"]);
   assert.equal(rows[0].querySelector(".rule-dynamic input").checked, true);

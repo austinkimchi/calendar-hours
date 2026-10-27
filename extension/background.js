@@ -99,9 +99,7 @@ async function syncGridEvent(message, sender) {
 }
 
 async function connectCalendar() {
-  const result = await globalThis.CalendarHoursOAuth.connect();
-  if (result.connected) await chrome.storage.sync.set({ apiSync: true });
-  return result;
+  return globalThis.CalendarHoursOAuth.connect();
 }
 
 function trustedWorkday(sender) {
@@ -118,12 +116,11 @@ function trustedSettings(sender) {
   } catch { return false; }
 }
 
-async function workdayCalendars(connect = false) {
-  if (connect) await globalThis.CalendarHoursOAuth.connectWorkday();
+async function workdayCalendars() {
   const status = await globalThis.CalendarHoursOAuth.status();
-  if (!status.calendarListAccess) return { ok: false, needsSetup: true, reason: "Connect Google Calendar below to choose a calendar for importing." };
+  if (!status.calendarListAccess) return { ok: false, needsSetup: true, reason: "Connect Google Calendar in General to choose an import calendar." };
   const accessToken = await globalThis.CalendarHoursOAuth.getAccessToken();
-  if (!accessToken) return { ok: false, needsSetup: true, reason: "Reconnect Google Calendar to choose your import calendar." };
+  if (!accessToken) return { ok: false, needsSetup: true, reason: "Reconnect Google Calendar in General to choose your import calendar." };
   return { ok: true, calendars: await globalThis.CalendarHoursWorkdayApi.listCalendars({ accessToken }) };
 }
 
@@ -145,7 +142,8 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     CALENDAR_HOURS_API_CONNECT: connectCalendar,
     CALENDAR_HOURS_API_DISCONNECT: () => globalThis.CalendarHoursOAuth.disconnect(),
     CALENDAR_HOURS_WORKDAY_CALENDARS: () => workdayCalendars(),
-    CALENDAR_HOURS_WORKDAY_CONNECT: () => workdayCalendars(true),
+    // Compatibility with already-open older settings tabs; one shared OAuth path.
+    CALENDAR_HOURS_WORKDAY_CONNECT: async () => { await connectCalendar(); return workdayCalendars(); },
     CALENDAR_HOURS_WORKDAY_EVENTS: () => workdayEvents(message),
     CALENDAR_HOURS_WORKDAY_SETUP: async () => {
       await chrome.tabs.create({ url: chrome.runtime.getURL("options.html#workday") });

@@ -11,11 +11,12 @@
   async function refresh() {
     try {
       const result = await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_API_STATUS" });
-      if (result?.connected) {
+      if (result?.connected && result.calendarListAccess) {
         connect.hidden = true;
-        show("Connected. Fast grid saves are ready.", "success");
+        show("Connected. Google Calendar is ready for title updates and Workday import. Choose your features in settings.", "success");
       } else if (result?.configured) {
-        show("Connect to enable fast grid saves, or open Calendar to start using the other features.");
+        show(result.connected ? "Reconnect once to share your connection with Workday import." : "Connect once for Google Calendar features, or open Calendar to start using title suggestions.");
+        connect.textContent = result.connected ? "Reconnect Google Calendar" : "Connect Google Calendar";
       } else {
         connect.hidden = true;
         show("Google connection is unavailable in this build. You can still use Calendar Hours without it.", "error");
@@ -32,7 +33,7 @@
       const result = await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_API_CONNECT" });
       if (!result?.connected) throw new Error(result?.reason || "Google Calendar did not connect");
       connect.hidden = true;
-      show("Connected. Fast grid saves are ready.", "success");
+      show("Connected. Google Calendar is ready for title updates and Workday import. Choose your features in settings.", "success");
     } catch (error) {
       show(`Could not connect: ${error.message}`, "error");
     } finally {

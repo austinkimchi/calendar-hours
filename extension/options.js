@@ -6,9 +6,6 @@
   const status = document.querySelector("#status");
   const replaceHelpButton = document.querySelector("#replace-help-button");
   const replaceHelp = document.querySelector("#replace-help");
-  const apiStatus = document.querySelector("#api-status");
-  const connectApi = document.querySelector("#connect-api");
-  const disconnectApi = document.querySelector("#disconnect-api");
   const names = Object.keys(core.defaults).filter(name => name !== "matchingPhrases");
   let minutesTemplateInitialized = false;
   let lastHoursUnit = core.defaults.unit;
@@ -129,19 +126,6 @@
     else saveTimer = setTimeout(() => { void saveSettings().catch(() => {}); }, 350);
   }
 
-  async function refreshApiStatus() {
-    if (!chrome.runtime?.sendMessage) return;
-    try {
-      const result = await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_API_STATUS" });
-      apiStatus.textContent = result.connected ? "Connected" : result.configured
-        ? "Connect to use fast saves" : "OAuth client unavailable for this build";
-      connectApi.hidden = result.connected || !result.configured;
-      disconnectApi.hidden = !result.connected;
-    } catch (error) {
-      apiStatus.textContent = `Connection status unavailable: ${error.message}`;
-    }
-  }
-
   chrome.storage.sync.get(null).then(saved => {
     const cfg = core.settingsFrom(saved);
     minutesTemplateInitialized = typeof saved.minutesTemplate === "string" && saved.minutesTemplate.includes("{value}");
@@ -155,37 +139,6 @@
     lastHoursUnit = cfg.unit;
     lastMinutesUnit = cfg.minutesUnit;
     preview();
-    void refreshApiStatus();
-  });
-
-  connectApi.addEventListener("click", async () => {
-    connectApi.disabled = true;
-    apiStatus.textContent = "Connecting…";
-    try {
-      const result = await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_API_CONNECT" });
-      if (!result?.connected) throw new Error(result?.reason || "Google Calendar did not connect");
-      form.elements.namedItem("apiSync").checked = true;
-      changed(true);
-      await refreshApiStatus();
-    } catch (error) {
-      apiStatus.textContent = `Could not connect: ${error.message}`;
-    } finally {
-      connectApi.disabled = false;
-    }
-  });
-
-  disconnectApi.addEventListener("click", async () => {
-    disconnectApi.disabled = true;
-    try {
-      await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_API_DISCONNECT" });
-      form.elements.namedItem("apiSync").checked = false;
-      changed(true);
-      await refreshApiStatus();
-    } catch (error) {
-      apiStatus.textContent = `Could not disconnect: ${error.message}`;
-    } finally {
-      disconnectApi.disabled = false;
-    }
   });
 
   form.elements.namedItem("minutesBelowHour").addEventListener("change", event => {

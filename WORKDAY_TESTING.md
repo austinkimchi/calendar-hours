@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-`npm test`: 89 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
+`npm test`: 95 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
 
 The new tests cover:
 
@@ -11,7 +11,8 @@ The new tests cover:
 - Actions defaults to Calendar on every opening. Arrow keys, Home/End, typeahead, and pointer hover keep the highlight and active descendant aligned; Enter activates only that option, including after Workday's delayed focus update.
 - First-use setup routing, revoked permissions, removed calendars, and invalid settings.
 - Trusted message senders; Google access tokens stay in the service worker.
-- Incremental calendar-list permission and preserving it on silent token renewal.
+- One shared authorization request for events and calendar-list permissions, with no forced repeat consent. Both permissions survive silent renewal, simultaneous connect requests share one window, and partial consent preserves the previous connection.
+- General connection changes refresh the Workday picker without another authorization flow or preference changes. Legacy connections upgrade only on request; disconnect blocks imports while preserving their saved choices.
 - Paginated Google Calendar reads with recurrence expansion and the displayed range's time-zone boundaries.
 - Day/week date extraction, previous dates, cross-year weeks, and DST query boundaries.
 - Exact minute times, lunch gaps, cancelled/all-day/future exclusions, duplicate reruns, source overlaps, and existing-entry conflicts.

@@ -12,9 +12,20 @@
       <div class="mark" aria-hidden="true">◷</div>
       <div><h1>Calendar Hours</h1><p>Choose when durations appear and how they look.</p></div>
     </header>
+    <section id="general" aria-labelledby="general-heading">
+      <h2 id="general-heading">General</h2>
+      <h3 class="help-label" data-help="google-connection-help" tabindex="0">Google Calendar</h3>
+      <p class="section-intro">One connection for title updates and Workday import.</p>
+      <div id="google-connection-help" class="info-panel" hidden>Connect once to let Calendar Hours view and edit calendar events and read your calendar list. These permissions are requested together and shared by all Calendar features. Each feature keeps its own on/off setting. Disconnecting removes access for all features.</div>
+      <div class="api-controls">
+        <button type="button" id="connect-api" class="secondary-button">Connect Google Calendar</button>
+        <button type="button" id="disconnect-api" class="secondary-button" hidden>Disconnect</button>
+      </div>
+      <p id="api-status" role="status">Checking connection…</p>
+    </section>
     <form id="settings">
-      <section aria-labelledby="general-heading">
-        <div class="heading-with-help"><h2 id="general-heading" class="help-label" data-help="matching-help" tabindex="0">Event titles</h2></div>
+      <section aria-labelledby="titles-heading">
+        <div class="heading-with-help"><h2 id="titles-heading" class="help-label" data-help="matching-help" tabindex="0">Event titles</h2></div>
         <div id="matching-help" class="info-panel" hidden>Add a word or phrase for each kind of event you want to recognize. Matching uses whole words or phrases and ignores capitalization.</div>
         <div class="rules-header"><span>Event title contains</span><span>Auto-update <button type="button" id="dynamic-help-button" class="info-button" aria-label="About automatic duration updates" aria-controls="dynamic-help" aria-expanded="false">i</button></span><span></span></div>
         <div id="dynamic-help" class="info-panel" hidden>Auto-update keeps the duration correct when you edit times or move or resize a matching one-time event. After a grid change, it saves the updated title through Google Calendar. Repeating events need manual review.</div>
@@ -81,12 +92,7 @@
         <div id="existing-help" class="info-panel" hidden>Applies to titles that already end in a duration, including one added with the typing shortcut or suggestion. Matching phrases use their own Auto-update switch. Grid changes save automatically; editor changes need Calendar's Save.</div>
         <h3>Saving changes</h3>
         <div class="check-with-help"><label class="check help-label" data-help="saving-help"><input type="checkbox" name="apiSync"> Use faster saves</label></div>
-        <div id="saving-help" class="info-panel" hidden>Connect Google Calendar to save without opening an editor tab. Calendar Hours checks that the new time has saved, then updates only the event title. If the connection is unavailable, it uses the regular editor method.</div>
-        <div class="api-controls">
-          <button type="button" id="connect-api" class="secondary-button">Connect Google Calendar</button>
-          <button type="button" id="disconnect-api" class="secondary-button" hidden>Disconnect</button>
-          <span id="api-status" role="status">Checking connection…</span>
-        </div>
+        <div id="saving-help" class="info-panel" hidden>Uses the shared Google Calendar connection in General to save without opening an editor tab. Calendar Hours checks that the new time has saved, then updates only the event title. If the connection is unavailable, it uses the regular editor method.</div>
       </section>
       <footer><button type="submit" class="primary-button">Save settings</button><span id="status" role="status">Changes save automatically.</span></footer>
     </form>
@@ -95,15 +101,15 @@
         <div class="heading-with-help"><h2 id="workday-heading" class="help-label" data-help="workday-setup-help" tabindex="0">Workday import <span class="dev-badge">Preview</span></h2></div>
         <p class="section-intro">In Workday, choose Actions → Auto-fill from Calendar.</p>
         <div id="workday-setup-help" class="info-panel" hidden>
-          <ol class="setup-steps"><li>Connect Google Calendar and choose your work calendar.</li><li>Enter a phrase to match event titles and choose the time zone shown in Workday.</li><li>Save, then open Workday's Enter Time page. Auto-fill from Calendar imports into the day or week you are viewing.</li></ol>
+          <ol class="setup-steps"><li>Connect Google Calendar in General, then choose your work calendar here.</li><li>Enter a phrase to match event titles and choose the time zone shown in Workday.</li><li>Save, then open Workday's Enter Time page. Auto-fill from Calendar imports into the day or week you are viewing.</li></ol>
           This feature is a developer preview.
         </div>
-        <div class="api-controls">
-          <button type="button" id="workday-connect" class="secondary-button">Connect Google Calendar</button>
-          <button type="button" id="workday-refresh" class="secondary-button">Refresh calendars</button>
+        <p id="workday-connection" role="status" hidden></p>
+        <a id="workday-manage-connection" class="connection-link" href="#general" hidden>Manage Google Calendar connection</a>
+        <div class="field-with-help">
+          <div class="field-heading calendar-heading"><label for="workday-calendar">Calendar</label><button type="button" id="workday-refresh" class="text-button">Refresh calendars</button></div>
+          <select id="workday-calendar" name="calendarId" required><option value="">Connect in General to choose a calendar</option></select>
         </div>
-        <p id="workday-connection" role="status">Checking calendar access…</p>
-        <label>Calendar <select name="calendarId" required><option value="">Connect to choose a calendar</option></select></label>
         <div class="field-with-help">
           <div class="field-heading"><label for="workday-phrase" class="help-label" data-help="workday-phrase-help">Event title contains</label></div>
           <input id="workday-phrase" name="keyword" maxlength="80" placeholder="e.g. SCU Block" required>
@@ -139,6 +145,7 @@
     </div>
   </template>
   <script src="settings-help.js"></script>
+  <script src="calendar-connection.js"></script>
   <script src="core.js"></script>
   <script src="options.js"></script>
   <script src="workday-core.js"></script>
