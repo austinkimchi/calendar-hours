@@ -39,7 +39,9 @@
       if (!date) return [];
       const sameDay = +start[1] === +end[1] && +start[2] === +end[2];
       return [{ date, start: +start[3] * 60 + +start[4], end: sameDay ? +end[3] * 60 + +end[4] : 1440,
-        type: e.querySelector(aid("calendarAppointmentTitle"))?.textContent.trim() || "", element: e }];
+        type: e.querySelector(aid("calendarAppointmentTitle"))?.textContent.trim() || "",
+        status: e.querySelector('[data-automation-icontype]')?.getAttribute("data-automation-icontype") || "",
+        eventId: e.getAttribute("data-automation-eventid") || "", element: e }];
     });
   }
   async function waitFor(test, message, timeout = 15000) {
@@ -66,6 +68,19 @@
   function normalizedClock(value) {
     return value.toUpperCase().replace(/\s/g, "").replace(/^0(?=\d:)/, "");
   }
+  function commentText(doc, descriptions = []) {
+    const notes = descriptions.map(description => {
+      // Calendar descriptions can contain rich text. A detached template keeps
+      // markup inert; only readable text is ever inserted into Workday.
+      const template = doc.createElement("template");
+      template.innerHTML = description;
+      template.content.querySelectorAll("script,style,iframe,object").forEach(e => e.remove());
+      template.content.querySelectorAll("br").forEach(e => e.replaceWith(doc.createTextNode("\n")));
+      template.content.querySelectorAll("p,div,li,blockquote,pre,h1,h2,h3,h4,h5,h6").forEach(e => e.append(doc.createTextNode("\n")));
+      return template.content.textContent.replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+    }).filter(Boolean);
+    return [...new Set(notes)].join("\n\n").slice(0, 1000);
+  }
   function assertView(doc, core, expected) {
     if (readView(doc, core).signature !== expected.signature) throw new Error("The displayed dates changed. Import stopped; already saved entries remain unsubmitted.");
   }
@@ -78,6 +93,29 @@
       button(result, "Discard").click();
       await waitFor(() => !dialog.isConnected && !result.isConnected, "Workday did not discard the unsaved draft");
     }
+  }
+  function updateTarget(doc, base, block, settings) {
+    const previous = block.previous;
+    const entries = readExisting(doc, base.dates);
+    const matches = entries.filter(e => e.eventId === previous.eventId);
+    const entry = matches[0];
+    if (matches.length !== 1 || entry.date !== previous.date || entry.start !== previous.start || entry.end !== previous.end ||
+        entry.type !== previous.type || entry.type !== settings.timeType || entry.status !== "Not Submitted") {
+      throw new Error("The existing Workday entry changed or is no longer a draft. Nothing was overwritten.");
+    }
+    const overlaps = entries.filter(e => e.date === block.date && e.start < block.end && e.end > block.start);
+    if (overlaps.length !== 1 || overlaps[0].eventId !== entry.eventId) throw new Error("The overlapping Workday entries changed. Correct this block manually.");
+    return entry;
+  }
+  async function updateBlock(doc, core, base, block, settings) {
+    if (!settings.updateOverlaps || !block.previous?.eventId) throw new Error("Enable Update overlapping entries before updating a Workday draft.");
+    assertView(doc, core, base);
+    if (doc.querySelector('[role="dialog"][aria-modal="true"]')) throw new Error("Close the open Workday dialog before importing");
+    const entry = updateTarget(doc, base, block, settings);
+    entry.element.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+    entry.element.click();
+    const dialog = await waitFor(() => [...doc.querySelectorAll('[role="dialog"]')].find(e => visible(e) && label(e) === "Enter Time"), "Workday did not open the existing time-entry form");
+    return saveBlockDialog(doc, core, base, block, settings, dialog, true);
   }
   async function createBlock(doc, core, base, block, settings) {
     assertView(doc, core, base);
@@ -103,11 +141,31 @@
         pointerId: 1, pointerType: "mouse", isPrimary: true }));
     }
     const dialog = await waitFor(() => [...doc.querySelectorAll('[role="dialog"]')].find(e => visible(e) && label(e) === "Enter Time"), "Workday did not open the time-entry form");
+    return saveBlockDialog(doc, core, base, block, settings, dialog);
+  }
+  async function saveBlockDialog(doc, core, base, block, settings, dialog, updating = false) {
     let saved = false;
     try {
+      await waitFor(() => {
+        try {
+          const start = field(dialog, "In"), end = field(dialog, "Out");
+          field(dialog, "Comment"); button(dialog, "Cancel"); button(dialog, "OK");
+          return !updating || (!!start.value && !!end.value && [...dialog.querySelectorAll(aid("promptOption"))].some(visible));
+        } catch { return false; }
+      }, "Workday's time-entry form did not finish loading. Nothing was saved.");
       const [year, month, day] = block.date.split("-").map(Number);
       if (!new RegExp(`(?<!\\d)${month}/${day}/${year}(?!\\d)`).test(dialog.textContent)) throw new Error("Workday opened a different date. Nothing was saved.");
-      if ([...dialog.querySelectorAll("button")].some(e => visible(e) && label(e) === "Delete")) throw new Error("Workday opened an existing entry. Nothing was changed.");
+      const existingDialog = [...dialog.querySelectorAll("button")].some(e => visible(e) && label(e) === "Delete");
+      const draftDialog = () => [...dialog.querySelectorAll(aid("promptOption"))].some(e => visible(e) && label(e) === "Not Submitted");
+      if (!updating && existingDialog) throw new Error("Workday opened an existing entry. Nothing was changed.");
+      if (updating) {
+        if (!existingDialog || !draftDialog()) throw new Error("Workday did not open an editable, unsubmitted entry. Nothing was changed.");
+        updateTarget(doc, base, block, settings);
+        if (normalizedClock(field(dialog, "In").value) !== normalizedClock(core.clock(block.previous.start)) ||
+            normalizedClock(field(dialog, "Out").value) !== normalizedClock(core.clock(block.previous.end))) {
+          throw new Error("Workday opened different entry times. Nothing was changed.");
+        }
+      }
       const typeList = [...dialog.querySelectorAll('[role="listbox"]')].find(e => label(e) === "items selected for Time Type");
       const selected = typeList?.querySelector('[role="option"]')?.textContent.trim();
       if (selected !== settings.timeType) throw new Error(`Workday selected ${selected || "no time type"}. Choose the matching Time Type in extension settings.`);
@@ -120,7 +178,11 @@
         const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === settings.outReason), "The configured Out Reason was not found");
         option.click();
       }
-      setInput(field(dialog, "Comment"), block.title.slice(0, 1000));
+      if (settings.importComments || !updating) {
+        const comment = settings.importComments ? commentText(doc, block.descriptions) : "";
+        setInput(field(dialog, "Comment"), comment);
+        if (field(dialog, "Comment").value !== comment) throw new Error("Workday did not accept the calendar description. Nothing was saved.");
+      }
       if (normalizedClock(field(dialog, "In").value) !== normalizedClock(core.clock(block.start)) ||
           normalizedClock(field(dialog, "Out").value) !== normalizedClock(core.clock(block.end))) throw new Error("Workday did not accept the exact calendar times");
       const amounts = [...dialog.querySelectorAll(aid("numericText"))].filter(visible);
@@ -131,11 +193,16 @@
           Math.abs(Number(amount[0].textContent.trim()) * 60 - (block.end - block.start)) < 0.001;
       }, "Workday did not confirm the calendar duration. Nothing was saved.");
       assertView(doc, core, base);
+      if (updating) {
+        updateTarget(doc, base, block, settings);
+        if (!draftDialog()) throw new Error("This entry is no longer an unsubmitted draft. Nothing was overwritten.");
+      }
       // Explicit allowlist: this adapter never clicks Review, Next, Submit or Delete.
       button(dialog, "OK").click(); saved = true;
       await waitFor(() => !dialog.isConnected, "Workday did not confirm this entry. Check the open form before retrying.");
-      await waitFor(() => readExisting(doc, base.dates).some(e => e.date === block.date && e.start === block.start && e.end === block.end && e.type === settings.timeType), "Workday closed the form but did not show the saved entry. Check the calendar before retrying.");
-      return "added";
+      await waitFor(() => readExisting(doc, base.dates).some(e => e.date === block.date && e.start === block.start && e.end === block.end && e.type === settings.timeType &&
+        (!updating || (e.eventId === block.previous.eventId && e.status === "Not Submitted"))), "Workday closed the form but did not show the saved entry. Check the calendar before retrying.");
+      return updating ? "updated" : "added";
     } catch (error) {
       if (!saved && dialog.isConnected) {
         try { await cancelDraft(doc, dialog); } catch { /* Keep an unfamiliar dialog for inspection. */ }
@@ -167,7 +234,7 @@
     }
     async function run() {
       if (busy) return; busy = true;
-      let added = 0;
+      let added = 0, updated = 0;
       try {
         const view = readView(doc, core);
         doc.querySelector(`${aid("calendarToolbar")} button[aria-label="Actions"][aria-expanded="true"]`)?.click();
@@ -182,17 +249,22 @@
         assertView(doc, core, view);
         const plan = core.plan({ events: response.events, dates: view.dates, settings: response.settings, existing: readExisting(doc, view.dates), core: titleCore });
         let already = plan.skipped.filter(e => e.reason === "already-entered").length;
+        for (const block of plan.update) {
+          showStatus(`Updating ${view.title}: ${updated + 1} of ${plan.update.length}…`);
+          await updateBlock(doc, core, view, block, response.settings);
+          updated++;
+        }
         for (const block of plan.add) {
           showStatus(`Importing ${view.title}: ${added + 1} of ${plan.add.length}…`);
           const result = await createBlock(doc, core, view, block, response.settings);
           if (result === "added") added++; else already++;
         }
         const future = plan.skipped.filter(e => e.reason === "future").length;
-        showStatus(`Calendar import: ${added} added, ${already} already entered${future ? `, ${future} future blocks skipped` : ""}.` +
-          (plan.conflicts.length ? ` ${plan.conflicts.length} overlapping blocks need manual correction; existing entries were kept.` : "") +
+        showStatus(`Calendar import: ${added} added, ${updated} updated, ${already} already entered${future ? `, ${future} future blocks skipped` : ""}.` +
+          (plan.conflicts.length ? ` ${plan.conflicts.length} overlapping ${plan.conflicts.length === 1 ? "block needs" : "blocks need"} manual correction; conflicting entries were kept.` : "") +
           (plan.warnings.length ? ` ${plan.warnings.join(" ")}` : "") + " Entries remain unsubmitted.");
       } catch (error) {
-        showStatus(`${added ? `${added} entries saved before stopping. ` : ""}${error.message}`);
+        showStatus(`${added || updated ? `${added} added, ${updated} updated before stopping. ` : ""}${error.message}`);
       } finally { busy = false; }
     }
     function enhanceMenu(menu) {
@@ -283,5 +355,5 @@
     new doc.defaultView.MutationObserver(inject).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "aria-labelledby", "aria-expanded", "aria-hidden", "role"] });
     inject();
   }
-  return { label, readView, readExisting, setInput, createBlock, install };
+  return { label, readView, readExisting, setInput, commentText, createBlock, updateBlock, install };
 });

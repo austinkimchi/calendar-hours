@@ -31,7 +31,9 @@
       timeZone: validZone(value.timeZone) ? value.timeZone : "",
       timeType: typeof value.timeType === "string" && value.timeType.trim() ? value.timeType.trim().slice(0, 80) : "Hours",
       outReason: typeof value.outReason === "string" && value.outReason.trim() ? value.outReason.trim().slice(0, 80) : "Out",
-      includeFuture: value.includeFuture === true
+      includeFuture: value.includeFuture === true,
+      updateOverlaps: value.updateOverlaps === true,
+      importComments: value.importComments === true
     };
   }
   function configured(value) {
@@ -99,7 +101,9 @@
         warnings.push(`${event.summary}: overnight, sub-minute or daylight-saving time block needs manual entry.`); continue;
       }
       if (!wanted.has(a.date)) continue;
-      blocks.push({ date: a.date, start: a.minute, end: b.minute, title: event.summary, startIso: event.start.dateTime, endIso: event.end.dateTime });
+      blocks.push({ date: a.date, start: a.minute, end: b.minute, title: event.summary,
+        descriptions: s.importComments && typeof event.description === "string" ? [event.description] : [],
+        startIso: event.start.dateTime, endIso: event.end.dateTime });
     }
     blocks.sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start || a.end - b.end);
     const merged = [];
@@ -108,17 +112,23 @@
       if (prev && prev.date === block.date && block.start < prev.end) {
         prev.end = Math.max(prev.end, block.end);
         if (prev.title !== block.title) prev.title = `${prev.title}; ${block.title}`.slice(0, 1000);
+        prev.descriptions = [...new Set([...prev.descriptions, ...block.descriptions])];
       } else merged.push({ ...block });
     }
-    const add = [], conflicts = [];
+    const add = [], update = [], conflicts = [];
+    const overlapsBlock = (a, b) => a.date === b.date && a.start < b.end && a.end > b.start;
     for (const block of merged) {
-      const overlaps = existing.filter(e => e.date === block.date && e.start < block.end && e.end > block.start);
-      if (overlaps.some(e => e.start === block.start && e.end === block.end && e.type === s.timeType)) {
+      const overlaps = existing.filter(e => overlapsBlock(e, block));
+      const entry = overlaps[0];
+      if (overlaps.length === 1 && entry.start === block.start && entry.end === block.end && entry.type === s.timeType) {
         skipped.push({ ...block, reason: "already-entered" });
+      } else if (s.updateOverlaps && overlaps.length === 1 && entry.type === s.timeType &&
+          entry.status === "Not Submitted" && entry.eventId && merged.filter(b => overlapsBlock(entry, b)).length === 1) {
+        update.push({ ...block, previous: { date: entry.date, start: entry.start, end: entry.end, type: entry.type, eventId: entry.eventId } });
       } else if (overlaps.length) conflicts.push(block);
       else add.push(block);
     }
-    return { add, skipped, conflicts, warnings, matched: merged.length };
+    return { add, update, skipped, conflicts, warnings, matched: merged.length };
   }
   return { settingsKey, settingsFrom, configured, validDate, validZone, addDays, parts, midnight, validateDates, datesFromLabels, clock, plan };
 });

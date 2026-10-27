@@ -35,7 +35,8 @@
       const params = new URLSearchParams({ timeMin, timeMax, singleEvents: "true", orderBy: "startTime", showDeleted: "false", maxResults: "2500" });
       if (pageToken) params.set("pageToken", pageToken);
       const data = await read(`/calendars/${encodeURIComponent(settings.calendarId)}/events?${params}`, accessToken, fetcher);
-      events.push(...(data.items || []).map(e => ({ summary: e.summary, status: e.status, start: e.start, end: e.end })));
+      events.push(...(data.items || []).map(e => ({ summary: e.summary, status: e.status, start: e.start, end: e.end,
+        ...(settings.importComments === true ? { description: typeof e.description === "string" ? e.description : "" } : {}) })));
       if (events.length > 10000) throw new Error("This range has too many events. Import one day at a time.");
       pageToken = data.nextPageToken;
     } while (pageToken);

@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-`npm test`: 80 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
+`npm test`: 88 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
 
 The new tests cover:
 
@@ -16,7 +16,9 @@ The new tests cover:
 - Day/week date extraction, previous dates, cross-year weeks, and DST query boundaries.
 - Exact minute times, lunch gaps, cancelled/all-day/future exclusions, duplicate reruns, source overlaps, and existing-entry conflicts.
 - Individual entry form saves; wrong-date/existing-entry dialogs and navigation changes stop before saving.
-- Workday zero-padded times, asynchronous duration calculation, and Discard Changes cleanup for unsaved drafts.
+- Optional one-to-one overlap updates edit unsubmitted drafts in place, recheck the target before saving, and skip the matching interval on rerun. Submitted/unknown statuses, different time types, split/merge ambiguity, and concurrent entry changes are rejected.
+- Comments start blank on new entries. Optional Calendar descriptions are converted from inert rich text to plain text; titles are never used as comments. Existing comments are preserved with the option off and replaced with the option on.
+- Workday zero-padded times, delayed edit-form fields/buttons, asynchronous duration calculation, and Discard Changes cleanup for unsaved drafts.
 - Explicitly no Review, Submit, Next or Delete action in the import adapter.
 
 ## Live browser verification
@@ -26,7 +28,9 @@ Verified on the English Workday Enter Time calendar using the approved developer
 - **Auto-fill from Calendar** appears first and is highlighted when Actions opens. Clicking Actions followed by Enter ran Calendar import. Arrow Down/Up navigated to Prior Week and back, Escape closed the menu, and reopening selected Calendar again.
 - First use shows setup guidance and opens the Workday section in extension settings. Google consent and settings were completed by the user because the browser-control policy excludes extension-settings URLs.
 - The configured current-week import saved the missing blocks through the normal individual form. Existing exact entries were skipped. All new entries visibly remained **Not Submitted**.
-- A second current-week run added zero duplicates. The saved blocks and their exact intervals survived a page reload. An opened saved entry confirmed its calendar-title comment and configured Out Reason.
+- A second current-week run added zero duplicates. The saved blocks and their exact intervals survived a page reload. An opened saved entry confirmed its configured Out Reason.
+- With Update overlapping entries enabled by the user, a changed Calendar start time updated the same existing draft in place. The entry retained its identifier and Not Submitted status, with no additional entry. The updated interval survived a page reload, and a keyboard-triggered rerun reported 0 added, 0 updated, and all four blocks already entered.
+- Description importing was left off for this live check. The new blank-comment default, preservation of existing comments, and optional description conversion/replacement are covered by automated form tests.
 - Day view requested just its displayed day and recognized that day's existing blocks. A separate empty Day-view grid probe opened a form for the correct displayed date and was canceled without saving.
 - Previous-week import used the previous displayed week, recognized its matching existing entries, and added no duplicates.
 - The observed grid requires a pointer/mouse down-up sequence on its hit target. Click-only activation does not open the form. The adapter scrolls the selected quarter-hour row into view before selecting it.

@@ -17,7 +17,11 @@ The `workday-integration` branch adds **Auto-fill from Calendar** as the first i
 
 Matching ignores case and uses the same whole-word/phrase mechanism as title formatting. Calendar start/end times are used without duration rounding; lunch gaps remain gaps. Only completed blocks are included by default, with an opt-in for unfinished/future blocks. Repeating calendar events are expanded into their instances.
 
-Exact existing entries are skipped on rerun. Other overlaps are reported and kept unchanged; this is an importer, not reconciliation of later edits or deleted calendar events. Overlapping source blocks are merged to avoid double-counting; adjacent blocks remain separate. Overnight, sub-minute and daylight-saving transition blocks require manual entry. A changed view or unexpected form stops the import. Successfully saved entries remain unsubmitted, including after a partial failure. **The extension never clicks Review or submits a time card.**
+Exact existing entries are skipped on rerun. Turn on **Update overlapping entries** to replace an overlapping, unsubmitted Workday draft's times with the Calendar block's times. Each update must match exactly one draft of the configured Time Type to one calendar block. Submitted entries, other time types, and overlaps involving multiple existing or calendar blocks remain for manual correction. The setting starts off. Deleted calendar events and blocks moved entirely outside their previous times do not remove old Workday entries.
+
+New entries have **blank comments by default**. **Import event descriptions as comments** optionally copies Google Calendar's Description field as plain text, up to 1,000 characters, when adding or updating an entry. With it off, updates preserve existing comments. With it on, the description replaces the comment, including clearing it when the description is empty. Event titles are used for matching, never as comments.
+
+Overlapping source blocks are merged to avoid double-counting; adjacent blocks remain separate. Overnight, sub-minute and daylight-saving transition blocks require manual entry. A changed view or unexpected form stops the import. Successfully saved entries remain unsubmitted, including after a partial failure. **The extension never clicks Review or submits a time card.**
 
 ## Features
 

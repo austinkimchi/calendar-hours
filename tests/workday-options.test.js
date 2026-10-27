@@ -46,3 +46,21 @@ test('choosing a calendar supports time zone aliases missing from the standard l
  assert.equal(f.form.elements.namedItem('timeZone').value, 'US/Pacific');
  f.dom.window.close();
 });
+
+test('overlap updates default off, save explicitly, and survive reopening settings', async () => {
+ const saved={enabled:true,calendarId:'work-test',keyword:'Work block',timeZone:'America/Los_Angeles'};
+ const f=await harness(true,saved);
+ const field=f.form.elements.namedItem('updateOverlaps');
+ assert.equal(field.checked,false);
+ assert.equal(f.form.elements.namedItem('importComments').checked,false);
+ field.click();
+ f.form.elements.namedItem('importComments').click();
+ f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));
+ await new Promise(resolve=>setTimeout(resolve,0));
+ assert.equal(f.writes[0].workdayIntegration.updateOverlaps,true);
+ assert.equal(f.writes[0].workdayIntegration.importComments,true);
+ const reopened=await harness(true,f.writes[0].workdayIntegration);
+ assert.equal(reopened.form.elements.namedItem('updateOverlaps').checked,true);
+ assert.equal(reopened.form.elements.namedItem('importComments').checked,true);
+ reopened.dom.window.close();f.dom.window.close();
+});
