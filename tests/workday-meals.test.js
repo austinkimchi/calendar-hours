@@ -94,3 +94,9 @@ test('meal descriptions belong to meal rows and default comments stay empty',()=
 test('a meal wholly inside a work gap is imported and suppresses automatic fallback',()=>{
  assert.deepEqual(times(plan([event('09:00','12:00'),event('13:00','17:00'),event('12:15','12:45','Lunch')],{autoMeal:true})),[[540,720,'Out'],[735,765,'Meal'],[780,1020,'Out']]);
 });
+test('completed meal in a gap is associated before unfinished work is excluded',()=>{
+ const args={events:[event('09:00','12:00'),event('12:15','12:45','Lunch'),event('13:00','17:00')],dates:[date],settings,core,now:Date.parse(`${date}T12:45:00-07:00`)};
+ const result=wd.plan(args);
+ assert.deepEqual(times(result),[[540,720,'Out'],[735,765,'Meal']]);
+ assert.equal(result.skipped.filter(b=>b.reason==='future').length,1);
+});

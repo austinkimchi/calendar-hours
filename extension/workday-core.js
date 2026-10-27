@@ -107,11 +107,11 @@
     }
     return result;
   }
-  function applyMeals(blocks, meals, settings, warnings) {
+  function applyMeals(blocks, meals, settings, warnings, allWork = blocks) {
     // Ignore unrelated meals outside the day's work span. A meal in a gap
     // between work blocks still belongs to that day and gets its own row.
     const breaks = union(meals, true).filter(meal => {
-      const day = blocks.filter(b => b.date === meal.date);
+      const day = allWork.filter(b => b.date === meal.date);
       return day.length && meal.start <= Math.max(...day.map(b => b.end)) && meal.end >= Math.min(...day.map(b => b.start));
     });
     for (const date of new Set(blocks.map(b => b.date))) {
@@ -153,7 +153,7 @@
     const s = settingsFrom(settings);
     if (!configured(s)) throw Object.assign(new Error("Finish Workday setup in Calendar Hours settings"), { needsSetup: true });
     const wanted = new Set(dates);
-    const blocks = [], meals = [], warnings = [], skipped = [];
+    const blocks = [], allWork = [], meals = [], warnings = [], skipped = [];
     for (const event of events) {
       const isMeal = s.calendarMeals && core.matchesAutoWords(event.summary || "", { matchingPhrases: s.mealWords.map(phrase => ({ phrase })) });
       const isWork = core.matchesAutoWords(event.summary || "", { matchingPhrases: [{ phrase: s.keyword }] });
@@ -164,7 +164,6 @@
         if (isMeal) throw new Error("A matching meal event has invalid times. Correct it in Calendar before importing.");
         warnings.push("A matching event has invalid times."); continue;
       }
-      if (!isMeal && !s.includeFuture && end > now) { skipped.push({ reason: "future", title: event.summary }); continue; }
       const a = parts(start, s.timeZone), b = parts(end, s.timeZone);
       if (a.date > dates.at(-1) || b.date < dates[0]) continue;
       const uniqueInstant = p => core.wallTimeInstant(core.parseCalendarDate(p.date),
@@ -176,11 +175,17 @@
         warnings.push(`${event.summary}: overnight, sub-minute or daylight-saving time block needs manual entry.`); continue;
       }
       if (!wanted.has(a.date)) continue;
+      if (!isMeal) {
+        // Associate completed meals with the full validated workday, even when
+        // its afternoon shift is not yet eligible for import.
+        allWork.push({ date: a.date, start: a.minute, end: b.minute });
+        if (!s.includeFuture && end > now) { skipped.push({ reason: "future", title: event.summary }); continue; }
+      }
       (isMeal ? meals : blocks).push({ date: a.date, start: a.minute, end: b.minute, title: event.summary,
         descriptions: s.importComments && typeof event.description === "string" ? [event.description] : [],
         startIso: event.start.dateTime, endIso: event.end.dateTime });
     }
-    const merged = applyMeals(union(blocks), meals, s, warnings).filter(block => {
+    const merged = applyMeals(union(blocks), meals, s, warnings, allWork).filter(block => {
       // Future meals may trim completed work, but are not themselves imported
       // until finished unless the user enables unfinished blocks.
       if (block.isMeal && !s.includeFuture && core.wallTimeInstant(core.parseCalendarDate(block.date),
