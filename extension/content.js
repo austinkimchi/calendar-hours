@@ -578,6 +578,10 @@
   }, true);
   document.addEventListener("click", event => {
     const button = event.target instanceof Element && event.target.closest('button,[role="button"]');
+    if (button?.textContent.trim() === "OK" && button.closest('[role="dialog"]')?.querySelector('input[aria-label="Event start time zone"]')) {
+      timeEditedFor = findEditor()?.title.value || null;
+      queueUpdate();
+    }
     if (button && (button.getAttribute("aria-label") === "Save" || button.textContent.trim() === "Save")) {
       applyPendingKeyword("keyword before Save");
     }
