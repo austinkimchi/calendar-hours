@@ -1,0 +1,4370 @@
+{
+  "measuredOn": "2026-10-27",
+  "entriesPerBatch": 4,
+  "description": "Existing draft probes; validate end +1 minute then restore; save original values only. Request totals exclude live UI repaint. No raw URLs, request bodies or identifiers retained.",
+  "strategyOrder": [
+    [
+      "naive",
+      "reuse-each",
+      "verify-end"
+    ],
+    [
+      "verify-end",
+      "reuse-each",
+      "naive"
+    ],
+    [
+      "reuse-each",
+      "naive",
+      "verify-end"
+    ]
+  ],
+  "nativeComparison": {
+    "successfulBatchSamples": 0,
+    "failedAttempts": 3,
+    "reason": "Timed out opening or initializing a form. Subsequent-form opening still failed after fractional-hours tolerance was corrected. Original values verified; failed runs excluded."
+  },
+  "trials": [
+    {
+      "round": 1,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 746.7,
+            "readCalendar": 532.5,
+            "save": 718.2,
+            "validateProbe": 468.5,
+            "validateRestore": 220.9,
+            "verifyCalendar": 937.4
+          },
+          "savedOriginalValues": true,
+          "total": 3627.2
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 383.5,
+            "readCalendar": 606.5,
+            "save": 789.3,
+            "validateProbe": 300.1,
+            "validateRestore": 206.4,
+            "verifyCalendar": 503.5
+          },
+          "savedOriginalValues": true,
+          "total": 2790.9
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 458.6,
+            "readCalendar": 508.8,
+            "save": 379.1,
+            "validateProbe": 287.2,
+            "validateRestore": 228.4,
+            "verifyCalendar": 497.1
+          },
+          "savedOriginalValues": true,
+          "total": 2360.5
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 411.2,
+            "readCalendar": 841.7,
+            "save": 445.9,
+            "validateProbe": 412.8,
+            "validateRestore": 259.8,
+            "verifyCalendar": 573.5
+          },
+          "savedOriginalValues": true,
+          "total": 2946
+        }
+      ],
+      "mode": "naive",
+      "requests": [
+        {
+          "bodyRead": 1.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.3,
+            "duration": 530.9,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 525.9
+          },
+          "status": 200,
+          "toHeaders": 530.1,
+          "total": 532.2
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 1.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.6,
+            "duration": 743.4,
+            "encodedBytes": 8687,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8987,
+            "ttfb": 735.5
+          },
+          "status": 200,
+          "toHeaders": 744.7,
+          "total": 746.3
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.3,
+            "duration": 453.9,
+            "encodedBytes": 408,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 708,
+            "ttfb": 444.7
+          },
+          "status": 200,
+          "toHeaders": 456.5,
+          "total": 457.1
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.6,
+            "duration": 218.2,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 211.4
+          },
+          "status": 200,
+          "toHeaders": 219.7,
+          "total": 219.9
+        },
+        {
+          "bodyRead": 1.1,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 9,
+            "duration": 715,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 703.9
+          },
+          "status": 200,
+          "toHeaders": 716.7,
+          "total": 718
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6,
+            "duration": 933.6,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 925.1
+          },
+          "status": 200,
+          "toHeaders": 935.6,
+          "total": 936.8
+        },
+        {
+          "bodyRead": 0.7,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.6,
+            "duration": 602.6,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 593.9
+          },
+          "status": 200,
+          "toHeaders": 604.7,
+          "total": 605.9
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.1,
+            "duration": 379.3,
+            "encodedBytes": 8676,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8976,
+            "ttfb": 371
+          },
+          "status": 200,
+          "toHeaders": 381.7,
+          "total": 382.8
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.4,
+            "duration": 292.9,
+            "encodedBytes": 409,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 709,
+            "ttfb": 286.6
+          },
+          "status": 200,
+          "toHeaders": 294.4,
+          "total": 294.7
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.6,
+            "duration": 203,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 195.2
+          },
+          "status": 200,
+          "toHeaders": 205.4,
+          "total": 205.8
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.9,
+            "duration": 786.4,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 776.7
+          },
+          "status": 200,
+          "toHeaders": 788.4,
+          "total": 789
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.7,
+            "duration": 499.9,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 490.5
+          },
+          "status": 200,
+          "toHeaders": 502,
+          "total": 503
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.8,
+            "duration": 505.1,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 495.2
+          },
+          "status": 200,
+          "toHeaders": 507.1,
+          "total": 508.3
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.8,
+            "duration": 455.1,
+            "encodedBytes": 8669,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8969,
+            "ttfb": 446.3
+          },
+          "status": 200,
+          "toHeaders": 457.4,
+          "total": 458.3
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.4,
+            "duration": 279,
+            "encodedBytes": 413,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 713,
+            "ttfb": 270.7
+          },
+          "status": 200,
+          "toHeaders": 281.5,
+          "total": 282.1
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.4,
+            "duration": 225.2,
+            "encodedBytes": 197,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 497,
+            "ttfb": 216.3
+          },
+          "status": 200,
+          "toHeaders": 227.3,
+          "total": 227.8
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.2,
+            "duration": 377,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 368
+          },
+          "status": 200,
+          "toHeaders": 378.8,
+          "total": 379
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.6,
+            "duration": 494.4,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 485.5
+          },
+          "status": 200,
+          "toHeaders": 495.8,
+          "total": 496.7
+        },
+        {
+          "bodyRead": 57.9,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.8,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 65.1,
+            "duration": 838.6,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 771
+          },
+          "status": 200,
+          "toHeaders": 782.5,
+          "total": 841.2
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.5,
+            "duration": 407.3,
+            "encodedBytes": 8659,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8959,
+            "ttfb": 396.9
+          },
+          "status": 200,
+          "toHeaders": 409.8,
+          "total": 410.7
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.7,
+            "duration": 405.8,
+            "encodedBytes": 417,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 717,
+            "ttfb": 396.7
+          },
+          "status": 200,
+          "toHeaders": 407.6,
+          "total": 408
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.3,
+            "duration": 257.5,
+            "encodedBytes": 202,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 502,
+            "ttfb": 251.6
+          },
+          "status": 200,
+          "toHeaders": 258.9,
+          "total": 259.2
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.3,
+            "duration": 443,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 428.8
+          },
+          "status": 200,
+          "toHeaders": 445,
+          "total": 445.6
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.2,
+            "duration": 571.1,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 565.7
+          },
+          "status": 200,
+          "toHeaders": 572.9,
+          "total": 573.3
+        }
+      ],
+      "total": 11724.9
+    },
+    {
+      "round": 1,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 395.7,
+            "save": 393.3,
+            "validateProbe": 312.4,
+            "validateRestore": 260,
+            "verifyCalendar": 536.1
+          },
+          "savedOriginalValues": true,
+          "total": 1898.8
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 404.3,
+            "save": 389.3,
+            "validateProbe": 294.3,
+            "validateRestore": 242.4,
+            "verifyCalendar": 574.2
+          },
+          "savedOriginalValues": true,
+          "total": 1905.4
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 564.6,
+            "save": 448.7,
+            "validateProbe": 380.7,
+            "validateRestore": 250.5,
+            "verifyCalendar": 499.4
+          },
+          "savedOriginalValues": true,
+          "total": 2144.9
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 403.3,
+            "save": 439.4,
+            "validateProbe": 313.9,
+            "validateRestore": 208.2,
+            "verifyCalendar": 527.6
+          },
+          "savedOriginalValues": true,
+          "total": 1893.2
+        }
+      ],
+      "entriesVerified": 4,
+      "mode": "reuse-each",
+      "phases": {
+        "readCalendar": 754.3
+      },
+      "requests": [
+        {
+          "bodyRead": 0.7,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.9,
+            "duration": 750.5,
+            "encodedBytes": 11835,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12135,
+            "ttfb": 740.7
+          },
+          "status": 200,
+          "toHeaders": 752.4,
+          "total": 753.8
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.1,
+            "duration": 392.2,
+            "encodedBytes": 8684,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8984,
+            "ttfb": 382.8
+          },
+          "status": 200,
+          "toHeaders": 394.4,
+          "total": 395.3
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.4,
+            "duration": 305.4,
+            "encodedBytes": 413,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 713,
+            "ttfb": 294.6
+          },
+          "status": 200,
+          "toHeaders": 307.4,
+          "total": 307.7
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.4,
+            "duration": 257.2,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 248.5
+          },
+          "status": 200,
+          "toHeaders": 259.1,
+          "total": 259.5
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.2,
+            "duration": 390.9,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 384.1
+          },
+          "status": 200,
+          "toHeaders": 392.6,
+          "total": 393
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4,
+            "duration": 533.1,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 525.5
+          },
+          "status": 200,
+          "toHeaders": 534.9,
+          "total": 535.8
+        },
+        {
+          "bodyRead": 1.2,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.4,
+            "duration": 402.6,
+            "encodedBytes": 8677,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8977,
+            "ttfb": 395.9
+          },
+          "status": 200,
+          "toHeaders": 402.4,
+          "total": 404
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.4,
+            "duration": 288.1,
+            "encodedBytes": 411,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 711,
+            "ttfb": 282.7
+          },
+          "status": 200,
+          "toHeaders": 289.6,
+          "total": 289.9
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.5,
+            "duration": 239,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 230.1
+          },
+          "status": 200,
+          "toHeaders": 241.3,
+          "total": 241.8
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.1,
+            "duration": 387.6,
+            "encodedBytes": 4374,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4674,
+            "ttfb": 382.1
+          },
+          "status": 200,
+          "toHeaders": 388.8,
+          "total": 389.1
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 8.2,
+            "duration": 572,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 562
+          },
+          "status": 200,
+          "toHeaders": 572.7,
+          "total": 573.7
+        },
+        {
+          "bodyRead": 0,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 1.7,
+            "duration": 563.1,
+            "encodedBytes": 8671,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8971,
+            "ttfb": 558.7
+          },
+          "status": 200,
+          "toHeaders": 564.1,
+          "total": 564.3
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.9,
+            "duration": 374.3,
+            "encodedBytes": 412,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 712,
+            "ttfb": 368
+          },
+          "status": 200,
+          "toHeaders": 376.1,
+          "total": 376.6
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.3,
+            "duration": 246.7,
+            "encodedBytes": 200,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 500,
+            "ttfb": 240.5
+          },
+          "status": 200,
+          "toHeaders": 249.5,
+          "total": 250
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.5,
+            "duration": 446.4,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 441.2
+          },
+          "status": 200,
+          "toHeaders": 448.1,
+          "total": 448.4
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.7,
+            "duration": 489.6,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 484.5
+          },
+          "status": 200,
+          "toHeaders": 498.8,
+          "total": 499.3
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 1.9,
+            "duration": 402,
+            "encodedBytes": 8660,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8960,
+            "ttfb": 398.2
+          },
+          "status": 200,
+          "toHeaders": 402.9,
+          "total": 403.2
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 9.2,
+            "duration": 307.6,
+            "encodedBytes": 415,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 715,
+            "ttfb": 297.2
+          },
+          "status": 200,
+          "toHeaders": 308.4,
+          "total": 308.8
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.8,
+            "duration": 203.9,
+            "encodedBytes": 202,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 502,
+            "ttfb": 198.3
+          },
+          "status": 200,
+          "toHeaders": 207.4,
+          "total": 207.7
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.6,
+            "duration": 436.7,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 428.3
+          },
+          "status": 200,
+          "toHeaders": 438.7,
+          "total": 439.2
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.8,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.3,
+            "duration": 524,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 516.1
+          },
+          "status": 200,
+          "toHeaders": 525.9,
+          "total": 527
+        }
+      ],
+      "savedOriginalValues": true,
+      "total": 8597.2,
+      "verification": "each"
+    },
+    {
+      "round": 1,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 411.8,
+            "save": 404.6,
+            "validateProbe": 318.6,
+            "validateRestore": 218.1
+          },
+          "savedOriginalValues": true,
+          "total": 1353.9
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 431.6,
+            "save": 413.3,
+            "validateProbe": 312.7,
+            "validateRestore": 243.5
+          },
+          "savedOriginalValues": true,
+          "total": 1401.5
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 431.6,
+            "save": 398.7,
+            "validateProbe": 292.3,
+            "validateRestore": 221.4
+          },
+          "savedOriginalValues": true,
+          "total": 1345
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 414.7,
+            "save": 440,
+            "validateProbe": 291.3,
+            "validateRestore": 224.3
+          },
+          "savedOriginalValues": true,
+          "total": 1371.5
+        }
+      ],
+      "entriesVerified": 4,
+      "mode": "verify-end",
+      "phases": {
+        "readCalendar": 596,
+        "verifyCalendar": 506.5
+      },
+      "requests": [
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.8,
+            "duration": 593.5,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 586.4
+          },
+          "status": 200,
+          "toHeaders": 594.9,
+          "total": 595.6
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.9,
+            "duration": 409.4,
+            "encodedBytes": 8687,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8987,
+            "ttfb": 404
+          },
+          "status": 200,
+          "toHeaders": 410.8,
+          "total": 411.6
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.6,
+            "duration": 311.2,
+            "encodedBytes": 406,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 706,
+            "ttfb": 302.5
+          },
+          "status": 200,
+          "toHeaders": 313.5,
+          "total": 313.8
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.8,
+            "duration": 215.5,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 208
+          },
+          "status": 200,
+          "toHeaders": 217.3,
+          "total": 217.6
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 1.8,
+            "duration": 403.3,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 398.3
+          },
+          "status": 200,
+          "toHeaders": 404.2,
+          "total": 404.3
+        },
+        {
+          "bodyRead": 0,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2,
+            "duration": 429.9,
+            "encodedBytes": 8676,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8976,
+            "ttfb": 426.6
+          },
+          "status": 200,
+          "toHeaders": 430.9,
+          "total": 431.3
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.4,
+            "duration": 307.2,
+            "encodedBytes": 413,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 713,
+            "ttfb": 301
+          },
+          "status": 200,
+          "toHeaders": 308.8,
+          "total": 309.2
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 10.8,
+            "duration": 242,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 229.6
+          },
+          "status": 200,
+          "toHeaders": 242.9,
+          "total": 243.2
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.2,
+            "duration": 410.5,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 403.1
+          },
+          "status": 200,
+          "toHeaders": 412.4,
+          "total": 413.2
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.5,
+            "duration": 428.1,
+            "encodedBytes": 8669,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8969,
+            "ttfb": 420.6
+          },
+          "status": 200,
+          "toHeaders": 430.2,
+          "total": 431.3
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.1,
+            "duration": 284.2,
+            "encodedBytes": 414,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 714,
+            "ttfb": 275.6
+          },
+          "status": 200,
+          "toHeaders": 286.5,
+          "total": 287.2
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.5,
+            "duration": 217.6,
+            "encodedBytes": 197,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 497,
+            "ttfb": 208.8
+          },
+          "status": 200,
+          "toHeaders": 220,
+          "total": 220.4
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.1,
+            "duration": 395.5,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 385.8
+          },
+          "status": 200,
+          "toHeaders": 397.7,
+          "total": 398.4
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.3,
+            "duration": 411.1,
+            "encodedBytes": 8659,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8959,
+            "ttfb": 401.5
+          },
+          "status": 200,
+          "toHeaders": 413.5,
+          "total": 414.4
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.3,
+            "duration": 282,
+            "encodedBytes": 417,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 717,
+            "ttfb": 273.7
+          },
+          "status": 200,
+          "toHeaders": 284.3,
+          "total": 284.9
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.7,
+            "duration": 220.4,
+            "encodedBytes": 201,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 501,
+            "ttfb": 211.3
+          },
+          "status": 200,
+          "toHeaders": 223,
+          "total": 223.5
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.7,
+            "duration": 437.1,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 429.3
+          },
+          "status": 200,
+          "toHeaders": 438.8,
+          "total": 439.6
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6,
+            "duration": 502.8,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 493.9
+          },
+          "status": 200,
+          "toHeaders": 505,
+          "total": 506.1
+        }
+      ],
+      "savedOriginalValues": true,
+      "total": 6574.8,
+      "verification": "end"
+    },
+    {
+      "round": 2,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 442,
+            "save": 400.2,
+            "validateProbe": 300.4,
+            "validateRestore": 234.5
+          },
+          "savedOriginalValues": true,
+          "total": 1378.3
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 388.9,
+            "save": 372.4,
+            "validateProbe": 298.9,
+            "validateRestore": 221.8
+          },
+          "savedOriginalValues": true,
+          "total": 1283
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 401.3,
+            "save": 404.1,
+            "validateProbe": 313.3,
+            "validateRestore": 216.1
+          },
+          "savedOriginalValues": true,
+          "total": 1336
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 415.5,
+            "save": 373.7,
+            "validateProbe": 301.1,
+            "validateRestore": 215.1
+          },
+          "savedOriginalValues": true,
+          "total": 1306.3
+        }
+      ],
+      "entriesVerified": 4,
+      "mode": "verify-end",
+      "phases": {
+        "readCalendar": 551.4,
+        "verifyCalendar": 501.2
+      },
+      "requests": [
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.8,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 8.3,
+            "duration": 547.4,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 535.4
+          },
+          "status": 200,
+          "toHeaders": 549.6,
+          "total": 550.9
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.8,
+            "duration": 438.3,
+            "encodedBytes": 8686,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8986,
+            "ttfb": 429.3
+          },
+          "status": 200,
+          "toHeaders": 440.7,
+          "total": 441.8
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5,
+            "duration": 291.1,
+            "encodedBytes": 406,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 706,
+            "ttfb": 283
+          },
+          "status": 200,
+          "toHeaders": 293.1,
+          "total": 293.5
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.7,
+            "duration": 231.1,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 221.9
+          },
+          "status": 200,
+          "toHeaders": 233.2,
+          "total": 233.7
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.6,
+            "duration": 396.7,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 386.2
+          },
+          "status": 200,
+          "toHeaders": 399.1,
+          "total": 399.8
+        },
+        {
+          "bodyRead": 0.7,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.8,
+            "duration": 385.1,
+            "encodedBytes": 8676,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8976,
+            "ttfb": 376.1
+          },
+          "status": 200,
+          "toHeaders": 387.6,
+          "total": 388.6
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.4,
+            "duration": 289.2,
+            "encodedBytes": 412,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 712,
+            "ttfb": 280.8
+          },
+          "status": 200,
+          "toHeaders": 291.7,
+          "total": 292.3
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.7,
+            "duration": 218.6,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 207.8
+          },
+          "status": 200,
+          "toHeaders": 220.8,
+          "total": 221.1
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.4,
+            "duration": 369.7,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 361.3
+          },
+          "status": 200,
+          "toHeaders": 371.5,
+          "total": 372.1
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.5,
+            "duration": 398.2,
+            "encodedBytes": 8668,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8968,
+            "ttfb": 388.5
+          },
+          "status": 200,
+          "toHeaders": 399.8,
+          "total": 401
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.3,
+            "duration": 304.8,
+            "encodedBytes": 412,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 712,
+            "ttfb": 296.6
+          },
+          "status": 200,
+          "toHeaders": 307.1,
+          "total": 307.5
+        },
+        {
+          "bodyRead": 0.7,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.8,
+            "duration": 212,
+            "encodedBytes": 200,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 500,
+            "ttfb": 202.9
+          },
+          "status": 200,
+          "toHeaders": 214.7,
+          "total": 215.5
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.4,
+            "duration": 401.2,
+            "encodedBytes": 4374,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4674,
+            "ttfb": 390.9
+          },
+          "status": 200,
+          "toHeaders": 402.9,
+          "total": 403.6
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.4,
+            "duration": 412.7,
+            "encodedBytes": 8659,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8959,
+            "ttfb": 401.9
+          },
+          "status": 200,
+          "toHeaders": 414.7,
+          "total": 415.3
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.9,
+            "duration": 292.7,
+            "encodedBytes": 413,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 713,
+            "ttfb": 284.1
+          },
+          "status": 200,
+          "toHeaders": 295.1,
+          "total": 295.5
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.9,
+            "duration": 212.7,
+            "encodedBytes": 202,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 502,
+            "ttfb": 204.5
+          },
+          "status": 200,
+          "toHeaders": 214.2,
+          "total": 214.5
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.6,
+            "duration": 371,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 361.1
+          },
+          "status": 200,
+          "toHeaders": 372.9,
+          "total": 373.3
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7,
+            "duration": 498,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 487.8
+          },
+          "status": 200,
+          "toHeaders": 499.6,
+          "total": 500.7
+        }
+      ],
+      "savedOriginalValues": true,
+      "total": 6357,
+      "verification": "end"
+    },
+    {
+      "round": 2,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 400,
+            "save": 375.8,
+            "validateProbe": 308.1,
+            "validateRestore": 279.3,
+            "verifyCalendar": 526.6
+          },
+          "savedOriginalValues": true,
+          "total": 1891.2
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 514.6,
+            "save": 403.9,
+            "validateProbe": 302,
+            "validateRestore": 235.2,
+            "verifyCalendar": 500
+          },
+          "savedOriginalValues": true,
+          "total": 1956.7
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 462.1,
+            "save": 511.6,
+            "validateProbe": 323.1,
+            "validateRestore": 221.1,
+            "verifyCalendar": 656.1
+          },
+          "savedOriginalValues": true,
+          "total": 2175.4
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 441,
+            "save": 450.2,
+            "validateProbe": 332.6,
+            "validateRestore": 224.1,
+            "verifyCalendar": 533
+          },
+          "savedOriginalValues": true,
+          "total": 1981.7
+        }
+      ],
+      "entriesVerified": 4,
+      "mode": "reuse-each",
+      "phases": {
+        "readCalendar": 501.1
+      },
+      "requests": [
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.4,
+            "duration": 497.3,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 488.8
+          },
+          "status": 200,
+          "toHeaders": 499.5,
+          "total": 500.6
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.8,
+            "duration": 396.4,
+            "encodedBytes": 8685,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8985,
+            "ttfb": 387.5
+          },
+          "status": 200,
+          "toHeaders": 398.7,
+          "total": 399.7
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.3,
+            "duration": 301,
+            "encodedBytes": 407,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 707,
+            "ttfb": 294.2
+          },
+          "status": 200,
+          "toHeaders": 303,
+          "total": 303.3
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.2,
+            "duration": 277.3,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 270.1
+          },
+          "status": 200,
+          "toHeaders": 278.6,
+          "total": 278.8
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.6,
+            "duration": 373.2,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 364.8
+          },
+          "status": 200,
+          "toHeaders": 375.1,
+          "total": 375.6
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 8.6,
+            "duration": 523,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 511.7
+          },
+          "status": 200,
+          "toHeaders": 525,
+          "total": 526.1
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.5,
+            "duration": 510.8,
+            "encodedBytes": 8675,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8975,
+            "ttfb": 501
+          },
+          "status": 200,
+          "toHeaders": 513.5,
+          "total": 514.3
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.2,
+            "duration": 294,
+            "encodedBytes": 412,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 712,
+            "ttfb": 285.1
+          },
+          "status": 200,
+          "toHeaders": 297,
+          "total": 297.5
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5,
+            "duration": 232.7,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 224.1
+          },
+          "status": 200,
+          "toHeaders": 234.3,
+          "total": 234.6
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.6,
+            "duration": 401.9,
+            "encodedBytes": 4374,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4674,
+            "ttfb": 396.8
+          },
+          "status": 200,
+          "toHeaders": 403.4,
+          "total": 403.7
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5,
+            "duration": 497,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 489.8
+          },
+          "status": 200,
+          "toHeaders": 498.4,
+          "total": 499.5
+        },
+        {
+          "bodyRead": 0.8,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.8,
+            "duration": 458.2,
+            "encodedBytes": 8669,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8969,
+            "ttfb": 448.1
+          },
+          "status": 200,
+          "toHeaders": 460.7,
+          "total": 461.9
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.7,
+            "duration": 315.1,
+            "encodedBytes": 419,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 719,
+            "ttfb": 307.1
+          },
+          "status": 200,
+          "toHeaders": 317.3,
+          "total": 318
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.3,
+            "duration": 219,
+            "encodedBytes": 200,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 500,
+            "ttfb": 211.4
+          },
+          "status": 200,
+          "toHeaders": 220.4,
+          "total": 220.6
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4,
+            "duration": 508.7,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 502.6
+          },
+          "status": 200,
+          "toHeaders": 510.8,
+          "total": 511.3
+        },
+        {
+          "bodyRead": 1.1,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 9.1,
+            "duration": 653,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 640.5
+          },
+          "status": 200,
+          "toHeaders": 654.2,
+          "total": 655.6
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.2,
+            "duration": 439.2,
+            "encodedBytes": 8658,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8958,
+            "ttfb": 419.9
+          },
+          "status": 200,
+          "toHeaders": 440.4,
+          "total": 440.7
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 1.4,
+            "duration": 329.5,
+            "encodedBytes": 417,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 717,
+            "ttfb": 326.3
+          },
+          "status": 200,
+          "toHeaders": 330.3,
+          "total": 330.5
+        },
+        {
+          "bodyRead": 0,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 1.7,
+            "duration": 222.8,
+            "encodedBytes": 202,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 502,
+            "ttfb": 219.7
+          },
+          "status": 200,
+          "toHeaders": 223.6,
+          "total": 223.6
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.6,
+            "duration": 447.7,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 439.7
+          },
+          "status": 200,
+          "toHeaders": 449.6,
+          "total": 450
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.4,
+            "duration": 530.4,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 522.9
+          },
+          "status": 200,
+          "toHeaders": 531.8,
+          "total": 532.6
+        }
+      ],
+      "savedOriginalValues": true,
+      "total": 8506.5,
+      "verification": "each"
+    },
+    {
+      "round": 2,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 395.3,
+            "readCalendar": 533.5,
+            "save": 406.3,
+            "validateProbe": 296.7,
+            "validateRestore": 216,
+            "verifyCalendar": 510.1
+          },
+          "savedOriginalValues": true,
+          "total": 2359.2
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 387,
+            "readCalendar": 516.4,
+            "save": 418.1,
+            "validateProbe": 347.5,
+            "validateRestore": 270.3,
+            "verifyCalendar": 509.5
+          },
+          "savedOriginalValues": true,
+          "total": 2449.6
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 478.9,
+            "readCalendar": 517.9,
+            "save": 414.3,
+            "validateProbe": 297.7,
+            "validateRestore": 237.8,
+            "verifyCalendar": 655.6
+          },
+          "savedOriginalValues": true,
+          "total": 2603.4
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 375.2,
+            "readCalendar": 507,
+            "save": 513.5,
+            "validateProbe": 294.7,
+            "validateRestore": 201.6,
+            "verifyCalendar": 578.4
+          },
+          "savedOriginalValues": true,
+          "total": 2471.8
+        }
+      ],
+      "mode": "naive",
+      "requests": [
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.6,
+            "duration": 529.9,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 520.7
+          },
+          "status": 200,
+          "toHeaders": 531.8,
+          "total": 532.9
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.6,
+            "duration": 392.8,
+            "encodedBytes": 8689,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8989,
+            "ttfb": 386.9
+          },
+          "status": 200,
+          "toHeaders": 394.1,
+          "total": 394.9
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.5,
+            "duration": 289.7,
+            "encodedBytes": 411,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 711,
+            "ttfb": 283
+          },
+          "status": 200,
+          "toHeaders": 291.4,
+          "total": 291.6
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.6,
+            "duration": 212.8,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 204.9
+          },
+          "status": 200,
+          "toHeaders": 214.7,
+          "total": 215.3
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.5,
+            "duration": 402.6,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 391.7
+          },
+          "status": 200,
+          "toHeaders": 405.3,
+          "total": 405.9
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.7,
+            "duration": 505.9,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 496.9
+          },
+          "status": 200,
+          "toHeaders": 508.2,
+          "total": 509.4
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.2,
+            "duration": 512.8,
+            "encodedBytes": 11834,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12134,
+            "ttfb": 502.8
+          },
+          "status": 200,
+          "toHeaders": 515,
+          "total": 516
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.4,
+            "duration": 384.2,
+            "encodedBytes": 8670,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8970,
+            "ttfb": 375.6
+          },
+          "status": 200,
+          "toHeaders": 386.2,
+          "total": 386.7
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.7,
+            "duration": 338.8,
+            "encodedBytes": 409,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 709,
+            "ttfb": 329.8
+          },
+          "status": 200,
+          "toHeaders": 340.7,
+          "total": 341.2
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 8.7,
+            "duration": 268,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 256.3
+          },
+          "status": 200,
+          "toHeaders": 269.3,
+          "total": 269.6
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.6,
+            "duration": 415.5,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 405.3
+          },
+          "status": 200,
+          "toHeaders": 417.4,
+          "total": 417.8
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.3,
+            "duration": 506.3,
+            "encodedBytes": 11835,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12135,
+            "ttfb": 497
+          },
+          "status": 200,
+          "toHeaders": 508.2,
+          "total": 509.1
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.2,
+            "duration": 514.5,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 507.1
+          },
+          "status": 200,
+          "toHeaders": 516.6,
+          "total": 517.5
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7,
+            "duration": 475.7,
+            "encodedBytes": 8670,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8970,
+            "ttfb": 465.8
+          },
+          "status": 200,
+          "toHeaders": 477.9,
+          "total": 478.7
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.3,
+            "duration": 289.9,
+            "encodedBytes": 412,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 712,
+            "ttfb": 280.2
+          },
+          "status": 200,
+          "toHeaders": 292.3,
+          "total": 292.8
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5,
+            "duration": 234.3,
+            "encodedBytes": 200,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 500,
+            "ttfb": 226.5
+          },
+          "status": 200,
+          "toHeaders": 236.7,
+          "total": 237.1
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.6,
+            "duration": 411.6,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 402.4
+          },
+          "status": 200,
+          "toHeaders": 413.6,
+          "total": 414
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.3,
+            "duration": 652.1,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 642.2
+          },
+          "status": 200,
+          "toHeaders": 654,
+          "total": 655.1
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.7,
+            "duration": 503.3,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 493.7
+          },
+          "status": 200,
+          "toHeaders": 505.3,
+          "total": 506.5
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.5,
+            "duration": 371.2,
+            "encodedBytes": 8660,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8960,
+            "ttfb": 362.9
+          },
+          "status": 200,
+          "toHeaders": 374.3,
+          "total": 375.1
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.8,
+            "duration": 287.2,
+            "encodedBytes": 414,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 714,
+            "ttfb": 279.7
+          },
+          "status": 200,
+          "toHeaders": 289,
+          "total": 289.4
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.6,
+            "duration": 198.9,
+            "encodedBytes": 202,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 502,
+            "ttfb": 190.9
+          },
+          "status": 200,
+          "toHeaders": 200.9,
+          "total": 201.1
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.9,
+            "duration": 511.7,
+            "encodedBytes": 4374,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4674,
+            "ttfb": 501.2
+          },
+          "status": 200,
+          "toHeaders": 512.8,
+          "total": 513.3
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.2,
+            "duration": 575.3,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 568
+          },
+          "status": 200,
+          "toHeaders": 577.1,
+          "total": 577.9
+        }
+      ],
+      "total": 9884.3
+    },
+    {
+      "round": 3,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 422.6,
+            "save": 390.7,
+            "validateProbe": 314.9,
+            "validateRestore": 220.5,
+            "verifyCalendar": 513.3
+          },
+          "savedOriginalValues": true,
+          "total": 1863.3
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 396.1,
+            "save": 397.4,
+            "validateProbe": 321.5,
+            "validateRestore": 219.1,
+            "verifyCalendar": 555.3
+          },
+          "savedOriginalValues": true,
+          "total": 1890.4
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 398.2,
+            "save": 383.2,
+            "validateProbe": 299.4,
+            "validateRestore": 235.6,
+            "verifyCalendar": 574.1
+          },
+          "savedOriginalValues": true,
+          "total": 1891.6
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 435.6,
+            "save": 517,
+            "validateProbe": 294.9,
+            "validateRestore": 342.5,
+            "verifyCalendar": 641.2
+          },
+          "savedOriginalValues": true,
+          "total": 2232.4
+        }
+      ],
+      "entriesVerified": 4,
+      "mode": "reuse-each",
+      "phases": {
+        "readCalendar": 540.9
+      },
+      "requests": [
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 1.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 8.9,
+            "duration": 537.4,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 524.5
+          },
+          "status": 200,
+          "toHeaders": 538.9,
+          "total": 540.4
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 0.9,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 10.9,
+            "duration": 418.8,
+            "encodedBytes": 8684,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8984,
+            "ttfb": 404.6
+          },
+          "status": 200,
+          "toHeaders": 421.4,
+          "total": 422.4
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.2,
+            "duration": 306.7,
+            "encodedBytes": 411,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 711,
+            "ttfb": 296.7
+          },
+          "status": 200,
+          "toHeaders": 308.9,
+          "total": 309.4
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.5,
+            "duration": 218.1,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 207.5
+          },
+          "status": 200,
+          "toHeaders": 219,
+          "total": 219.7
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.9,
+            "duration": 387.5,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 378.2
+          },
+          "status": 200,
+          "toHeaders": 389.8,
+          "total": 390.5
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.3,
+            "duration": 510.4,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 499.8
+          },
+          "status": 200,
+          "toHeaders": 511.6,
+          "total": 512.7
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.4,
+            "duration": 392.1,
+            "encodedBytes": 8677,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8977,
+            "ttfb": 383.3
+          },
+          "status": 200,
+          "toHeaders": 395.1,
+          "total": 395.8
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.3,
+            "duration": 314.4,
+            "encodedBytes": 409,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 709,
+            "ttfb": 306.1
+          },
+          "status": 200,
+          "toHeaders": 317.2,
+          "total": 317.6
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.7,
+            "duration": 215.7,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 207.1
+          },
+          "status": 200,
+          "toHeaders": 217.9,
+          "total": 218.4
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.5,
+            "duration": 393.8,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 385.3
+          },
+          "status": 200,
+          "toHeaders": 396.2,
+          "total": 396.9
+        },
+        {
+          "bodyRead": 1,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5,
+            "duration": 551.2,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 542.8
+          },
+          "status": 200,
+          "toHeaders": 553.2,
+          "total": 554.7
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 9.5,
+            "duration": 395.8,
+            "encodedBytes": 8671,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8971,
+            "ttfb": 383.9
+          },
+          "status": 200,
+          "toHeaders": 397.1,
+          "total": 397.9
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.5,
+            "duration": 292.3,
+            "encodedBytes": 413,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 713,
+            "ttfb": 285.5
+          },
+          "status": 200,
+          "toHeaders": 293.9,
+          "total": 294.2
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.2,
+            "duration": 232.2,
+            "encodedBytes": 200,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 500,
+            "ttfb": 225.5
+          },
+          "status": 200,
+          "toHeaders": 234.4,
+          "total": 235
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.3,
+            "duration": 381.1,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 375.7
+          },
+          "status": 200,
+          "toHeaders": 382.5,
+          "total": 382.7
+        },
+        {
+          "bodyRead": 0.8,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.1,
+            "duration": 570.4,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 561.4
+          },
+          "status": 200,
+          "toHeaders": 572.2,
+          "total": 573.5
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 8.1,
+            "duration": 432.6,
+            "encodedBytes": 8659,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8959,
+            "ttfb": 421.9
+          },
+          "status": 200,
+          "toHeaders": 434.5,
+          "total": 435.3
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.7,
+            "duration": 286.5,
+            "encodedBytes": 415,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 715,
+            "ttfb": 277.4
+          },
+          "status": 200,
+          "toHeaders": 288.6,
+          "total": 289.2
+        },
+        {
+          "bodyRead": 0.1,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 1.4,
+            "duration": 341,
+            "encodedBytes": 202,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 502,
+            "ttfb": 336.6
+          },
+          "status": 200,
+          "toHeaders": 342,
+          "total": 342.1
+        },
+        {
+          "bodyRead": 1.1,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.8,
+            "duration": 512.9,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 507
+          },
+          "status": 200,
+          "toHeaders": 515.4,
+          "total": 516.7
+        },
+        {
+          "bodyRead": 0.8,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.5,
+            "duration": 637,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 628
+          },
+          "status": 200,
+          "toHeaders": 639.4,
+          "total": 640.7
+        }
+      ],
+      "savedOriginalValues": true,
+      "total": 8419.2,
+      "verification": "each"
+    },
+    {
+      "round": 3,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 393.1,
+            "readCalendar": 588.4,
+            "save": 395.3,
+            "validateProbe": 279.4,
+            "validateRestore": 259.6,
+            "verifyCalendar": 526.7
+          },
+          "savedOriginalValues": true,
+          "total": 2443.9
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 403.1,
+            "readCalendar": 487.8,
+            "save": 425.4,
+            "validateProbe": 314.4,
+            "validateRestore": 221.6,
+            "verifyCalendar": 506.1
+          },
+          "savedOriginalValues": true,
+          "total": 2359.9
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 387.8,
+            "readCalendar": 487.7,
+            "save": 383.1,
+            "validateProbe": 293.2,
+            "validateRestore": 211.5,
+            "verifyCalendar": 495
+          },
+          "savedOriginalValues": true,
+          "total": 2259.6
+        },
+        {
+          "entriesVerified": 4,
+          "phases": {
+            "open": 387.9,
+            "readCalendar": 504.4,
+            "save": 422.2,
+            "validateProbe": 284.3,
+            "validateRestore": 295.5,
+            "verifyCalendar": 497.6
+          },
+          "savedOriginalValues": true,
+          "total": 2393.6
+        }
+      ],
+      "mode": "naive",
+      "requests": [
+        {
+          "bodyRead": 0.7,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.8,
+            "duration": 584.9,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 576
+          },
+          "status": 200,
+          "toHeaders": 586.9,
+          "total": 588
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.9,
+            "duration": 389.6,
+            "encodedBytes": 8688,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8988,
+            "ttfb": 380.6
+          },
+          "status": 200,
+          "toHeaders": 391.9,
+          "total": 392.8
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.7,
+            "duration": 269.4,
+            "encodedBytes": 409,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 709,
+            "ttfb": 261.6
+          },
+          "status": 200,
+          "toHeaders": 271.8,
+          "total": 272.5
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.2,
+            "duration": 256.7,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 248.7
+          },
+          "status": 200,
+          "toHeaders": 258.6,
+          "total": 258.9
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6,
+            "duration": 392.7,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 383.7
+          },
+          "status": 200,
+          "toHeaders": 394.8,
+          "total": 395.1
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 8,
+            "duration": 524,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 512.9
+          },
+          "status": 200,
+          "toHeaders": 524.9,
+          "total": 526.2
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.9,
+            "duration": 484.3,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 473.2
+          },
+          "status": 200,
+          "toHeaders": 486.2,
+          "total": 487.2
+        },
+        {
+          "bodyRead": 0.9,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.9,
+            "duration": 399.3,
+            "encodedBytes": 8676,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8976,
+            "ttfb": 391.2
+          },
+          "status": 200,
+          "toHeaders": 401.4,
+          "total": 402.9
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.3,
+            "duration": 306.9,
+            "encodedBytes": 414,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 714,
+            "ttfb": 297.3
+          },
+          "status": 200,
+          "toHeaders": 309,
+          "total": 309.4
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.6,
+            "duration": 218.5,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 211.1
+          },
+          "status": 200,
+          "toHeaders": 220.6,
+          "total": 220.9
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.7,
+            "duration": 422.7,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 414.6
+          },
+          "status": 200,
+          "toHeaders": 424.7,
+          "total": 425.1
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.5,
+            "duration": 503.6,
+            "encodedBytes": 11835,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12135,
+            "ttfb": 494.7
+          },
+          "status": 200,
+          "toHeaders": 505.1,
+          "total": 505.8
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.8,
+            "duration": 484.2,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 475.3
+          },
+          "status": 200,
+          "toHeaders": 486,
+          "total": 487.1
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4,
+            "duration": 384.5,
+            "encodedBytes": 8670,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8970,
+            "ttfb": 377.2
+          },
+          "status": 200,
+          "toHeaders": 386.7,
+          "total": 387.4
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.8,
+            "duration": 284.7,
+            "encodedBytes": 411,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 711,
+            "ttfb": 275.9
+          },
+          "status": 200,
+          "toHeaders": 287.4,
+          "total": 287.9
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.4,
+            "duration": 208.4,
+            "encodedBytes": 200,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 500,
+            "ttfb": 200
+          },
+          "status": 200,
+          "toHeaders": 210.7,
+          "total": 211
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.8,
+            "duration": 380.2,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 371
+          },
+          "status": 200,
+          "toHeaders": 382.6,
+          "total": 382.9
+        },
+        {
+          "bodyRead": 0.5,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.5,
+            "duration": 492.1,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 482.7
+          },
+          "status": 200,
+          "toHeaders": 493.5,
+          "total": 494.6
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.8,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.9,
+            "duration": 500.9,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 493.2
+          },
+          "status": 200,
+          "toHeaders": 502.6,
+          "total": 503.8
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.9,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.7,
+            "duration": 384.5,
+            "encodedBytes": 8659,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8959,
+            "ttfb": 376.5
+          },
+          "status": 200,
+          "toHeaders": 386.4,
+          "total": 387.7
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.9,
+            "duration": 278.1,
+            "encodedBytes": 414,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 714,
+            "ttfb": 270.1
+          },
+          "status": 200,
+          "toHeaders": 280.4,
+          "total": 280.8
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.8,
+            "duration": 293.8,
+            "encodedBytes": 201,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 501,
+            "ttfb": 285.6
+          },
+          "status": 200,
+          "toHeaders": 294.7,
+          "total": 295
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 2.7,
+            "duration": 420.3,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 414.9
+          },
+          "status": 200,
+          "toHeaders": 421.6,
+          "total": 422
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6,
+            "duration": 495.4,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 487.1
+          },
+          "status": 200,
+          "toHeaders": 496.2,
+          "total": 497.2
+        }
+      ],
+      "total": 9457.2
+    },
+    {
+      "round": 3,
+      "dialogsShown": 0,
+      "entries": [
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 395.9,
+            "save": 383.7,
+            "validateProbe": 295,
+            "validateRestore": 211.5
+          },
+          "savedOriginalValues": true,
+          "total": 1287
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 456.6,
+            "save": 425.5,
+            "validateProbe": 310.1,
+            "validateRestore": 222.5
+          },
+          "savedOriginalValues": true,
+          "total": 1415.7
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 454.4,
+            "save": 397.3,
+            "validateProbe": 309.6,
+            "validateRestore": 213.2
+          },
+          "savedOriginalValues": true,
+          "total": 1375.5
+        },
+        {
+          "entriesVerified": 0,
+          "phases": {
+            "open": 522.5,
+            "save": 399.1,
+            "validateProbe": 298.3,
+            "validateRestore": 222.5
+          },
+          "savedOriginalValues": true,
+          "total": 1443.4
+        }
+      ],
+      "entriesVerified": 4,
+      "mode": "verify-end",
+      "phases": {
+        "readCalendar": 620.5,
+        "verifyCalendar": 500.8
+      },
+      "requests": [
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.2,
+            "duration": 616.4,
+            "encodedBytes": 11837,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12137,
+            "ttfb": 608.3
+          },
+          "status": 200,
+          "toHeaders": 619.2,
+          "total": 620
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37470,
+          "kind": "open",
+          "parse": 0.7,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.3,
+            "duration": 392.1,
+            "encodedBytes": 8687,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8987,
+            "ttfb": 382.6
+          },
+          "status": 200,
+          "toHeaders": 394.7,
+          "total": 395.7
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4047,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.3,
+            "duration": 286.4,
+            "encodedBytes": 406,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 706,
+            "ttfb": 279.7
+          },
+          "status": 200,
+          "toHeaders": 288.1,
+          "total": 288.4
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 328,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.4,
+            "duration": 208.4,
+            "encodedBytes": 207,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 507,
+            "ttfb": 199.8
+          },
+          "status": 200,
+          "toHeaders": 210.4,
+          "total": 210.9
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.2,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.6,
+            "duration": 380.7,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 372.1
+          },
+          "status": 200,
+          "toHeaders": 382.8,
+          "total": 383.4
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37412,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.6,
+            "duration": 454,
+            "encodedBytes": 8677,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8977,
+            "ttfb": 444.1
+          },
+          "status": 200,
+          "toHeaders": 455.5,
+          "total": 456.3
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.9,
+            "duration": 302.6,
+            "encodedBytes": 415,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 715,
+            "ttfb": 292
+          },
+          "status": 200,
+          "toHeaders": 304.8,
+          "total": 305.5
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 318,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.1,
+            "duration": 219.3,
+            "encodedBytes": 205,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 505,
+            "ttfb": 210.2
+          },
+          "status": 200,
+          "toHeaders": 221.3,
+          "total": 221.6
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.5,
+            "duration": 422.5,
+            "encodedBytes": 4376,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4676,
+            "ttfb": 411.5
+          },
+          "status": 200,
+          "toHeaders": 424.6,
+          "total": 425
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.5,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 3.8,
+            "duration": 451.1,
+            "encodedBytes": 8670,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8970,
+            "ttfb": 444.4
+          },
+          "status": 200,
+          "toHeaders": 453.3,
+          "total": 454.1
+        },
+        {
+          "bodyRead": 0.2,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.1,
+            "duration": 302.7,
+            "encodedBytes": 408,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 708,
+            "ttfb": 295.7
+          },
+          "status": 200,
+          "toHeaders": 304.5,
+          "total": 304.8
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4,
+            "duration": 210.1,
+            "encodedBytes": 200,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 500,
+            "ttfb": 203.8
+          },
+          "status": 200,
+          "toHeaders": 212.1,
+          "total": 212.6
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 4.7,
+            "duration": 394.6,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 386.7
+          },
+          "status": 200,
+          "toHeaders": 396.5,
+          "total": 397
+        },
+        {
+          "bodyRead": 0.8,
+          "decodedBytes": 37396,
+          "kind": "open",
+          "parse": 0.4,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.8,
+            "duration": 519.2,
+            "encodedBytes": 8658,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 8958,
+            "ttfb": 508.2
+          },
+          "status": 200,
+          "toHeaders": 521,
+          "total": 522.2
+        },
+        {
+          "bodyRead": 0.6,
+          "decodedBytes": 4055,
+          "kind": "validate",
+          "parse": 0.1,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.1,
+            "duration": 290.3,
+            "encodedBytes": 412,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 712,
+            "ttfb": 282.2
+          },
+          "status": 200,
+          "toHeaders": 292.7,
+          "total": 293.4
+        },
+        {
+          "bodyRead": 0.3,
+          "decodedBytes": 314,
+          "kind": "validate",
+          "parse": 0,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 7.9,
+            "duration": 219.3,
+            "encodedBytes": 202,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 502,
+            "ttfb": 207.7
+          },
+          "status": 200,
+          "toHeaders": 221.6,
+          "total": 221.9
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 8124,
+          "kind": "save",
+          "parse": 0.3,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 6.5,
+            "duration": 396.3,
+            "encodedBytes": 4375,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 4675,
+            "ttfb": 386.1
+          },
+          "status": 200,
+          "toHeaders": 398.2,
+          "total": 398.9
+        },
+        {
+          "bodyRead": 0.4,
+          "decodedBytes": 80247,
+          "kind": "calendar",
+          "parse": 0.6,
+          "resource": {
+            "connect": 0,
+            "dns": 0,
+            "download": 5.4,
+            "duration": 497.6,
+            "encodedBytes": 11836,
+            "protocol": "h2",
+            "serverTiming": [],
+            "transferBytes": 12136,
+            "ttfb": 489
+          },
+          "status": 200,
+          "toHeaders": 499.5,
+          "total": 500.5
+        }
+      ],
+      "savedOriginalValues": true,
+      "total": 6643.4,
+      "verification": "end"
+    }
+  ]
+}

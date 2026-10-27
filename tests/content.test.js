@@ -39,17 +39,23 @@ function run(html, saved = {}, options = {}) {
   return { dom, window, send: message => new Promise(resolve => listener(message, {}, resolve)) };
 }
 
-test("keyword replaces itself in the full editor without saving the event", async () => {
+test("keyword replaces itself in the full editor without saving the event", async t => {
   const app = run(`<input aria-label="Title" value="SCU Block /hours">
     <input aria-label="Start date" data-date="20261021" value="Oct 21, 2026">
     <input aria-label="Start time" value="10:15am">
     <input aria-label="End date" data-date="20261021" value="Oct 21, 2026">
     <input aria-label="End time" value="1:25pm">
     <input type="checkbox" aria-label="All day">`);
-  await settle();
-  assert.equal(app.window.document.querySelector('[aria-label="Title"]').value, "SCU Block (3.17 hours)");
+  t.after(() => app.dom.window.close());
+  const title = app.window.document.querySelector('[aria-label="Title"]');
+  // Loaded CI workers can delay the asynchronous settings/DOM update beyond
+  // settle's fixed 220 ms. Wait for the observable result, with a hard bound.
+  const deadline = Date.now() + 2000;
+  while (title.value !== "SCU Block (3.17 hours)" && Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 20));
+  }
+  assert.equal(title.value, "SCU Block (3.17 hours)");
   assert.equal(app.window.document.querySelector(".calendar-hours-suggestion"), null);
-  app.dom.window.close();
 });
 
 test("rapid Enter after editing an event applies the saved under-hour minutes setting before Calendar saves", async () => {
