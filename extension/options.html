@@ -60,8 +60,8 @@
         <h2 id="other-heading">Other</h2>
         <label>Typed keyword <input name="keyword" maxlength="40" value="/hours" required></label>
         <p class="hint">Type this in an event title to replace it with the calculated duration.</p>
-        <label class="check"><input type="checkbox" name="showSuggestion" checked> Show a duration suggestion beside the title</label>
-        <p class="hint">Press Tab to add it. After a few events, the instruction disappears while the duration suggestion stays available.</p>
+        <label class="check"><input type="checkbox" name="showSuggestion" checked> Show inline duration suggestions</label>
+        <p class="hint">A faint duration appears at the end of the title while you type. Press Enter or Tab to add it, or Escape to dismiss it. Accepting a suggestion does not save the event.</p>
         <div class="check-with-help">
           <label class="check"><input type="checkbox" name="replaceExisting" checked> Replace a previous duration when I add it again</label>
           <button type="button" id="replace-help-button" class="info-button" aria-label="Why is duration replacement locked?" aria-controls="replace-help" aria-expanded="false" hidden>i</button>

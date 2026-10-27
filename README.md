@@ -21,7 +21,7 @@ Calendar Hours adds the elapsed time to Google Calendar event titles. A 10:15amâ
 
 To try the current source build, load [`extension/`](extension/) as an unpacked extension in Chrome or Edge. Refresh any open Google Calendar tabs after reloading the extension. [Store publication details](STORE_LISTING.md) are tracked separately.
 
-Open a timed event, enter its start and end times, then type `/hours` in the title or press **Tab** to accept the suggested duration. Save the event in Calendar. Settings let you customize the format and matching phrases.
+Open a timed event, enter its start and end times, then type `/hours` in the title or press **Enter** or **Tab** to accept the faint inline duration suggestion. Accepting the suggestion only updates the title; save the event in Calendar afterward. Turn off **Show inline duration suggestions** in More options to hide the hint. Settings let you customize the format and matching phrases.
 
 Google Calendar API sign-in is currently limited to the project's OAuth test users. Broader distribution requires Google's OAuth review.
 
