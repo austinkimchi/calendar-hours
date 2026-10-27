@@ -85,7 +85,7 @@
   function plan({ events, dates, settings, existing = [], core, now = Date.now() }) {
     validateDates(dates);
     const s = settingsFrom(settings);
-    if (!configured(s)) throw new Error("Finish Workday setup in Calendar Hours settings");
+    if (!configured(s)) throw Object.assign(new Error("Finish Workday setup in Calendar Hours settings"), { needsSetup: true });
     const wanted = new Set(dates);
     const blocks = [], warnings = [], skipped = [];
     for (const event of events) {

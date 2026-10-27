@@ -44,13 +44,16 @@
         eventId: e.getAttribute("data-automation-eventid") || "", element: e }];
     });
   }
+  function settingsError(message) {
+    return Object.assign(new Error(message), { needsSettings: true });
+  }
   async function waitFor(test, message, timeout = 15000) {
     const until = Date.now() + timeout;
     while (Date.now() < until) {
       const result = test(); if (result) return result;
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    throw new Error(message);
+    throw message instanceof Error ? message : new Error(message);
   }
   function field(dialog, name) {
     const matches = [...dialog.querySelectorAll("input,textarea")].filter(e => label(e) === name && !e.disabled);
@@ -108,7 +111,8 @@
     return entry;
   }
   async function updateBlock(doc, core, base, block, settings) {
-    if (!settings.updateOverlaps || !block.previous?.eventId) throw new Error("Enable Update overlapping entries before updating a Workday draft.");
+    if (!settings.updateOverlaps) throw settingsError("Enable Update overlapping entries before updating a Workday draft.");
+    if (!block.previous?.eventId) throw new Error("The existing Workday entry could not be identified. Correct this block manually.");
     assertView(doc, core, base);
     if (doc.querySelector('[role="dialog"][aria-modal="true"]')) throw new Error("Close the open Workday dialog before importing");
     const entry = updateTarget(doc, base, block, settings);
@@ -168,14 +172,14 @@
       }
       const typeList = [...dialog.querySelectorAll('[role="listbox"]')].find(e => label(e) === "items selected for Time Type");
       const selected = typeList?.querySelector('[role="option"]')?.textContent.trim();
-      if (selected !== settings.timeType) throw new Error(`Workday selected ${selected || "no time type"}. Choose the matching Time Type in extension settings.`);
+      if (selected !== settings.timeType) throw settingsError(`Workday selected ${selected || "no time type"}. Choose the matching Time Type in import settings.`);
       setInput(field(dialog, "In"), core.clock(block.start));
       setInput(field(dialog, "Out"), core.clock(block.end));
       const outReason = [...dialog.querySelectorAll('[role="combobox"]')].find(e => label(e).startsWith("Out Reason"));
       if (!outReason) throw new Error("Workday's Out Reason field is unavailable");
       if (!outReason.textContent.replace(/\s+selected\s*$/, "").trim().endsWith(settings.outReason)) {
         outReason.click();
-        const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === settings.outReason), "The configured Out Reason was not found");
+        const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === settings.outReason), settingsError("The configured Out Reason was not found. Check Out Reason in import settings."));
         option.click();
       }
       if (settings.importComments || !updating) {
@@ -219,7 +223,7 @@
     const menus = new WeakMap();
     let openMenu = null;
     let menuSequence = 0;
-    function showStatus(message, setup = false) {
+    function showStatus(message, settingsAction = null) {
       const toolbar = doc.querySelector(aid("calendarToolbar"));
       if (!toolbar) return;
       if (!statusBox?.isConnected) {
@@ -227,10 +231,11 @@
         statusBox.setAttribute("role", "status"); toolbar.after(statusBox);
       }
       try { statusSignature = readView(doc, core).signature; } catch { statusSignature = undefined; }
-      statusBox.replaceChildren(doc.createTextNode(message + " "));
-      const settings = doc.createElement("button"); settings.type = "button"; settings.textContent = setup ? "Set up calendar import" : "Import settings";
+      statusBox.replaceChildren(doc.createTextNode(message));
+      if (!settingsAction) return;
+      const settings = doc.createElement("button"); settings.type = "button"; settings.textContent = settingsAction === "setup" ? "Set up calendar import" : "Import settings";
       settings.addEventListener("click", () => { void chromeApi.runtime.sendMessage({ type: "CALENDAR_HOURS_WORKDAY_SETUP" }); });
-      statusBox.append(settings);
+      statusBox.append(doc.createTextNode(" "), settings);
     }
     async function run() {
       if (busy) return; busy = true;
@@ -242,7 +247,7 @@
         showStatus(`Reading calendar for ${view.title}…`);
         const response = await chromeApi.runtime.sendMessage({ type: "CALENDAR_HOURS_WORKDAY_EVENTS", dates: view.dates });
         if (!response?.ok) {
-          showStatus(response?.reason || "Calendar could not be read. Try again.", !!response?.needsSetup);
+          showStatus(response?.reason || "Calendar could not be read. Try again.", response?.needsSetup ? "setup" : null);
           if (response?.needsSetup) await chromeApi.runtime.sendMessage({ type: "CALENDAR_HOURS_WORKDAY_SETUP" });
           return;
         }
@@ -264,7 +269,8 @@
           (plan.conflicts.length ? ` ${plan.conflicts.length} overlapping ${plan.conflicts.length === 1 ? "block needs" : "blocks need"} manual correction; conflicting entries were kept.` : "") +
           (plan.warnings.length ? ` ${plan.warnings.join(" ")}` : "") + " Entries remain unsubmitted.");
       } catch (error) {
-        showStatus(`${added || updated ? `${added} added, ${updated} updated before stopping. ` : ""}${error.message}`);
+        showStatus(`${added || updated ? `${added} added, ${updated} updated before stopping. ` : ""}${error.message}`,
+          error.needsSetup ? "setup" : error.needsSettings ? "settings" : null);
       } finally { busy = false; }
     }
     function enhanceMenu(menu) {
