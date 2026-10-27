@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-`npm test`: 71 tests pass, including 21 Workday/OAuth tests and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
+`npm test`: 74 tests pass, including 24 Workday/OAuth tests and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
 
 The new tests cover:
 
@@ -14,11 +14,14 @@ The new tests cover:
 - Day/week date extraction, previous dates, cross-year weeks, and DST query boundaries.
 - Exact minute times, lunch gaps, cancelled/all-day/future exclusions, duplicate reruns, source overlaps, and existing-entry conflicts.
 - Individual entry form saves; wrong-date/existing-entry dialogs and navigation changes stop before saving.
+- Workday zero-padded times, asynchronous duration calculation, and Discard Changes cleanup for unsaved drafts.
 - Explicitly no Review, Submit, Next or Delete action in the import adapter.
 
 ## Live verification still required
 
-The initial live inspection identified the English Enter Time Day/Week calendar, existing-entry metadata, and the individual Enter Time form with an OK action. No draft entries were added during inspection.
+Live inspection confirmed the English Enter Time calendar's current-week, previous-week, and single-day date headers. The individual form accepts exact minute times, pads morning hours with a leading zero, calculates the duration asynchronously, and asks for Discard Changes confirmation after an edited draft is canceled. The inspection draft was discarded and the original saved entry remained unchanged.
+
+After reloading the approved developer build, Actions visibly contained **Auto-fill from Calendar**. First use displayed the setup guidance and opened `options.html#workday`. The live Actions listbox labels itself through a button's `aria-label`, so the adapter and regression fixture now account for that accessible-name structure. These behaviors were verified through the actual browser UI. Configured imports and Google consent remain pending manual setup because the browser-control policy disallows extension-settings URLs.
 
 After granting the developer build Workday access and Google calendar-list permission, verify:
 

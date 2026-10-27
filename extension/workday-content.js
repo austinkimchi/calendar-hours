@@ -9,7 +9,7 @@
   const visible = e => !!e && !e.hidden && e.getAttribute("aria-hidden") !== "true" && e.getClientRects().length > 0;
   function label(e) {
     const ids = (e.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean);
-    return (e.getAttribute("aria-label") || ids.map(id => e.ownerDocument.getElementById(id)?.textContent || "").join(" ") || [...(e.labels || [])].map(l => l.textContent).join(" ") || e.textContent || "").replace(/\*/g, "").trim().replace(/\s+/g, " ");
+    return (e.getAttribute("aria-label") || ids.map(id => { const node = e.ownerDocument.getElementById(id); return node?.getAttribute("aria-label") || node?.textContent || ""; }).join(" ") || [...(e.labels || [])].map(l => l.textContent).join(" ") || e.textContent || "").replace(/\*/g, "").trim().replace(/\s+/g, " ");
   }
   function button(doc, name) {
     const matches = [...doc.querySelectorAll('button,[role="button"]')].filter(e => visible(e) && label(e) === name && !e.disabled && e.getAttribute("aria-disabled") !== "true");
@@ -63,8 +63,21 @@
     input.dispatchEvent(new win.Event("change", { bubbles: true }));
     input.blur();
   }
+  function normalizedClock(value) {
+    return value.toUpperCase().replace(/\s/g, "").replace(/^0(?=\d:)/, "");
+  }
   function assertView(doc, core, expected) {
     if (readView(doc, core).signature !== expected.signature) throw new Error("The displayed dates changed. Import stopped; already saved entries remain unsubmitted.");
+  }
+  async function cancelDraft(doc, dialog) {
+    button(dialog, "Cancel").click();
+    const result = await waitFor(() => !dialog.isConnected ||
+      [...doc.querySelectorAll('[role="dialog"]')].find(e => visible(e) && label(e) === "Discard Changes?"),
+      "Workday did not close the draft. Cancel the open form before retrying.");
+    if (result !== true) {
+      button(result, "Discard").click();
+      await waitFor(() => !dialog.isConnected && !result.isConnected, "Workday did not discard the unsaved draft");
+    }
   }
   async function createBlock(doc, core, base, block, settings) {
     assertView(doc, core, base);
@@ -97,8 +110,15 @@
         option.click();
       }
       setInput(field(dialog, "Comment"), block.title.slice(0, 1000));
-      if (field(dialog, "In").value.toUpperCase().replace(/\s/g, "") !== core.clock(block.start).replace(/\s/g, "") ||
-          field(dialog, "Out").value.toUpperCase().replace(/\s/g, "") !== core.clock(block.end).replace(/\s/g, "")) throw new Error("Workday did not accept the exact calendar times");
+      if (normalizedClock(field(dialog, "In").value) !== normalizedClock(core.clock(block.start)) ||
+          normalizedClock(field(dialog, "Out").value) !== normalizedClock(core.clock(block.end))) throw new Error("Workday did not accept the exact calendar times");
+      const amounts = [...dialog.querySelectorAll(aid("numericText"))].filter(visible);
+      if (amounts.length !== 1) throw new Error("Workday's calculated Hours field could not be identified safely");
+      await waitFor(() => {
+        const amount = [...dialog.querySelectorAll(aid("numericText"))].filter(visible);
+        return amount.length === 1 && amount[0].textContent.trim() !== "" &&
+          Math.abs(Number(amount[0].textContent.trim()) * 60 - (block.end - block.start)) < 0.001;
+      }, "Workday did not confirm the calendar duration. Nothing was saved.");
       assertView(doc, core, base);
       // Explicit allowlist: this adapter never clicks Review, Next, Submit or Delete.
       button(dialog, "OK").click(); saved = true;
@@ -107,7 +127,7 @@
       return "added";
     } catch (error) {
       if (!saved && dialog.isConnected) {
-        try { button(dialog, "Cancel").click(); } catch { /* Keep an unfamiliar dialog for inspection. */ }
+        try { await cancelDraft(doc, dialog); } catch { /* Keep an unfamiliar dialog for inspection. */ }
       }
       throw error;
     }
@@ -170,7 +190,7 @@
       item.addEventListener("keydown", event => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); void run(); } });
       menu.append(item);
     }
-    new doc.defaultView.MutationObserver(inject).observe(doc.body, { childList: true, subtree: true });
+    new doc.defaultView.MutationObserver(inject).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "aria-labelledby", "aria-expanded", "aria-hidden", "role"] });
     inject();
   }
   return { label, readView, readExisting, setInput, createBlock, install };
