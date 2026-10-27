@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-`npm test`: 95 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
+`npm test`: the suite passes, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.12-workday-dev.zip`.
 
 The new tests cover:
 
