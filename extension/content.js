@@ -177,7 +177,6 @@
     const line = chip.firstElementChild;
     setText(line.firstElementChild, value);
     setText(line.lastElementChild, result.nextTitle.slice(value.length));
-    setText(document.getElementById(suggestionDescriptionId), `Suggested duration: ${result.formatted.text}. Press Enter or Tab to add it. Escape dismisses it.`);
     const rect = input.getBoundingClientRect();
     const style = getComputedStyle(input);
     const px = key => parseFloat(style[key]) || 0;
@@ -191,7 +190,14 @@
     chip.style.width = `${Math.max(0, rect.width - left - right)}px`;
     chip.style.height = `${Math.max(0, rect.height - top - bottom)}px`;
     line.style.transform = `translateX(${-input.scrollLeft}px)`;
-    preview = { ...result, sourceTitle: value };
+    const bounds = chip.getBoundingClientRect();
+    const suffix = line.lastElementChild.getBoundingClientRect();
+    const fits = bounds.width > 0 && suffix.left >= bounds.left && suffix.right <= bounds.right &&
+      bounds.bottom > 0 && bounds.top < innerHeight;
+    // Do not intercept Enter/Tab for a hint clipped out of a long title field.
+    chip.style.visibility = fits ? "visible" : "hidden";
+    setText(document.getElementById(suggestionDescriptionId), fits ? `Suggested duration: ${result.formatted.text}. Press Enter or Tab to add it. Escape dismisses it.` : "");
+    preview = fits ? { ...result, sourceTitle: value } : null;
   }
 
   function update() {
