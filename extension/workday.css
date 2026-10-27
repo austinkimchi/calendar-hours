@@ -1,4 +1,4 @@
-.calendar-hours-workday-menuitem { cursor: pointer; padding: 10px 16px; }
+.calendar-hours-workday-menuitem { cursor: pointer; }
 .calendar-hours-workday-menuitem:hover, .calendar-hours-workday-menuitem:focus-visible { background: #e9f2ff; outline: 2px solid #336ed4; outline-offset: -2px; }
 /* Override Workday's stale private highlight only within the enhanced Actions list. */
 .calendar-hours-workday-menu [role="option"] { background: transparent !important; color: #333 !important; outline: none !important; }

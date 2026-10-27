@@ -269,10 +269,13 @@
     }
     function enhanceMenu(menu) {
       const prefix = `calendar-hours-workday-menu-${++menuSequence}`;
+      const nativeOption = menu.querySelector('[role="option"]');
       const item = doc.createElement("div"); item.setAttribute("role", "option"); item.tabIndex = -1;
       item.id = `${prefix}-import`;
       item.dataset.calendarHours = "workday-import";
-      item.className = (menu.querySelector('[role="option"]')?.className || "") + " calendar-hours-workday-menuitem";
+      item.className = (nativeOption?.className || "") + " calendar-hours-workday-menuitem";
+      // Workday also styles native options through attributes we do not copy.
+      if (nativeOption) item.style.padding = doc.defaultView.getComputedStyle(nativeOption).padding;
       item.textContent = "Auto-fill from Calendar";
       item.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); void run(); });
       menu.prepend(item);
