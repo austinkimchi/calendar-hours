@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.13 — October 27, 2026
+
+- Follow Google Calendar’s primary and event-specific time zones automatically, with the current device zone as fallback. No additional connection or permission is required.
+- Calculate elapsed time across daylight-saving changes and separate start/end zones. Leave ambiguous or nonexistent clock times unchanged.
+- Verify grid saves using absolute instants across different display/editor zones, and ignore display-zone changes as resize triggers.
+
 ## 0.2.12 — October 27, 2026
 
 - Replace the floating duration button with faint inline autocomplete text at the end of the event title.

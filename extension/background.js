@@ -54,7 +54,9 @@ async function syncGridEventViaEditor(message, sender) {
         id: message.id,
         title: message.title,
         startTime: message.startTime,
-        endTime: message.endTime
+        endTime: message.endTime,
+        startIso: message.startIso,
+        endIso: message.endIso
       });
       if (!result.retry) break;
     }

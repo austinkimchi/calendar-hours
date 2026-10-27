@@ -24,4 +24,4 @@ Calendar Hours turns event start and end times into a title suffix such as `Work
 
 **0.2.11 submission:** On October 27, 2026, `dist/calendar-hours-0.2.11.zip` (SHA-256 `6aa2bc30491da71ff2163d571c476f6effd98783eeb6e1a042a45cc867d525b1`) was uploaded with the updated listing, screenshots, privacy practices, and reviewer instructions. The dashboard confirmed **Draft 0.2.11 pending review** and **Published 0.1.0**. Automatic publication after approval was selected. Google OAuth verification is still required before distributing direct API mode beyond the project's listed test users. Check the dashboard for the actual approval or publication outcome.
 
-**0.2.12 preparation:** Inline duration autocomplete is prepared locally. This update has not been uploaded or submitted to the store. Existing review/publication details above describe earlier versions.
+**0.2.13 preparation:** Inline duration autocomplete and automatic time-zone detection are prepared locally. This update has not been uploaded or submitted to the store. Existing review/publication details above describe earlier versions.

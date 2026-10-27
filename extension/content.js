@@ -1,6 +1,7 @@
 (function () {
   "use strict";
   const core = globalThis.CalendarHoursCore;
+  const zones = globalThis.CalendarHoursZones;
   let settings = core.settingsFrom();
   let chip = null;
   let suggestionInput = null;
@@ -22,6 +23,7 @@
   const optimisticTitles = new Map();
   let settingsReady;
   let contextInvalidated = false;
+  let lastGridZone;
 
   const visible = element => !!element && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden";
   const firstVisible = (root, selector) => [...root.querySelectorAll(selector)].find(visible) || null;
@@ -83,6 +85,7 @@
       endDataDate: endDate?.getAttribute("data-date") || "",
       endTime: endTime?.value || summary("endTime"),
       allDay,
+      ...zones.forEditor(root),
       referenceYear: referenceYear()
     };
   }
@@ -316,20 +319,22 @@
 
   function gridRangeIso(range) {
     if (!range) return null;
-    const date = core.parseCalendarDate(range.date);
-    const startClock = core.parseClock(range.startTime);
-    const endClock = core.parseClock(range.endTime);
-    if (!date || !startClock || !endClock) return null;
-    const at = clock => new Date(date.year, date.month - 1, date.day, clock.hour, clock.minute);
-    const start = at(startClock);
-    const end = at(endClock);
-    if (start.getFullYear() !== date.year || start.getMonth() + 1 !== date.month || start.getDate() !== date.day ||
-        end <= start || end.getFullYear() !== date.year || end.getMonth() + 1 !== date.month || end.getDate() !== date.day) return null;
-    return { startIso: start.toISOString(), endIso: end.toISOString() };
+    const times = core.eventInstants({ startDate: range.date, endDate: range.date,
+      startTime: range.startTime, endTime: range.endTime, timeZone: zones.primary() });
+    return times ? { startIso: new Date(times.start).toISOString(), endIso: new Date(times.end).toISOString() } : null;
   }
 
   function scanGridChanges() {
     if (typeof document === "undefined" || contextInvalidated) return;
+    const timeZone = zones.primary();
+    if (lastGridZone !== timeZone) {
+      // Changing the display zone moves every chip; that is not a resize.
+      lastGridZone = timeZone;
+      observedGridRanges.clear();
+      for (const timeout of gridFallbackTimers.values()) clearTimeout(timeout);
+      gridFallbackTimers.clear();
+      gridGesture = queuedGridGesture = null;
+    }
     for (const chip of document.querySelectorAll('[data-eventchip][data-eventid]')) {
       const id = chip.getAttribute("data-eventid");
       const summary = chipSummary(chip);
@@ -345,7 +350,7 @@
         const current = eventChip(id);
         if (!current || gridBusy || chipTitle(current) !== previous.title ||
             gridRangeKey(chipSummary(current)) !== rangeKey) return;
-        syncResizedEvent({ id, title: previous.title, summary: previous.summary });
+        syncResizedEvent({ id, title: previous.title, summary: previous.summary, timeZone });
       }, 250));
     }
   }
@@ -372,7 +377,10 @@
     if (!editor) return { ok: false, reason: "Event editor did not load" };
     if (editor.title.value !== message.title) return { ok: false, reason: "Event title changed" };
     const fields = readFields(editor);
-    if (message.startTime && message.endTime &&
+    const times = core.eventInstants(fields);
+    if (message.startIso && message.endIso ?
+        (!times || times.start !== Date.parse(message.startIso) || times.end !== Date.parse(message.endIso)) :
+        message.startTime && message.endTime &&
         (!sameClock(fields.startTime, message.startTime) || !sameClock(fields.endTime, message.endTime))) {
       return { ok: false, retry: true, reason: "Waiting for Calendar's resize save" };
     }
@@ -409,10 +417,13 @@
       const chip = eventChip(gesture.id);
       if (!chip || chipTitle(chip) !== gesture.title || !core.shouldUpdateDuration(gesture.title, settings) || findEditor()) return;
       const range = gridRange(chipSummary(chip));
+      if (gesture.timeZone !== zones.primary()) return;
+      const instants = gridRangeIso(range);
+      if (!instants) throw new Error("Calendar's time zone or event times could not be resolved unambiguously");
       if (range) {
         const minutes = core.durationMinutes({
           startDate: range.date, endDate: range.date,
-          startTime: range.startTime, endTime: range.endTime
+          startTime: range.startTime, endTime: range.endTime, timeZone: zones.primary()
         });
         const formatted = minutes == null ? null : core.formattedDuration(minutes, settings);
         expectedTitle = core.titleWithDuration(gesture.title, formatted, settings);
@@ -424,7 +435,7 @@
       const response = await chrome.runtime.sendMessage({
         type: "CALENDAR_HOURS_GRID_SYNC", id: gesture.id, title: gesture.title,
         startTime: range?.startTime || "", endTime: range?.endTime || "",
-        ...gridRangeIso(range)
+        ...instants
       });
       if (!response?.ok) throw new Error(response?.reason || "Background save failed");
       if (response.nextTitle) {
@@ -471,6 +482,7 @@
     if (!chip || !title || !core.shouldUpdateDuration(title, settings)) return;
     gridGesture = {
       id: chip.getAttribute("data-eventid"), title, summary: chipSummary(chip),
+      timeZone: zones.primary(),
       x: event.clientX, y: event.clientY, copying: event.altKey
     };
   }
@@ -555,6 +567,7 @@
     event.stopImmediatePropagation();
   }, true);
   window.addEventListener("blur", () => { acceptedKey = null; hideChip(); });
+  window.addEventListener("focus", () => { scanGridChanges(); queueUpdate(); });
   document.addEventListener("pointerdown", event => {
     const editor = findEditor();
     const button = event.target instanceof Element && event.target.closest('button,[role="button"]');
@@ -576,7 +589,7 @@
     if (contextInvalidated) return;
     if (optimisticTitles.size) paintOptimisticTitles();
     scanGridChanges();
-    if (changes.some(change => change.type === "childList")) queueUpdate();
+    if (changes.some(change => change.type === "childList" || change.type === "characterData")) queueUpdate();
   }).observe(document.documentElement, {
     childList: true, characterData: true, subtree: true
   });
