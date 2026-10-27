@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.12 — October 27, 2026
+
+- Replace the floating duration button with faint inline autocomplete text at the end of the event title.
+- Enter or Tab accepts the hint without saving the event; Escape dismisses it. The hint follows the title font and stays inside its field.
+- Hide hints while selecting or editing earlier title text, using an input method, or working in another field. Keep the existing preference to turn suggestions off.
+- Stop recording suggestion instruction counts.
+
 ## 0.2.11 — October 27, 2026
 
 - Let Option-drag copies finish without waiting for the unchanged source event, so a copied block can update its duration immediately when resized.

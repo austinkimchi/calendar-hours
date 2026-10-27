@@ -38,7 +38,7 @@ Overlapping source blocks are merged to avoid double-counting; adjacent blocks r
 
 To try the current source build, load [`extension/`](extension/) as an unpacked extension in Chrome or Edge. Refresh any open Google Calendar tabs after reloading the extension. [Store publication details](STORE_LISTING.md) are tracked separately.
 
-Open a timed event, enter its start and end times, then type `/hours` in the title or press **Tab** to accept the suggested duration. Save the event in Calendar. Settings let you customize the format and matching phrases. Hover over a setting label or focus its field for routine help; key actions keep an ⓘ button. Tooltips do not shift the page and close immediately when the pointer leaves their label or icon. Press Escape or tap elsewhere to dismiss them.
+Open a timed event, enter its start and end times, then type `/hours` in the title or press **Enter** or **Tab** to accept the faint inline duration suggestion. Accepting the suggestion only updates the title; save the event in Calendar afterward. Turn off **Show inline duration suggestions** in More options to hide the hint. Settings let you customize the format and matching phrases. Hover over a setting label or focus its field for routine help; key actions keep an ⓘ button. Tooltips do not shift the page and close immediately when the pointer leaves their label or icon. Press Escape or tap elsewhere to dismiss them.
 
 Google Calendar connection requests use one authorization flow for both permissions and do not force repeat consent. Google may still require account selection, a missing permission, or renewed authorization. Disconnecting removes the shared connection for all features without erasing their settings.
 
