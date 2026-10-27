@@ -27,3 +27,7 @@ Calendar's JSON layout and editor labels are private UI details, observed in the
 ## Automated checks
 
 `npm test` covers a traveling machine, Calendar/device mismatch, primary-zone changes, URL overrides, separate start/end zones crossing dates, Pacific spring/fall DST, Lord Howe half-hour DST, Kathmandu's quarter-hour offset, Samoa's skipped date, invalid zones, unknown labels, grid absolute-time checks, and background editor date/zone mismatch. Synthetic tests use no account data or live Calendar writes.
+
+## Live check
+
+October 27, 2026: verified the developer build in the actual Google Calendar editor using an unsaved generic event. The quick composer showed a normal one-hour hint. In More options, 2 PM Tokyo to 3 PM Los Angeles on the same date correctly suggested **17 hours**. The event was discarded and the original week still contained 18 events. No Calendar account time zone or OS time zone was changed.
