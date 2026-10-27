@@ -40,7 +40,7 @@
         matches[0].element.scrollIntoView({block:"center",inline:"nearest",behavior:"instant"});
         matches[0].element.click();
         dialog=await wait(()=>[...doc.querySelectorAll('[role="dialog"]')].find(e=>visible(e)&&adapter.label(e)==="Enter Time"));
-        await wait(()=>{try{return input("In").value&&input("Out").value&&button("OK")&&amount()===(target.end-target.start)/60}catch{return false}});
+        await wait(()=>{try{return input("In").value&&input("Out").value&&button("OK")&&Math.abs(amount()*60-(target.end-target.start))<0.001}catch{return false}});
         button("Delete"); // Confirms an existing draft. Never invoked.
         if(![...dialog.querySelectorAll('[data-automation-id="promptOption"]')].some(e=>adapter.label(e)==="Not Submitted"))throw new Error("Expected an unsubmitted draft");
         const [y,m,d]=target.date.split("-").map(Number);

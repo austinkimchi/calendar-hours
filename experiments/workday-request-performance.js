@@ -1,5 +1,5 @@
 /* Opt-in development probe. Deliberately absent from the extension manifest.
- * Saves only the original values of one existing, unsubmitted draft.
+ * Saves only original values of existing, unsubmitted drafts.
  * Never persists credentials, replays captured requests, or retries a save.
  */
 (function (root, factory) {
@@ -82,15 +82,15 @@
       if (!response.ok) fail(`Workday request failed (${response.status}); do not retry a save automatically`);
       return response.json();
     }
-    async function run(target) {
-      if (busy) fail("A probe is already running");
+    function validateTarget(target) {
       if (!target || !/^\d{4}-\d{2}-\d{2}$/.test(target.date) || !Number.isInteger(target.start) || !Number.isInteger(target.end) || target.start < 0 || target.end <= target.start || target.end >= 1439 || !target.type) fail("Unsupported probe target");
-      busy = true;
+    }
+    async function execute(target, initialModel, verify = true) {
       let form, flowKey, saveAttempted = false;
       const totalStart = now(), phases = {};
       async function phase(name, action) { const start = now(); const result = await action(); phases[name] = now() - start; return result; }
       try {
-        const model = await phase("readCalendar", () => request(url.href, "calendar"));
+        const model = initialModel || await phase("readCalendar", () => request(url.href, "calendar"));
         const before = calendarEntries(model);
         const entry = one(before.filter(e => e.date === target.date && e.endDate === target.date && e.start === target.start && e.end === target.end && e.type === target.type && e.status === "saved"), "Expected one unchanged draft");
         if (before.some(e => e !== entry && e.date === target.date && e.start < target.end + 1 && e.end > target.start)) fail("Probe would overlap another entry");
@@ -113,18 +113,57 @@
         saveAttempted = true;
         const saved = await phase("save", () => request(form.requestUri, "flow", { _flowExecutionKey: flowKey, _eventId_submit: form.body.id, "change-summary": xml }, form.sessionSecureToken));
         if (saved.mode !== "CONFIRM" || saved.microConclusion !== true || saved.title?.text !== "Time Block In/Out Saved") fail("Save outcome uncertain; inspect Workday before retrying");
-        const after = await phase("verifyCalendar", () => request(url.href, "calendar"));
-        if (snapshot(calendarEntries(after)) !== snapshot(before)) fail("Calendar changed; inspect Workday before retrying");
-        return { phases, total: now() - totalStart, entriesVerified: before.length, savedOriginalValues: true };
+        const after = verify ? await phase("verifyCalendar", () => request(url.href, "calendar")) : null;
+        if (after && snapshot(calendarEntries(after)) !== snapshot(before)) fail("Calendar changed; inspect Workday before retrying");
+        return { model: after, result: { phases, total: now() - totalStart, entriesVerified: verify ? before.length : 0, savedOriginalValues: true } };
       } catch (error) {
         if (form?.flowExecutionKey && !saveAttempted) {
           try { await request(form.requestUri, "flow", { _flowExecutionKey: flowKey || form.flowExecutionKey, _eventId_cancel: "Cancel" }, form.sessionSecureToken); }
           catch { error.message += "; draft cancellation was not confirmed"; }
         }
         throw error;
+      }
+    }
+    async function run(target) {
+      if (busy) fail("A probe is already running");
+      validateTarget(target);
+      busy = true;
+      try { return (await execute(target)).result; }
+      finally { busy = false; }
+    }
+    async function runBatch(targets, { verification = "each" } = {}) {
+      if (busy) fail("A probe is already running");
+      if (!Array.isArray(targets) || !targets.length || targets.length > 20 || !["each", "end"].includes(verification)) fail("Unsupported batch");
+      targets.forEach(validateTarget);
+      if (new Set(targets.map(t => JSON.stringify([t.date,t.start,t.end,t.type]))).size !== targets.length) fail("Duplicate batch target");
+      busy = true;
+      const start = now(), entries = [], phases = {};
+      let before, model;
+      try {
+        let at = now();
+        model = await request(url.href, "calendar");
+        phases.readCalendar = now() - at;
+        before = snapshot(calendarEntries(model));
+        for (const target of targets) {
+          const next = await execute(target, model, verification === "each");
+          entries.push(next.result);
+          // The just-verified calendar is the next entry's fresh starting state.
+          if (next.model) model = next.model;
+        }
+        if (verification === "end") {
+          at = now();
+          model = await request(url.href, "calendar");
+          phases.verifyCalendar = now() - at;
+        }
+        if (snapshot(calendarEntries(model)) !== before) fail("Calendar changed; inspect Workday before retrying");
+        return { verification, phases, entries, total: now() - start, entriesVerified: calendarEntries(model).length, savedOriginalValues: true };
+      } catch (error) {
+        // This is diagnostic metadata, not an instruction to retry the batch.
+        error.completedEntries = entries.length;
+        throw error;
       } finally { busy = false; }
     }
-    return { run };
+    return { run, runBatch };
   }
   return { create, nodes, field, calendarEntries, snapshot, validateForm, validationResult };
 });

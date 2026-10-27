@@ -107,3 +107,59 @@ test('overlap, ambiguous target and unsafe one-minute probe are rejected before 
 test('one probe instance rejects concurrent runs',async()=>{
  const f=fixture();const first=f.probe.run(target);await assert.rejects(f.probe.run(target),/already running/);await first;
 });
+
+function batchFixture({failSecond=false,changedFinal=false}={}) {
+ const targets=[target,{...target,start:800,end:900}], requests=[];
+ let reads=0,current=0,opens=0,saves=0;
+ const fetcher=async(url,options)=>{
+  const params=options.body?Object.fromEntries(options.body):{};requests.push({url,params});
+  let body;
+  if(!options.method){
+   reads++;body=calendar();
+   body.body.consolidatedList.children=targets.map((t,i)=>{
+    const e=copy(calendar().body.consolidatedList.children[0]);
+    e.startMoment.value={...date,...clock(t.start)};e.endMoment.value={...date,...clock(t.end)};
+    e.quantity.value=(t.end-t.start)/60;e.editButton.children[0].uri=`/example/button/c${reads}/20/${i}`;
+    if(changedFinal&&saves===2&&i===1)e.quantity.value++;
+    return e;
+   });
+  } else if(url.includes('/button/')) {
+   opens++;current=Number(new URL(url).pathname.match(/\/(\d+)\.htmld$/)[1]);body=form();
+   experiment.field(body,'In').value=clock(targets[current].start);experiment.field(body,'Out').value=clock(targets[current].end);
+   if(failSecond&&opens===2)experiment.field(body,'Status').instances=[{text:'Submitted'}];
+  } else if(params._eventId_validate) {
+   const end=Number(params['101/wd:Out_Time_H'])*60+Number(params['101/wd:Out_Time_m']);body=validation(end);body.changes[1].node.value=(end-targets[current].start)/60;
+  } else if(params._eventId_submit) {saves++;body={mode:'CONFIRM',microConclusion:true,title:{text:'Time Block In/Out Saved'}}}
+  else if(params._eventId_cancel)body={mode:'CONFIRM'};
+  else assert.fail('Unexpected request');
+  return {ok:true,json:async()=>copy(body)};
+ };
+ return {targets,requests,probe:experiment.create({calendarUrl,origin:'https://www.myworkday.com',clientVersion:'test',fetcher})};
+}
+test('batch reuses each verified calendar response for the next entry without an extra GET',async()=>{
+ const f=batchFixture(),r=await f.probe.runBatch(f.targets);
+ assert.equal(r.entries.length,2);assert.equal(r.entriesVerified,2);assert.equal(f.requests.length,11);
+ assert.equal(f.requests.filter(r=>!r.params.sessionSecureToken).length,3);
+ assert.match(f.requests.filter(r=>r.url.includes('/button/'))[1].url,/\/button\/c2\//);
+});
+test('end-verification batch checks all entries once after individually confirmed saves',async()=>{
+ const f=batchFixture(),r=await f.probe.runBatch(f.targets,{verification:'end'});
+ assert.equal(r.entries.length,2);assert.equal(r.entriesVerified,2);assert.equal(f.requests.length,10);
+ assert.match(f.requests.filter(r=>r.url.includes('/button/'))[1].url,/\/button\/c1\//);
+ assert.equal(f.requests.filter(r=>r.params._eventId_submit).length,2);
+ const changed=batchFixture({changedFinal:true});await assert.rejects(changed.probe.runBatch(changed.targets,{verification:'end'}),/Calendar changed/);
+});
+test('a failed batch stops, cancels only the unsaved flow, reports completed entries and never retries',async()=>{
+ const f=batchFixture({failSecond:true});
+ await assert.rejects(f.probe.runBatch(f.targets,{verification:'end'}),error=>error.completedEntries===1&&/drafts/.test(error.message));
+ assert.equal(f.requests.filter(r=>r.params._eventId_submit).length,1);assert.equal(f.requests.at(-1).params._eventId_cancel,'Cancel');
+});
+test('invalid or duplicate batch targets and invalid verification modes make no requests',async()=>{
+ for(const [targets,options] of [[[],{}],[[target,target],{}],[[target],{verification:'none'}]]){
+  const f=batchFixture();await assert.rejects(f.probe.runBatch(targets,options));assert.equal(f.requests.length,0);
+ }
+});
+test('batch and single-entry probes share the concurrency guard',async()=>{
+ const f=batchFixture(),first=f.probe.runBatch(f.targets);
+ await assert.rejects(f.probe.run(target),/already running/);await first;
+});
