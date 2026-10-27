@@ -108,11 +108,15 @@
     return result;
   }
   function applyMeals(blocks, meals, settings, warnings) {
-    const breaks = union(meals, true);
+    // Ignore unrelated meals outside the day's work span. A meal in a gap
+    // between work blocks still belongs to that day and gets its own row.
+    const breaks = union(meals, true).filter(meal => {
+      const day = blocks.filter(b => b.date === meal.date);
+      return day.length && meal.start <= Math.max(...day.map(b => b.end)) && meal.end >= Math.min(...day.map(b => b.start));
+    });
     for (const date of new Set(blocks.map(b => b.date))) {
       const day = blocks.filter(b => b.date === date);
-      // A calendar meal must touch/overlap work to suppress the automatic fallback.
-      if (!settings.autoMeal || breaks.some(m => m.date === date && day.some(b => m.start <= b.end && m.end > b.start))) continue;
+      if (!settings.autoMeal || breaks.some(m => m.date === date)) continue;
       let remaining = Math.round(settings.mealAfterHours * 60);
       for (const block of day) {
         const length = block.end - block.start;
@@ -128,17 +132,21 @@
       let cursor = block.start;
       const pieces = [];
       for (const meal of combined.filter(m => m.date === block.date && m.start <= block.end && m.end > block.start)) {
-        if (meal.start > cursor) pieces.push({ ...block, start: cursor, end: meal.start, outReason: "Meal", mealApplied: true });
+        if (meal.start > cursor) pieces.push({ ...block, start: cursor, end: meal.start, outReason: settings.outReason });
         cursor = Math.max(cursor, meal.end);
         if (cursor >= block.end) break;
       }
       if (cursor < block.end) pieces.push({ ...block, start: cursor, outReason: settings.outReason });
-      if (!pieces.length) warnings.push(`${block.date}: a meal covers the entire work block; no paid entry was planned. Any existing entry needs manual correction.`);
       // Only a single exact draft of this original source span can be split automatically.
       const changed = pieces.length !== 1 || pieces[0]?.start !== block.start || pieces[0]?.end !== block.end;
       for (const piece of pieces) result.push({ ...piece, ...(changed ? { mealSource: { start: block.start, end: block.end } } : {}) });
     }
-    return result;
+    for (const meal of combined) {
+      const source = blocks.find(b => b.date === meal.date && b.start <= meal.start && b.end >= meal.end);
+      result.push({ ...meal, outReason: "Meal", isMeal: true,
+        ...(source ? { mealSource: { start: source.start, end: source.end } } : {}) });
+    }
+    return result.sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start);
   }
   function plan({ events, dates, settings, existing = [], core, now = Date.now() }) {
     validateDates(dates);
@@ -172,7 +180,15 @@
         descriptions: s.importComments && typeof event.description === "string" ? [event.description] : [],
         startIso: event.start.dateTime, endIso: event.end.dateTime });
     }
-    const merged = applyMeals(union(blocks), meals, s, warnings);
+    const merged = applyMeals(union(blocks), meals, s, warnings).filter(block => {
+      // Future meals may trim completed work, but are not themselves imported
+      // until finished unless the user enables unfinished blocks.
+      if (block.isMeal && !s.includeFuture && core.wallTimeInstant(core.parseCalendarDate(block.date),
+          { hour: Math.floor(block.end / 60), minute: block.end % 60 }, s.timeZone) > now) {
+        skipped.push({ ...block, reason: "future" }); return false;
+      }
+      return true;
+    });
     const add = [], update = [], conflicts = [];
     const overlapsBlock = (a, b) => a.date === b.date && a.start < b.end && a.end > b.start;
     const resolved = new Set();
