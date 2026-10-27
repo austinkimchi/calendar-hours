@@ -6,6 +6,8 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
+  const maxDurationMinutes = 7 * 24 * 60;
+
   const defaults = Object.freeze({
     decimals: 2,
     rounding: "nearest",
@@ -113,7 +115,7 @@
     if (start.getFullYear() !== startDate.year || start.getMonth() + 1 !== startDate.month || start.getDate() !== startDate.day) return null;
     if (end.getFullYear() !== endDate.year || end.getMonth() + 1 !== endDate.month || end.getDate() !== endDate.day) return null;
     const minutes = (end.getTime() - start.getTime()) / 60000;
-    return Number.isFinite(minutes) && minutes > 0 && minutes <= 10080 ? minutes : null;
+    return Number.isFinite(minutes) && minutes > 0 && minutes <= maxDurationMinutes ? minutes : null;
   }
 
   function roundNumber(value, precision, mode) {
@@ -132,7 +134,7 @@
 
   function formattedDuration(minutes, settings) {
     const cfg = settingsFrom(settings);
-    if (!Number.isFinite(minutes) || minutes <= 0) return null;
+    if (!Number.isFinite(minutes) || minutes <= 0 || minutes > maxDurationMinutes) return null;
     const increments = minutes / cfg.incrementMinutes;
     const roundedIncrements = cfg.rounding === "down" || cfg.rounding === "truncate"
       ? Math.floor(increments + 1e-9)
@@ -216,5 +218,5 @@
     return cfg.updateExistingHours && hasDurationSuffix(title, cfg);
   }
 
-  return { defaults, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic, hasDurationSuffix, shouldUpdateDuration, singularUnitFor };
+  return { defaults, maxDurationMinutes, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic, hasDurationSuffix, shouldUpdateDuration, singularUnitFor };
 });

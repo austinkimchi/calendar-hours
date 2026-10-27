@@ -66,3 +66,19 @@ test("API sync retries a version conflict using a fresh event version", async ()
   assert.equal(reads, 2);
   assert.equal(patches, 2);
 });
+
+test("API sync rejects durations over seven days before contacting Calendar", async () => {
+  let requests = 0;
+  const result = await syncTitle({
+    gridId, title: "SCU Block (1 hour)", startIso,
+    endIso: new Date(Date.parse(startIso) + (core.maxDurationMinutes + 1) * 60000).toISOString(),
+    settings: core.settingsFrom({ matchingPhrases: [{ phrase: "SCU Block", dynamic: true }] }),
+    accessToken: "test-token", core,
+    fetcher: async () => { requests++; throw new Error("Unexpected Calendar request"); }
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /exceeds seven days/);
+  assert.equal(requests, 0);
+  assert.equal(core.formattedDuration(core.maxDurationMinutes + 1, core.defaults), null);
+  assert.equal(core.formattedDuration(core.maxDurationMinutes, core.defaults).value, "168");
+});

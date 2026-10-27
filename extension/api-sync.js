@@ -41,8 +41,12 @@
 
   async function syncTitle({ gridId, title, startIso, endIso, settings, accessToken, fetcher = fetch, sleep = pause, core }) {
     const ref = eventRefFromGridId(gridId);
-    if (!ref || !Number.isFinite(Date.parse(startIso)) || !Number.isFinite(Date.parse(endIso))) {
+    const requestedMinutes = (Date.parse(endIso) - Date.parse(startIso)) / 60000;
+    if (!ref || !Number.isFinite(requestedMinutes) || requestedMinutes <= 0) {
       return { ok: false, reason: "Calendar event reference or time was unavailable" };
+    }
+    if (requestedMinutes > core.maxDurationMinutes) {
+      return { ok: false, reason: "Event duration exceeds seven days" };
     }
     const url = `${apiRoot}/${encodeURIComponent(ref.calendarId)}/events/${encodeURIComponent(ref.eventId)}`;
     const headers = { Authorization: `Bearer ${accessToken}` };
