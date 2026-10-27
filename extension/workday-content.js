@@ -87,6 +87,13 @@
   function assertView(doc, core, expected) {
     if (readView(doc, core).signature !== expected.signature) throw new Error("The displayed dates changed. Import stopped; already saved entries remain unsubmitted.");
   }
+  async function waitForCalendarReady(doc) {
+    await waitFor(() => {
+      const toolbar = doc.querySelector(aid("calendarToolbar"));
+      return visible(toolbar) && !toolbar.closest('[aria-hidden="true"],[inert]') &&
+        ![...doc.querySelectorAll('[role="dialog"][aria-modal="true"]')].some(visible);
+    }, "Workday has not finished closing its time-entry form. Refresh the calendar before retrying.");
+  }
   async function cancelDraft(doc, dialog) {
     button(dialog, "Cancel").click();
     const result = await waitFor(() => !dialog.isConnected ||
@@ -96,6 +103,7 @@
       button(result, "Discard").click();
       await waitFor(() => !dialog.isConnected && !result.isConnected, "Workday did not discard the unsaved draft");
     }
+    await waitForCalendarReady(doc);
   }
   function updateTarget(doc, base, block, settings) {
     const previous = block.previous;
@@ -184,8 +192,11 @@
         await cancelDraft(doc, dialog);
         return "already-entered";
       }
-      setInput(field(dialog, "In"), core.clock(block.start));
-      setInput(field(dialog, "Out"), core.clock(block.end));
+      if (normalizedClock(field(dialog, "In").value) !== normalizedClock(core.clock(block.start)) ||
+          normalizedClock(field(dialog, "Out").value) !== normalizedClock(core.clock(block.end))) {
+        setInput(field(dialog, "In"), core.clock(block.start));
+        setInput(field(dialog, "Out"), core.clock(block.end));
+      }
       const outReason = [...dialog.querySelectorAll('[role="combobox"]')].find(e => label(e).startsWith("Out Reason"));
       if (!outReason) throw new Error("Workday's Out Reason field is unavailable");
       if (reasonValue() !== reason) {
@@ -218,6 +229,7 @@
       await waitFor(() => !dialog.isConnected, "Workday did not confirm this entry. Check the open form before retrying.");
       await waitFor(() => readExisting(doc, base.dates).some(e => e.date === block.date && e.start === block.start && e.end === block.end && e.type === settings.timeType &&
         (!updating || (e.eventId === block.previous.eventId && e.status === "Not Submitted"))), "Workday closed the form but did not show the saved entry. Check the calendar before retrying.");
+      await waitForCalendarReady(doc);
       return updating ? "updated" : "added";
     } catch (error) {
       if (!saved && dialog.isConnected) {
