@@ -16,7 +16,7 @@ Calendar Hours turns event start and end times into a title suffix such as `Work
 
 **Privacy policy:** [Public policy](https://gist.github.com/austinkimchi/6069defb02ecb9c38b5b2c7d4feb65c7), matching `PRIVACY.md`. Only the public policy is visible outside the private source repository.
 
-**Listing assets:** `store-assets/settings-screenshot.png`, `store-assets/settings-format-screenshot.png`, and `store-assets/settings-other-screenshot.png` show the current settings page at 1280 × 800. They use generic example phrases. All three were uploaded to the listing, with `settings-screenshot.png` first. The original 0.1.0 screenshot also remains pending a separate removal decision. The package includes the icon and short description.
+**Listing assets:** `store-assets/settings-screenshot.png`, `store-assets/settings-format-screenshot.png`, and `store-assets/settings-other-screenshot.png` show the current settings page at 1280 × 800. They use generic example phrases. All three were uploaded to the listing, with `settings-screenshot.png` first. The original 0.1.0 screenshot remains; the user approved its removal, but the dashboard locks listing edits while 0.2.11 is pending review. Remove it when listing edits become available, then verify the resulting review and publication status. The package includes the icon and short description.
 
 **Distribution:** Free, Unlisted, all regions, English (US). After approval, the listing can be installed in Edge through its Chrome Web Store link.
 
