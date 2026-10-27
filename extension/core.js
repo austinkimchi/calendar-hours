@@ -104,19 +104,64 @@
     return { year: parsed.getFullYear(), month: parsed.getMonth() + 1, day: parsed.getDate() };
   }
 
-  function durationMinutes(fields) {
+  const zoneFormatters = new Map();
+  function zoneFormatter(timeZone) {
+    if (typeof timeZone !== "string" || !timeZone) return null;
+    if (zoneFormatters.has(timeZone)) return zoneFormatters.get(timeZone);
+    try {
+      const formatter = new Intl.DateTimeFormat("en-CA", {
+        timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+      });
+      if (zoneFormatters.size >= 32) zoneFormatters.clear();
+      zoneFormatters.set(timeZone, formatter);
+      return formatter;
+    } catch { return null; }
+  }
+
+  function systemTimeZone() {
+    // Read afresh: a long-lived Calendar tab may stay open while the user travels.
+    return new Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+
+  function validTimeZone(timeZone) { return !!zoneFormatter(timeZone); }
+
+  function wallTimeInstant(date, clock, timeZone = systemTimeZone()) {
+    const formatter = zoneFormatter(timeZone);
+    if (!date || !clock || !formatter) return null;
+    const wall = Date.UTC(date.year, date.month - 1, date.day, clock.hour, clock.minute);
+    const checked = new Date(wall);
+    if (checked.getUTCFullYear() !== date.year || checked.getUTCMonth() + 1 !== date.month ||
+        checked.getUTCDate() !== date.day || checked.getUTCHours() !== clock.hour || checked.getUTCMinutes() !== clock.minute) return null;
+    const wallAt = instant => {
+      const p = Object.fromEntries(formatter.formatToParts(instant).map(part => [part.type, part.value]));
+      return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+    };
+    // Both sides of an offset transition, including half-hour DST and date-line
+    // changes. A gap has no match; a repeated clock time has two. Never guess.
+    const offsets = new Set([-36, -24, -12, 0, 12, 24, 36].map(hours => {
+      const sample = wall + hours * 3600000;
+      return wallAt(sample) - sample;
+    }));
+    const matches = [...offsets].map(offset => wall - offset).filter(instant => wallAt(instant) === wall);
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  function eventInstants(fields) {
     const startDate = parseCalendarDate(fields.startDate, fields.startDataDate, fields.referenceYear);
     const endDate = parseCalendarDate(fields.endDate || fields.startDate, fields.endDataDate, fields.referenceYear);
     const startClock = parseClock(fields.startTime);
     const endClock = parseClock(fields.endTime);
     if (!startDate || !endDate || !startClock || !endClock || fields.allDay) return null;
-    const start = new Date(startDate.year, startDate.month - 1, startDate.day, startClock.hour, startClock.minute);
-    const end = new Date(endDate.year, endDate.month - 1, endDate.day, endClock.hour, endClock.minute);
-    if (start.getFullYear() !== startDate.year || start.getMonth() + 1 !== startDate.month || start.getDate() !== startDate.day) return null;
-    if (end.getFullYear() !== endDate.year || end.getMonth() + 1 !== endDate.month || end.getDate() !== endDate.day) return null;
-    const minutes = (end.getTime() - start.getTime()) / 60000;
-    return Number.isFinite(minutes) && minutes > 0 && minutes <= maxDurationMinutes ? minutes : null;
+    const defaultZone = fields.timeZone === undefined ? systemTimeZone() : fields.timeZone;
+    const start = wallTimeInstant(startDate, startClock, fields.startTimeZone === undefined ? defaultZone : fields.startTimeZone);
+    const end = wallTimeInstant(endDate, endClock, fields.endTimeZone === undefined ? defaultZone : fields.endTimeZone);
+    if (start === null || end === null) return null;
+    const minutes = (end - start) / 60000;
+    return Number.isFinite(minutes) && minutes > 0 && minutes <= maxDurationMinutes ? { start, end, minutes } : null;
   }
+
+  function durationMinutes(fields) { return eventInstants(fields)?.minutes ?? null; }
 
   function roundNumber(value, precision, mode) {
     const factor = 10 ** precision;
@@ -218,5 +263,5 @@
     return cfg.updateExistingHours && hasDurationSuffix(title, cfg);
   }
 
-  return { defaults, maxDurationMinutes, settingsFrom, parseClock, parseCalendarDate, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic, hasDurationSuffix, shouldUpdateDuration, singularUnitFor };
+  return { defaults, maxDurationMinutes, settingsFrom, parseClock, parseCalendarDate, systemTimeZone, validTimeZone, wallTimeInstant, eventInstants, durationMinutes, formattedDuration, titleWithDuration, matchesAutoWords, matchesDynamic, hasDurationSuffix, shouldUpdateDuration, singularUnitFor };
 });

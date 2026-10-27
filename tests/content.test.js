@@ -6,6 +6,7 @@ const { JSDOM } = require("jsdom");
 
 const extension = path.join(__dirname, "..", "extension");
 const coreScript = fs.readFileSync(path.join(extension, "core.js"), "utf8");
+const zonesScript = fs.readFileSync(path.join(extension, "calendar-zones.js"), "utf8");
 const contentScript = fs.readFileSync(path.join(extension, "content.js"), "utf8");
 const settle = () => new Promise(resolve => setTimeout(resolve, 220));
 
@@ -33,6 +34,7 @@ function run(html, saved = {}, options = {}) {
     runtime: { onMessage: { addListener(fn) { listener = fn; } }, sendMessage: options.sendMessage || (async () => ({ ok: false })) }
   };
   window.eval(coreScript);
+  window.eval(zonesScript);
   window.eval(contentScript);
   return { dom, window, send: message => new Promise(resolve => listener(message, {}, resolve)) };
 }
@@ -637,5 +639,59 @@ test("background editor saves and verifies a resized one-time event", async () =
   app.window.history.pushState({}, "", url);
   const verified = await app.send({ type: "CALENDAR_HOURS_BACKGROUND_VERIFY", id: "event-1", title: savedTitle });
   assert.equal(verified.ok, true);
+  app.dom.window.close();
+});
+
+test("editor suggestions follow separate Calendar zones and skip an unknown explicit zone", async () => {
+  const app = run(`<script id="initialdata" type="application/json">[["timezone","UTC"]]</script>
+    <script id="timezonedata" type="application/json">[[["Asia/Tokyo","(GMT+09:00) Japan Standard Time"],["America/Los_Angeles","(GMT-07:00) Pacific Time - Los Angeles"]]]</script>
+    <input aria-label="Title" value="Travel">
+    <input aria-label="Start date" value="2026-10-27"><input aria-label="Start time" value="11am">
+    <div jsname="PH80Af" data-text="(GMT+09:00) Japan Standard Time">(GMT+09:00)</div>
+    <input aria-label="End date" value="2026-10-27"><input aria-label="End time" value="5am">
+    <div id="xTmZn" data-text="(GMT-07:00) Pacific Time - Los Angeles">(GMT-07:00)</div>`);
+  await settle();
+  assert.equal(app.window.document.querySelector('.calendar-hours-suggestion-suffix').textContent,' (10 hours)');
+  app.window.document.getElementById('xTmZn').setAttribute('data-text','(GMT+04:00) Unknown zone');
+  assert.equal((await app.send({type:'CALENDAR_HOURS_APPLY'})).ok,false);
+  assert.equal(app.window.document.querySelector('[aria-label="Title"]').value,'Travel');
+  app.dom.window.close();
+});
+
+test("grid sync uses Calendar-zone instants and a display-zone change never saves events", async () => {
+  const requests=[];
+  const app=run(`<script id="initialdata" type="application/json">[["timezone","Asia/Kathmandu"]]</script>
+    <div data-eventchip data-eventid="grid-zone" role="button">
+    <div>9am to 10am, Planning (1 hour), Calendar: Work, October 27, 2026</div>
+    <div aria-hidden="true"><span class="I0UMhf">Planning (1 hour)</span></div></div>`,{},
+    {sendMessage:async message=>{requests.push(message);return {ok:true,nextTitle:'Planning (1.5 hours)'}}});
+  await settle();
+  const chip=app.window.document.querySelector('[data-eventchip]');
+  chip.firstElementChild.textContent='9am to 10:30am, Planning (1 hour), Calendar: Work, October 27, 2026';
+  await new Promise(resolve=>setTimeout(resolve,350));
+  assert.equal(requests.length,1);
+  assert.equal(requests[0].startIso,'2026-10-27T03:15:00.000Z');
+  assert.equal(requests[0].endIso,'2026-10-27T04:45:00.000Z');
+  app.window.document.getElementById('initialdata').textContent='[["timezone","Asia/Tokyo"]]';
+  chip.firstElementChild.textContent='12:15pm to 1:45pm, Planning (1.5 hours), Calendar: Work, October 27, 2026';
+  await new Promise(resolve=>setTimeout(resolve,350));
+  assert.equal(requests.length,1);
+  app.dom.window.close();
+});
+
+test("background verification compares absolute dates and instants instead of grid wall clocks", async () => {
+  const app=run(`<script id="initialdata" type="application/json">[["timezone","Asia/Tokyo"]]</script>
+    <input aria-label="Title" value="Planning (1 hour)">
+    <input aria-label="Start date" value="2026-10-28"><input aria-label="Start time" value="1am">
+    <input aria-label="End date" value="2026-10-28"><input aria-label="End time" value="3am">
+    <div role="combobox" aria-label="Recurrence">Every week</div>`,{},
+    {url:'https://calendar.google.com/calendar/u/0/r/eventedit/zone-event'});
+  await settle();
+  const message={type:'CALENDAR_HOURS_BACKGROUND_SYNC',id:'zone-event',title:'Planning (1 hour)',
+    startTime:'9am',endTime:'11am',startIso:'2026-10-27T16:00:00Z',endIso:'2026-10-27T18:00:00Z'};
+  // Matching instants pass time verification despite different dates and clocks,
+  // then the independent recurring-event gate stops this synthetic save.
+  assert.equal((await app.send(message)).reason,'recurring event');
+  assert.equal((await app.send({...message,startIso:'2026-10-26T16:00:00Z'})).retry,true);
   app.dom.window.close();
 });

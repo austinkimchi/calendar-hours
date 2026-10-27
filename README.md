@@ -25,6 +25,12 @@ Open a timed event, enter its start and end times, then type `/hours` in the tit
 
 Google Calendar API sign-in is currently limited to the project's OAuth test users. Broader distribution requires Google's OAuth review.
 
+## Time zones
+
+Time zone detection is automatic. Calendar Hours follows Google Calendar’s primary display zone and an event’s own start/end zones when available; otherwise it reads the device’s current zone. It recalculates from IANA zone rules for the event date, including daylight saving time. It does not change Calendar or system settings or request location access. If Calendar is kept in your home zone while traveling, the extension follows that choice.
+
+Repeated or nonexistent clocks during a daylight-saving transition cannot be resolved from the editor alone, so the title is left unchanged. [Implementation and verification notes](TIME_ZONE_TESTING.md) describe detection and its limits.
+
 ## Development
 
 ```bash

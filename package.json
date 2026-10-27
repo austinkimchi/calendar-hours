@@ -1,6 +1,6 @@
 {
   "name": "calendar-hours",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "private": true,
   "description": "Google Calendar event-duration title extension for Chrome and Edge",
   "scripts": {

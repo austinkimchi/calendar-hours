@@ -1,8 +1,10 @@
 # Calendar Hours privacy policy
 
-Effective October 26, 2026
+Effective October 27, 2026
 
 Calendar Hours reads the title, start time, end time, and date fields of a Google Calendar event on the open Calendar page. It uses those fields locally in your browser to calculate an elapsed duration and propose or insert hours or minutes in the event title. When Dynamic is enabled for a matching phrase or the existing-duration update setting is on, it detects when you move or resize a qualifying one-time event on the Calendar grid and displays the new duration immediately. By default, it opens that event in an inactive Calendar tab, corrects its title, and uses Google Calendar's own Save button. The existing-duration update setting starts on for new installations and can be turned off in Settings.
+
+Time zone calculations read Calendar’s primary time zone and zone-label data already loaded on the Calendar page, plus event-specific zone labels. If unavailable, the extension reads the browser’s current system time zone. This happens locally, needs no location permission or additional Google scope, and does not change your Calendar or device settings. Zone detection data is kept in memory for the tab, not persisted or sent to the developer.
 
 An optional faster-save mode connects to Google Calendar through Google's OAuth and Calendar API. Google grants access to view and edit events on your calendars. For a qualifying one-time grid change, the extension requests the specific event from Google's Calendar API, checks its title and times, and sends a request that changes only the title. It stores a short-lived OAuth access token in the browser's local extension storage and restricts that storage to trusted extension contexts where supported. When the token expires, it tries to renew access through Google's browser sign-in without showing a window; if Google requires interaction, the direct save falls back to the inactive Calendar tab until you reconnect. Disconnecting asks Google to revoke the token and removes the locally stored copy.
 
