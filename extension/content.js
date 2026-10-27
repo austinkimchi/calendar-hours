@@ -443,14 +443,18 @@
     const chip = event.target.closest('[data-eventchip][data-eventid]');
     const title = chipTitle(chip);
     if (!chip || !title || !core.shouldUpdateDuration(title, settings)) return;
-    gridGesture = { id: chip.getAttribute("data-eventid"), title, summary: chipSummary(chip), x: event.clientX, y: event.clientY };
+    gridGesture = {
+      id: chip.getAttribute("data-eventid"), title, summary: chipSummary(chip),
+      x: event.clientX, y: event.clientY, copying: event.altKey
+    };
   }
 
   function finishGridGesture(event) {
     if (contextInvalidated) return;
     const gesture = gridGesture;
     gridGesture = null;
-    if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) >= 5) {
+    if (gesture && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) >= 5 &&
+        !gesture.copying && !event.altKey) {
       if (gridBusy) queuedGridGesture = gesture;
       else syncResizedEvent(gesture);
     }

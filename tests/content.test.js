@@ -269,6 +269,47 @@ test("grid resize still saves when Calendar opens its event details popup", asyn
   app.dom.window.close();
 });
 
+test("a new Option-drag copy can be resized immediately without waiting on its source", async () => {
+  const requests = [];
+  const app = run(`<div data-eventchip data-eventid="original" role="button">
+    <div>1pm to 2pm, SCU Block Test (1 hour), Calendar: Work, October 27, 2026</div>
+    <div aria-hidden="true"><span class="I0UMhf">SCU Block Test (1 hour)</span></div>
+  </div>`, { matchingPhrases: [{ phrase: "SCU Block", dynamic: true }] }, {
+    sendMessage: async message => {
+      requests.push(message);
+      return { ok: true, nextTitle: "SCU Block Test (1.5 hours)" };
+    }
+  });
+  const { window } = app;
+  await settle();
+  const original = window.document.querySelector('[data-eventid="original"]');
+  original.dispatchEvent(new window.MouseEvent("pointerdown", {
+    bubbles: true, altKey: true, clientX: 10, clientY: 10
+  }));
+  const copy = original.cloneNode(true);
+  copy.setAttribute("data-eventid", "copy");
+  copy.firstElementChild.textContent = "1pm to 2pm, SCU Block Test (1 hour), Calendar: Work, October 28, 2026";
+  window.document.body.append(copy);
+  original.dispatchEvent(new window.MouseEvent("pointerup", {
+    bubbles: true, altKey: true, clientX: 30, clientY: 10
+  }));
+  await Promise.resolve();
+  copy.dispatchEvent(new window.MouseEvent("pointerdown", {
+    bubbles: true, clientX: 10, clientY: 10
+  }));
+  copy.firstElementChild.textContent = "1pm to 2:30pm, SCU Block Test (1 hour), Calendar: Work, October 28, 2026";
+  copy.dispatchEvent(new window.MouseEvent("pointerup", {
+    bubbles: true, clientX: 10, clientY: 30
+  }));
+  await settle();
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].id, "copy");
+  assert.equal(requests[0].endTime, "2:30pm");
+  assert.equal(original.querySelector(".I0UMhf").textContent, "SCU Block Test (1 hour)");
+  assert.equal(copy.querySelector(".I0UMhf").textContent, "SCU Block Test (1.5 hours)");
+  app.dom.window.close();
+});
+
 test("a second resize is queued while the first title is saving", async () => {
   let finishFirst;
   const requests = [];
