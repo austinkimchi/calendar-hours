@@ -149,6 +149,9 @@
     let busy = false;
     let statusBox;
     let statusSignature;
+    const menus = new WeakMap();
+    let openMenu = null;
+    let menuSequence = 0;
     function showStatus(message, setup = false) {
       const toolbar = doc.querySelector(aid("calendarToolbar"));
       if (!toolbar) return;
@@ -192,21 +195,90 @@
         showStatus(`${added ? `${added} entries saved before stopping. ` : ""}${error.message}`);
       } finally { busy = false; }
     }
+    function enhanceMenu(menu) {
+      const prefix = `calendar-hours-workday-menu-${++menuSequence}`;
+      const item = doc.createElement("div"); item.setAttribute("role", "option"); item.tabIndex = -1;
+      item.id = `${prefix}-import`;
+      item.dataset.calendarHours = "workday-import";
+      item.className = (menu.querySelector('[role="option"]')?.className || "") + " calendar-hours-workday-menuitem";
+      item.textContent = "Auto-fill from Calendar";
+      item.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); void run(); });
+      menu.prepend(item);
+      menu.classList.add("calendar-hours-workday-menu");
+      const options = () => [...menu.querySelectorAll('[role="option"]')].filter(e => visible(e) && e.getAttribute("aria-disabled") !== "true");
+      let active = item;
+      let search = "", searchAt = 0;
+      function select(option) {
+        active = option;
+        const all = [...menu.querySelectorAll('[role="option"]')];
+        all.forEach((e, index) => {
+          if (!e.id) e.id = `${prefix}-${index}`;
+          e.setAttribute("aria-selected", String(e === option));
+          e.setAttribute("aria-posinset", String(index + 1));
+          e.setAttribute("aria-setsize", String(all.length));
+          e.toggleAttribute("data-calendar-hours-active", e === option);
+        });
+        menu.setAttribute("aria-activedescendant", option.id);
+      }
+      // Workday's private selection index excludes the injected item. Handle
+      // this list's keyboard navigation before its native bubbling handler so
+      // Enter always activates the option that is visibly highlighted.
+      menu.addEventListener("keydown", event => {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        const choices = options();
+        if (!choices.length) return;
+        const index = Math.max(0, choices.indexOf(active));
+        let next;
+        if (event.key === "ArrowDown") next = choices[(index + 1) % choices.length];
+        else if (event.key === "ArrowUp") next = choices[(index + choices.length - 1) % choices.length];
+        else if (event.key === "Home") next = choices[0];
+        else if (event.key === "End") next = choices.at(-1);
+        else if (event.key.length === 1 && event.key !== " ") {
+          const now = Date.now();
+          search = now - searchAt < 700 ? search + event.key.toLowerCase() : event.key.toLowerCase();
+          searchAt = now;
+          const phrase = [...search].every(char => char === search[0]) ? search[0] : search;
+          next = [...choices.slice(index + 1), ...choices.slice(0, index + 1)].find(e => e.textContent.trim().toLowerCase().startsWith(phrase)) || active;
+        }
+        else if (!["Enter", " "].includes(event.key)) return; // Keep native Escape and Tab behavior.
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (next) { select(next); next.scrollIntoView({ block: "nearest" }); }
+        else if (!event.repeat) active.click();
+      }, true);
+      menu.addEventListener("mouseover", event => {
+        const option = event.target.closest('[role="option"]');
+        if (!option || !options().includes(option)) return;
+        event.stopImmediatePropagation();
+        select(option);
+      }, true);
+      // Workday can restore its original active descendant after its opening
+      // animation. Keep screen-reader focus aligned with our visible selection.
+      new doc.defaultView.MutationObserver(() => {
+        if (visible(menu) && menu.getAttribute("aria-activedescendant") !== active.id) menu.setAttribute("aria-activedescendant", active.id);
+      }).observe(menu, { attributes: true, attributeFilter: ["aria-activedescendant"] });
+      return {
+        open() {
+          search = ""; searchAt = 0;
+          menu.focus({ preventScroll: true });
+          select(item);
+        }
+      };
+    }
     function inject() {
       if (statusBox?.isConnected && !busy) {
         let current;
         try { current = readView(doc, core).signature; } catch { /* Not an Enter Time view. */ }
         if (current !== statusSignature) statusBox.remove();
       }
-      if (![...doc.querySelectorAll("h1")].some(e => e.textContent.trim() === "Enter Time")) return;
+      if (![...doc.querySelectorAll("h1")].some(e => e.textContent.trim() === "Enter Time") ||
+          doc.querySelector(`${aid("calendarToolbar")} button[aria-label="Actions"]`)?.getAttribute("aria-expanded") === "false") { openMenu = null; return; }
       const menu = [...doc.querySelectorAll('[role="listbox"]')].find(e => visible(e) && label(e) === "Actions");
-      if (!menu || menu.querySelector('[data-calendar-hours="workday-import"]')) return;
-      const item = doc.createElement("div"); item.setAttribute("role", "option"); item.tabIndex = 0;
-      item.dataset.calendarHours = "workday-import"; item.className = (menu.querySelector('[role="option"]')?.className || "") + " calendar-hours-workday-menuitem";
-      item.textContent = "Auto-fill from Calendar";
-      item.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); void run(); });
-      item.addEventListener("keydown", event => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); void run(); } });
-      menu.prepend(item);
+      if (!menu) { openMenu = null; return; }
+      if (!menus.has(menu)) menus.set(menu, enhanceMenu(menu));
+      if (openMenu !== menu) {
+        openMenu = menu;
+        menus.get(menu).open();
+      }
     }
     new doc.defaultView.MutationObserver(inject).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "aria-labelledby", "aria-expanded", "aria-hidden", "role"] });
     inject();

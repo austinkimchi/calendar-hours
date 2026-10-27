@@ -1,4 +1,8 @@
 .calendar-hours-workday-menuitem { cursor: pointer; padding: 10px 16px; }
 .calendar-hours-workday-menuitem:hover, .calendar-hours-workday-menuitem:focus-visible { background: #e9f2ff; outline: 2px solid #336ed4; outline-offset: -2px; }
+/* Override Workday's stale private highlight only within the enhanced Actions list. */
+.calendar-hours-workday-menu [role="option"] { background: transparent !important; color: #333 !important; outline: none !important; }
+.calendar-hours-workday-menu [role="option"][data-calendar-hours-active] { background: #1756a9 !important; color: #fff !important; }
+.calendar-hours-workday-menu [role="option"][aria-disabled="true"] { color: #767676 !important; }
 .calendar-hours-workday-status { margin: 10px 0; padding: 12px 16px; border: 1px solid #bdcee7; border-radius: 8px; background: #f3f7fd; color: #182b48; font: 14px/1.5 system-ui, sans-serif; }
 .calendar-hours-workday-status button { background: transparent; color: #1756a9; border: 0; text-decoration: underline; cursor: pointer; font: inherit; }

@@ -62,6 +62,58 @@ test('Actions menu adds import and sends unconfigured users directly to setup',a
  assert.ok(f.doc.querySelector('.calendar-hours-workday-status'));f.doc.querySelector('[data-automation-id^="dayCell-"]').textContent='10/20';await new Promise(r=>setTimeout(r,10));assert.equal(f.doc.querySelector('.calendar-hours-workday-status'),null);f.dom.window.close();
 });
 
+function actionMenu(f) {
+ const menu=f.doc.createElement('ul');menu.tabIndex=0;menu.setAttribute('role','listbox');menu.setAttribute('aria-labelledby','actions-menu-trigger');
+ menu.setAttribute('aria-activedescendant','prior');
+ menu.innerHTML='<li role="presentation"><div role="option" id="prior" aria-selected="true">Auto-fill from Prior Week</div></li><li role="presentation"><div role="option" id="disabled" aria-disabled="true">Unavailable action</div></li><li role="presentation"><div role="option" id="week">Enter Time by Week</div></li>';
+ f.doc.body.append(menu);
+ return menu;
+}
+test('Actions opens with Calendar selected and Enter activates only Calendar',async()=>{
+ const f=fixture(),menu=actionMenu(f),requests=[];let nativeEnter=0,priorClicks=0;
+ menu.addEventListener('keydown',event=>{if(event.key==='Enter')nativeEnter++});
+ menu.querySelector('#prior').addEventListener('click',()=>priorClicks++);
+ adapter.install(f.doc,{runtime:{sendMessage:async m=>{requests.push(m);return {ok:true,events:[],settings}}}},core,titleCore);
+ const item=menu.querySelector('[data-calendar-hours="workday-import"]');
+ assert.equal(f.doc.activeElement,menu);
+ assert.equal(menu.getAttribute('aria-activedescendant'),item.id);
+ assert.equal(item.getAttribute('aria-selected'),'true');
+ assert.equal(menu.querySelector('#prior').getAttribute('aria-selected'),'false');
+ menu.setAttribute('aria-activedescendant','prior');
+ await new Promise(r=>setTimeout(r,0));
+ assert.equal(menu.getAttribute('aria-activedescendant'),item.id,'late Workday focus updates cannot restore the prior-week selection');
+ menu.dispatchEvent(new f.dom.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+ await new Promise(r=>setTimeout(r,0));
+ assert.deepEqual(requests.map(r=>r.type),['CALENDAR_HOURS_WORKDAY_EVENTS']);
+ assert.equal(nativeEnter,0);assert.equal(priorClicks,0);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
+});
+test('Actions arrows, pointer hover and typeahead select the highlighted option and reopen resets to Calendar',async()=>{
+ const f=fixture(),menu=actionMenu(f),trigger=f.doc.querySelector('#actions-menu-trigger');let priorClicks=0,nativeEscape=0;
+ menu.querySelector('#prior').addEventListener('click',()=>priorClicks++);
+ menu.addEventListener('keydown',event=>{if(event.key==='Escape')nativeEscape++});
+ adapter.install(f.doc,{runtime:{sendMessage:async()=>({ok:true,events:[],settings})}},core,titleCore);
+ const item=menu.querySelector('[data-calendar-hours="workday-import"]');
+ const key=key=>menu.dispatchEvent(new f.dom.window.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));
+ const selected=()=>menu.getAttribute('aria-activedescendant');
+ key('ArrowDown');assert.equal(selected(),'prior');
+ key('ArrowDown');assert.equal(selected(),'week','disabled items are skipped');
+ key('ArrowDown');assert.equal(selected(),item.id);
+ key('ArrowUp');assert.equal(selected(),'week');
+ key('Home');assert.equal(selected(),item.id);
+ key('End');assert.equal(selected(),'week');
+ key('a');assert.equal(selected(),item.id);
+ menu.querySelector('#prior').dispatchEvent(new f.dom.window.MouseEvent('mouseover',{bubbles:true}));
+ assert.equal(selected(),'prior');key('Enter');assert.equal(priorClicks,1);
+ key('Escape');assert.equal(nativeEscape,1,'native menu dismissal remains available');
+ trigger.setAttribute('aria-expanded','false');menu.hidden=true;
+ await new Promise(r=>setTimeout(r,0));
+ menu.hidden=false;trigger.setAttribute('aria-expanded','true');
+ await new Promise(r=>setTimeout(r,0));
+ assert.equal(selected(),item.id);
+ assert.equal(menu.querySelectorAll('[data-calendar-hours="workday-import"]').length,1);
+ assert.deepEqual(f.forbidden,[]);f.dom.window.close();
+});
+
 
 test('Workday zero-padded time formatting is accepted but changed time values are rejected',async()=>{
  for(const changeTime of [false,true]){

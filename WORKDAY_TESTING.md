@@ -2,11 +2,13 @@
 
 ## Automated checks
 
-`npm test`: 74 tests pass, including 24 Workday/OAuth tests and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
+`npm test`: 80 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.11-workday-dev.zip`.
 
 The new tests cover:
 
 - Configuring a readable Google calendar and an independent import phrase in settings.
+- Time zone dropdown persistence, aliases, and settings help on hover or keyboard focus.
+- Actions defaults to Calendar on every opening. Arrow keys, Home/End, typeahead, and pointer hover keep the highlight and active descendant aligned; Enter activates only that option, including after Workday's delayed focus update.
 - First-use setup routing, revoked permissions, removed calendars, and invalid settings.
 - Trusted message senders; Google access tokens stay in the service worker.
 - Incremental calendar-list permission and preserving it on silent token renewal.
@@ -21,7 +23,7 @@ The new tests cover:
 
 Verified on the English Workday Enter Time calendar using the approved developer extension and the user's saved Google Calendar setup:
 
-- **Auto-fill from Calendar** appears first in Actions.
+- **Auto-fill from Calendar** appears first and is highlighted when Actions opens. Clicking Actions followed by Enter ran Calendar import. Arrow Down/Up navigated to Prior Week and back, Escape closed the menu, and reopening selected Calendar again.
 - First use shows setup guidance and opens the Workday section in extension settings. Google consent and settings were completed by the user because the browser-control policy excludes extension-settings URLs.
 - The configured current-week import saved the missing blocks through the normal individual form. Existing exact entries were skipped. All new entries visibly remained **Not Submitted**.
 - A second current-week run added zero duplicates. The saved blocks and their exact intervals survived a page reload. An opened saved entry confirmed its calendar-title comment and configured Out Reason.
