@@ -17,20 +17,18 @@ The new tests cover:
 - Workday zero-padded times, asynchronous duration calculation, and Discard Changes cleanup for unsaved drafts.
 - Explicitly no Review, Submit, Next or Delete action in the import adapter.
 
-## Live verification still required
+## Live browser verification
 
-Live inspection confirmed the English Enter Time calendar's current-week, previous-week, and single-day date headers. The individual form accepts exact minute times, pads morning hours with a leading zero, calculates the duration asynchronously, and asks for Discard Changes confirmation after an edited draft is canceled. The inspection draft was discarded and the original saved entry remained unchanged.
+Verified on the English Workday Enter Time calendar using the approved developer extension and the user's saved Google Calendar setup:
 
-After reloading the approved developer build, Actions visibly contained **Auto-fill from Calendar**. First use displayed the setup guidance and opened `options.html#workday`. The live Actions listbox labels itself through a button's `aria-label`, so the adapter and regression fixture now account for that accessible-name structure. These behaviors were verified through the actual browser UI. Configured imports and Google consent remain pending manual setup because the browser-control policy disallows extension-settings URLs.
+- **Auto-fill from Calendar** appears first in Actions.
+- First use shows setup guidance and opens the Workday section in extension settings. Google consent and settings were completed by the user because the browser-control policy excludes extension-settings URLs.
+- The configured current-week import saved the missing blocks through the normal individual form. Existing exact entries were skipped. All new entries visibly remained **Not Submitted**.
+- A second current-week run added zero duplicates. The saved blocks and their exact intervals survived a page reload. An opened saved entry confirmed its calendar-title comment and configured Out Reason.
+- Day view requested just its displayed day and recognized that day's existing blocks. A separate empty Day-view grid probe opened a form for the correct displayed date and was canceled without saving.
+- Previous-week import used the previous displayed week, recognized its matching existing entries, and added no duplicates.
+- The observed grid requires a pointer/mouse down-up sequence on its hit target. Click-only activation does not open the form. The adapter scrolls the selected quarter-hour row into view before selecting it.
+- The live form pads morning hours with a leading zero, calculates duration asynchronously, and prompts to discard edited unsaved drafts. The adapter now handles all three behaviors, with regression tests.
+- Completed-import status is cleared when the displayed dates change so it cannot describe the wrong day or week.
 
-After granting the developer build Workday access and Google calendar-list permission, verify:
-
-1. Actions contains Auto-fill from Calendar and first use opens setup.
-2. Choose the intended calendar, independent phrase, correct Workday zone, and enable import.
-3. Import the displayed week; compare each added interval/comment and confirm Not Submitted.
-4. Rerun and confirm zero duplicate additions.
-5. Navigate to the previous week and import only that week.
-6. Switch to Day, import only the displayed day, and check rerun behavior.
-7. Confirm the feature remains functional after reload.
-
-Do not click Review or submit a time card. Keep personal calendar details, organization identifiers, screenshots and network payloads out of this public repository.
+No Review or Submit action was taken. Empty and edited inspection drafts were canceled/discarded. Authorized imported entries were retained for user inspection. Personal calendar details, organization identifiers, screenshots and network payloads are kept outside this public repository.

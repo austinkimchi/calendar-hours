@@ -8,7 +8,7 @@ Calendar Hours adds the elapsed time to Google Calendar event titles. A 10:15am�
 
 ## Workday developer preview
 
-The `workday-integration` branch adds **Actions → Auto-fill from Calendar** to **Enter Time** on `www.myworkday.com`. This is an unpacked developer build, not a store release. Workday interfaces vary by organization; the adapter currently supports the English Day/Week calendar and In/Out time-entry form.
+The `workday-integration` branch adds **Auto-fill from Calendar** as the first item in **Actions** to **Enter Time** on `www.myworkday.com`. This is an unpacked developer build, not a store release. Workday interfaces vary by organization; the adapter currently supports the English Day/Week calendar and In/Out time-entry form.
 
 1. Load or reload `extension/` in Chrome or Edge, allow its Workday site access, and refresh the Workday tab.
 2. Open extension settings → **Workday calendar import** (or choose the new Actions item for guided setup).

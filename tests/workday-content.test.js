@@ -3,10 +3,13 @@ const adapter=require('../extension/workday-content.js'),core=require('../extens
 const settings={enabled:true,calendarId:'test',keyword:'Work block',timeZone:'UTC',timeType:'Hours',outReason:'Out'};
 function fixture({day=true,date='2026-10-19',dialogDate='10/19/2026',existingDialog=false,padTime=false,changeTime=false,discardPrompt=false,calculationDelay=0}={}){
  const days=day?[date]:Array.from({length:7},(_,i)=>core.addDays(date,i));
- const dom=new JSDOM(`<h1>Enter Time</h1><div data-automation-id="calendarToolbar"><button id="actions-menu-trigger" aria-label="Actions" aria-expanded="true"></button><h2 data-automation-id="dateRangeTitle">${day?'Monday, October 19':'Oct 19 – 25'}, 2026</h2><span data-automation-id="calendarViewSelection">${day?'Day':'Week'}</span></div><div data-automation-id="weeklyBody">${days.map(d=>`<div data-automation-id="dayCell-${d}">${+d.slice(5,7)}/${+d.slice(8)}</div>`).join('')}</div><div class="gwt-appointment-panel"><div data-automation-id="timedDaySeparator_0"></div></div><button>Review</button><button>Submit</button><button>Next</button>`,{url:'https://www.myworkday.com/example/'});
+ const dom=new JSDOM(`<h1>Enter Time</h1><div data-automation-id="calendarToolbar"><button id="actions-menu-trigger" aria-label="Actions" aria-expanded="true"></button><h2 data-automation-id="dateRangeTitle">${day?'Monday, October 19':'Oct 19 – 25'}, 2026</h2><span data-automation-id="calendarViewSelection">${day?'Day':'Week'}</span></div><div data-automation-id="weeklyBody">${days.map(d=>`<div data-automation-id="dayCell-${d}">${+d.slice(5,7)}/${+d.slice(8)}</div>`).join('')}</div><div class="gwt-appointment-panel">${Array.from({length:96},()=>'<div class="minor-time-interval"></div>').join('')}<div data-automation-id="timedDaySeparator_0"></div><div class="hit-target"></div></div><button>Review</button><button>Submit</button><button>Next</button>`,{url:'https://www.myworkday.com/example/'});
  const {document:doc}=dom.window;dom.window.HTMLElement.prototype.getClientRects=function(){return this.hidden?[]:[{}]};
- const panel=doc.querySelector('.gwt-appointment-panel');panel.getBoundingClientRect=()=>({left:0,top:0,width:700,height:1440});
- let saved=[],cancelled=0,forbidden=[];
+ dom.window.HTMLElement.prototype.scrollIntoView=function(){};
+ const panel=doc.querySelector('.gwt-appointment-panel');
+ doc.elementFromPoint=()=>panel.querySelector('.hit-target');panel.getBoundingClientRect=()=>({left:0,top:0,width:700,height:1440});
+ let saved=[],cancelled=0,forbidden=[],selection=[];
+ for(const type of ['pointerdown','mousedown','pointerup','mouseup','click']) panel.addEventListener(type,e=>selection.push({type,target:e.target.className,x:e.clientX,y:e.clientY}));
  for(const b of doc.querySelectorAll('button')) if(['Review','Submit','Next'].includes(b.textContent))b.addEventListener('click',()=>forbidden.push(b.textContent));
  panel.addEventListener('click',()=>{
    const el=doc.createElement('div');el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Enter Time');
@@ -28,7 +31,7 @@ function fixture({day=true,date='2026-10-19',dialogDate='10/19/2026',existingDia
      entry.innerHTML='<span data-automation-id="calendarAppointmentTitle">Hours</span>Not Submitted';doc.body.append(entry);el.remove();
    };
  });
- return {dom,doc,saved,forbidden,get cancelled(){return cancelled}};
+ return {dom,doc,saved,forbidden,selection,get cancelled(){return cancelled}};
 }
 test('single-day and week extraction takes dates from rendered headers',()=>{
  const f=fixture();assert.deepEqual(adapter.readView(f.doc,core).dates,['2026-10-19']);f.dom.window.close();
@@ -38,6 +41,7 @@ test('individual draft save writes exact times and title; rerun skips, without a
  const f=fixture(),base=adapter.readView(f.doc,core),block={date:'2026-10-19',start:547,end:765,title:'Work block (3.63 hours)'};
  assert.equal(await adapter.createBlock(f.doc,core,base,block,settings),'added');
  assert.deepEqual(f.saved,[{start:'9:07 AM',end:'12:45 PM',comment:block.title}]);
+ assert.deepEqual(f.selection.map(e=>e.type),['pointerdown','mousedown','pointerup','mouseup','click']);assert.ok(f.selection.every(e=>e.target==='hit-target'));
  assert.equal(await adapter.createBlock(f.doc,core,base,block,settings),'already-entered');assert.equal(f.saved.length,1);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
 });
 test('unexpected date or existing-entry dialog is cancelled before saving',async()=>{
@@ -53,8 +57,9 @@ test('navigation during import stops before opening any form',async()=>{
 test('Actions menu adds import and sends unconfigured users directly to setup',async()=>{
  const f=fixture();const menu=f.doc.createElement('div');menu.setAttribute('role','listbox');menu.setAttribute('aria-labelledby','actions-menu-trigger');menu.innerHTML='<div role="option">Enter Time by Week</div>';f.doc.body.append(menu);
  const requests=[];adapter.install(f.doc,{runtime:{sendMessage:async m=>{requests.push(m);return {ok:false,needsSetup:true,reason:'Choose calendar'}}}},core,titleCore);
- const item=menu.querySelector('[data-calendar-hours="workday-import"]');assert.equal(item.textContent,'Auto-fill from Calendar');item.click();
- await new Promise(r=>setTimeout(r,10));assert.deepEqual(requests.map(m=>m.type),['CALENDAR_HOURS_WORKDAY_EVENTS','CALENDAR_HOURS_WORKDAY_SETUP']);assert.deepEqual(requests[0].dates,['2026-10-19']);f.dom.window.close();
+ const item=menu.querySelector('[data-calendar-hours="workday-import"]');assert.equal(item.textContent,'Auto-fill from Calendar');assert.equal(menu.firstElementChild,item);item.click();
+ await new Promise(r=>setTimeout(r,10));assert.deepEqual(requests.map(m=>m.type),['CALENDAR_HOURS_WORKDAY_EVENTS','CALENDAR_HOURS_WORKDAY_SETUP']);assert.deepEqual(requests[0].dates,['2026-10-19']);
+ assert.ok(f.doc.querySelector('.calendar-hours-workday-status'));f.doc.querySelector('[data-automation-id^="dayCell-"]').textContent='10/20';await new Promise(r=>setTimeout(r,10));assert.equal(f.doc.querySelector('.calendar-hours-workday-status'),null);f.dom.window.close();
 });
 
 

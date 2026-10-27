@@ -87,10 +87,21 @@
     if (overlaps.length) throw new Error("A Workday entry changed while importing. Import stopped to avoid overlapping hours.");
     const panel = doc.querySelector(aid("timedDaySeparator_0"))?.parentElement;
     if (!panel?.classList.contains("gwt-appointment-panel")) throw new Error("This Workday calendar layout is not supported");
+    const intervals = [...panel.children].filter(e => e.matches(".major-time-interval,.minor-time-interval"));
+    if (intervals.length !== 96) throw new Error("Workday's quarter-hour grid could not be identified safely");
+    intervals[Math.floor(block.start / 15)].scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
     const rect = panel.getBoundingClientRect();
     const x = rect.left + rect.width * (base.dates.indexOf(block.date) + 0.5) / base.dates.length;
     const y = rect.top + rect.height * (block.start + 0.5) / 1440;
-    panel.dispatchEvent(new doc.defaultView.MouseEvent("click", { bubbles: true, cancelable: true, view: doc.defaultView, clientX: x, clientY: y, button: 0 }));
+    const target = doc.elementFromPoint(x, y);
+    if (!target || !panel.contains(target)) throw new Error("The selected Workday time cell is obscured. Scroll it into view and try again.");
+    // Workday selects a blank cell from its pointer/mouse down-up sequence, not click alone.
+    for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
+      const EventType = type.startsWith("pointer") ? doc.defaultView.PointerEvent : doc.defaultView.MouseEvent;
+      target.dispatchEvent(new EventType(type, { bubbles: true, cancelable: true, view: doc.defaultView,
+        clientX: x, clientY: y, button: 0, buttons: type.endsWith("down") ? 1 : 0,
+        pointerId: 1, pointerType: "mouse", isPrimary: true }));
+    }
     const dialog = await waitFor(() => [...doc.querySelectorAll('[role="dialog"]')].find(e => visible(e) && label(e) === "Enter Time"), "Workday did not open the time-entry form");
     let saved = false;
     try {
@@ -137,6 +148,7 @@
     doc.documentElement.dataset.calendarHoursWorkdayInstalled = "true";
     let busy = false;
     let statusBox;
+    let statusSignature;
     function showStatus(message, setup = false) {
       const toolbar = doc.querySelector(aid("calendarToolbar"));
       if (!toolbar) return;
@@ -144,6 +156,7 @@
         statusBox = doc.createElement("div"); statusBox.className = "calendar-hours-workday-status";
         statusBox.setAttribute("role", "status"); toolbar.after(statusBox);
       }
+      try { statusSignature = readView(doc, core).signature; } catch { statusSignature = undefined; }
       statusBox.replaceChildren(doc.createTextNode(message + " "));
       const settings = doc.createElement("button"); settings.type = "button"; settings.textContent = setup ? "Set up calendar import" : "Import settings";
       settings.addEventListener("click", () => { void chromeApi.runtime.sendMessage({ type: "CALENDAR_HOURS_WORKDAY_SETUP" }); });
@@ -180,6 +193,11 @@
       } finally { busy = false; }
     }
     function inject() {
+      if (statusBox?.isConnected && !busy) {
+        let current;
+        try { current = readView(doc, core).signature; } catch { /* Not an Enter Time view. */ }
+        if (current !== statusSignature) statusBox.remove();
+      }
       if (![...doc.querySelectorAll("h1")].some(e => e.textContent.trim() === "Enter Time")) return;
       const menu = [...doc.querySelectorAll('[role="listbox"]')].find(e => visible(e) && label(e) === "Actions");
       if (!menu || menu.querySelector('[data-calendar-hours="workday-import"]')) return;
@@ -188,7 +206,7 @@
       item.textContent = "Auto-fill from Calendar";
       item.addEventListener("click", event => { event.preventDefault(); event.stopPropagation(); void run(); });
       item.addEventListener("keydown", event => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); void run(); } });
-      menu.append(item);
+      menu.prepend(item);
     }
     new doc.defaultView.MutationObserver(inject).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "aria-labelledby", "aria-expanded", "aria-hidden", "role"] });
     inject();
