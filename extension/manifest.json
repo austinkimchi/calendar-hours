@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Calendar Hours \u2014 Developer",
-  "version": "0.2.14",
-  "description": "Add calculated hours or minutes to Google Calendar event titles.",
+  "name": "Calendar Hours",
+  "version": "0.3.0",
+  "description": "Add durations to Google Calendar titles and import calendar work blocks into Workday.",
   "permissions": [
     "storage",
     "identity"
@@ -62,6 +62,5 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "version_name": "0.2.14-workday-meal-dev"
+  }
 }

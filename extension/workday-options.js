@@ -100,15 +100,6 @@
     if (event.target.checked && chosen.length === 1) selectTimeZone(calendars.find(c => c.id === chosen[0])?.timeZone);
     status.textContent = "Unsaved changes";
   });
-  function mealOptions() {
-    for (const [toggle, id, names] of [["calendarMeals", "calendar-meal-options", ["mealWords"]], ["autoMeal", "auto-meal-options", ["mealAfterHours", "mealDurationMinutes"]]]) {
-      const enabled = field(toggle).checked;
-      document.getElementById(id).hidden = !enabled;
-      for (const name of names) field(name).disabled = !enabled;
-    }
-  }
-  field("calendarMeals").addEventListener("change", mealOptions);
-  field("autoMeal").addEventListener("change", mealOptions);
   form.addEventListener("input", () => { status.textContent = "Unsaved changes"; });
   refresh.addEventListener("click", () => { void loadCalendars(); });
   document.addEventListener("calendar-hours-connection-changed", () => { if (initialized) void loadCalendars(); });
@@ -116,8 +107,6 @@
     event.preventDefault();
     const ids = chosenIds();
     if (field("enabled").checked && (!ready || !ids.length || ids.some(id => !calendars.some(c => c.id === id)))) { status.textContent = "Connect Google Calendar in General, then select available calendars here."; return; }
-    if (field("calendarMeals").checked && !field("mealWords").value.trim()) { status.textContent = "Enter at least one meal phrase."; return; }
-    if (field("autoMeal").checked && ["mealAfterHours", "mealDurationMinutes"].some(name => !field(name).checkValidity())) { status.textContent = "Choose valid meal timing and duration."; return; }
     const raw = Object.fromEntries([...form.elements].filter(e => e.name && e.name !== "calendarIds").map(e => [e.name, e.type === "checkbox" ? e.checked : e.value]));
     const value = core.settingsFrom({ ...raw, calendarIds: ids });
     value.calendarName = calendars.filter(c => ids.includes(c.id)).map(c => c.name).join(", ").slice(0, 200);
@@ -134,9 +123,8 @@
       const input = field(name);
       if (!input || name === "calendarId" || name === "calendarIds" || name === "timeZone") continue;
       if (input.type === "checkbox") input.checked = value;
-      else input.value = name === "mealWords" ? value.join(", ") : value;
+      else input.value = value;
     }
-    mealOptions();
     selectTimeZone(saved.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone);
     initialized = true;
     await loadCalendars();

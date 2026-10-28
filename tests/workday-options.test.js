@@ -65,16 +65,13 @@ test('overlap updates default on and an explicitly saved off choice survives reo
  assert.equal(reopened.form.elements.namedItem('importComments').checked,true);
  reopened.dom.window.close();f.dom.window.close();
 });
-test('meal controls default off and disabled, then persist independent meal preferences',async()=>{
- const f=await harness(true,{enabled:true,calendarId:'work-test',keyword:'SCU Block',timeZone:'UTC'}),el=n=>f.form.elements.namedItem(n);
- for(const n of ['calendarMeals','autoMeal'])assert.equal(el(n).checked,false);
- for(const n of ['mealWords','mealAfterHours','mealDurationMinutes'])assert.equal(el(n).disabled,true);
- assert.equal(el('mealWords').value,'Breakfast, Lunch, Dinner, Meal Break');assert.equal(el('mealAfterHours').value,'5');assert.equal(el('mealDurationMinutes').value,'30');
- el('calendarMeals').click();el('autoMeal').click();assert.equal(el('mealWords').disabled,false);assert.equal(el('mealAfterHours').disabled,false);
- el('mealWords').value='Pause, LUNCH';el('mealAfterHours').value='4.5';el('mealDurationMinutes').value='45';
+test('release hides retired meal controls and saves old enabled flags as disabled',async()=>{
+ const f=await harness(true,{enabled:true,calendarId:'work-test',keyword:'SCU Block',timeZone:'UTC',calendarMeals:true,autoMeal:true,mealWords:['Lunch']}),el=n=>f.form.elements.namedItem(n);
+ for(const name of ['calendarMeals','autoMeal','mealWords','mealAfterHours','mealDurationMinutes'])assert.equal(el(name),null);
+ assert.equal(f.writes.length,0,'opening settings does not reset stored preferences');
  f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,0));
- const value=f.writes[0].workdayIntegration;assert.equal(value.keyword,'SCU Block');assert.deepEqual(Array.from(value.mealWords),['Pause','LUNCH']);assert.equal(value.mealAfterHours,4.5);assert.equal(value.mealDurationMinutes,45);
- const g=await harness(true,value);assert.equal(g.form.elements.namedItem('calendarMeals').checked,true);assert.equal(g.form.elements.namedItem('mealWords').disabled,false);g.dom.window.close();f.dom.window.close();
+ const value=f.writes[0].workdayIntegration;assert.equal(value.calendarMeals,false);assert.equal(value.autoMeal,false);
+ assert.equal(value.keyword,'SCU Block');assert.equal(value.enabled,true);assert.equal(value.timeZone,'UTC');f.dom.window.close();
 });
 test('unavailable saved calendars remain checked and cannot be silently dropped on save',async()=>{
  const f=await harness(true,{enabled:true,calendarIds:['work-test','missing-meals'],keyword:'SCU Block',timeZone:'UTC'});

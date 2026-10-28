@@ -78,4 +78,3 @@ footer { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .calendar-checklist { margin-top: 7px; max-height: 180px; overflow-y: auto; border: 1px solid #bfc9d8; border-radius: 7px; padding: 12px; }
 .calendar-checklist .check { margin: 0; padding: 6px 0; }
 .calendar-checklist .unavailable { color: #8a3d20; }
-.meal-options { padding-left: 26px; }

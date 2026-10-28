@@ -18,3 +18,9 @@ test('first use leads to setup and settings hash is trusted, other extension pag
  assert.equal((await h.send({type:'CALENDAR_HOURS_WORKDAY_CONNECT'},sender)).ok,false);
  assert.equal((await h.send({type:'CALENDAR_HOURS_WORKDAY_CONNECT'},{url:'chrome-extension://example/untrusted.html'})).ok,false);
 });
+test('background disables stored meal flags before fetching and sending import settings',async()=>{
+ const h=harness({...settings,calendarMeals:true,autoMeal:true});
+ const result=await h.send({type:'CALENDAR_HOURS_WORKDAY_EVENTS',dates:['2026-10-19']},sender);
+ assert.equal(result.ok,true);
+ for(const value of [result.settings,h.reads[0].settings]){assert.equal(value.calendarMeals,false);assert.equal(value.autoMeal,false)}
+});

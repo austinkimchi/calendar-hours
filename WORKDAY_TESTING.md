@@ -1,10 +1,14 @@
-# Workday developer preview verification
+# Workday release verification
 
 ## Automated checks
 
-`npm test`: the suite passes, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.2.13-workday-dev.zip`.
+`npm test`: all 127 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.3.0.zip`.
 
-The new tests cover:
+The tests cover:
+
+- Previously saved calendar-meal and automatic-meal settings cannot split work, deduct time, or change Out Reason. The controls are absent; normal settings and calendar migration are retained.
+- Multi-calendar reads feed the planner and simulated forms, with exact work intervals, updates, and duplicate-free reruns.
+- Message dismissal stays in effect through the current run, resets on the next run, returns keyboard focus to Actions, and keeps settings links conditional. The message width follows the Actions right edge.
 
 - Configuring a readable Google calendar and an independent import phrase in settings.
 - Time zone dropdown persistence, aliases, and settings help on label hover or keyboard focus. Help closes immediately when the pointer leaves the label or icon, including when moving over the help box or after focusing its control. Label clicks keep their normal checkbox behavior; Escape dismisses help without changing values or field focus.
@@ -25,7 +29,7 @@ The new tests cover:
 
 ## Live browser verification
 
-Verified on the English Workday Enter Time calendar using the approved developer extension and the user's saved Google Calendar setup:
+Prior branch builds were verified on the English Workday Enter Time calendar using the approved developer extension and the user's saved Google Calendar setup:
 
 - **Auto-fill from Calendar** appears first and is highlighted when Actions opens. Clicking Actions followed by Enter ran Calendar import. Arrow Down/Up navigated to Prior Week and back, Escape closed the menu, and reopening selected Calendar again.
 - First use shows setup guidance and opens the Workday section in extension settings. Google consent and settings were completed by the user because the browser-control policy excludes extension-settings URLs.
@@ -40,3 +44,12 @@ Verified on the English Workday Enter Time calendar using the approved developer
 - Completed-import status is cleared when the displayed dates change so it cannot describe the wrong day or week.
 
 No Review or Submit action was taken. Empty and edited inspection drafts were canceled/discarded. Authorized imported entries were retained for user inspection. Personal calendar details, organization identifiers, screenshots and network payloads are kept outside this public repository.
+
+
+## Release-specific scope
+
+The 0.3.0 candidate removes meal automation from the runtime and settings. The existing live results above describe earlier builds; the complete release candidate has not been rerun against payroll data. The current release tests explicitly protect ordinary gap imports, ignore old enabled meal flags, and reject attempts to merge multiple old meal-generated drafts. Manual correction of existing payroll records is outside this release preparation.
+
+No backend-request experiment is loaded or included in the package. The description-meal branch remains a paused draft pending HR clarification. Store publication and OAuth verification remain separate release gates in `STORE_LISTING.md`.
+
+The release UI was also checked in Edge using a local preview with simulated Calendar responses: Actions + Enter starts import, the message and Actions right edges match exactly, × removes the message and returns focus to Actions, and settings show the four standard toggles with no meal controls despite saved prototype flags. This preview performs no payroll writes.

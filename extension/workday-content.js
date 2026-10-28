@@ -1,4 +1,4 @@
-/* Developer Workday adapter: saves individual unsubmitted blocks through the visible form. */
+/* Workday adapter: saves individual unsubmitted blocks through the visible form. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
@@ -209,7 +209,7 @@
       if (!outReason) throw new Error("Workday's Out Reason field is unavailable");
       if (reasonValue() !== reason) {
         outReason.click();
-        const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === reason), settingsError(reason === "Meal" ? "Workday does not offer Meal as an Out Reason. Check the meal options in import settings." : "The configured Out Reason was not found. Check Out Reason in import settings."));
+        const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === reason), settingsError("The configured Out Reason was not found. Check Out Reason in import settings."));
         option.click();
       }
       await waitFor(() => reasonValue() === reason, "Workday did not accept the requested Out Reason. Nothing was saved.");
@@ -252,25 +252,56 @@
     let busy = false;
     let statusBox;
     let statusSignature;
+    let statusDismissed = false;
+    let statusToolbar;
+    const actionsButton = () => doc.querySelector(`${aid("calendarToolbar")} button[aria-label="Actions"]`);
+    function alignStatus() {
+      if (!statusBox?.isConnected) return;
+      const right = actionsButton()?.getBoundingClientRect().right;
+      const left = statusBox.getBoundingClientRect().left;
+      statusBox.style.width = Number.isFinite(right) && right > left ? `${right - left}px` : "100%";
+    }
+    const statusResize = doc.defaultView.ResizeObserver ? new doc.defaultView.ResizeObserver(alignStatus) : null;
+    doc.defaultView.addEventListener("resize", alignStatus);
     const menus = new WeakMap();
     let openMenu = null;
     let menuSequence = 0;
     function showStatus(message, settingsAction = null) {
+      if (statusDismissed) return;
       const toolbar = doc.querySelector(aid("calendarToolbar"));
       if (!toolbar) return;
       if (!statusBox?.isConnected) {
         statusBox = doc.createElement("div"); statusBox.className = "calendar-hours-workday-status";
         statusBox.setAttribute("role", "status"); toolbar.after(statusBox);
       }
+      if (statusToolbar !== toolbar) {
+        statusResize?.disconnect();
+        statusResize?.observe(toolbar);
+        if (actionsButton()) statusResize?.observe(actionsButton());
+        statusToolbar = toolbar;
+      }
       try { statusSignature = readView(doc, core).signature; } catch { statusSignature = undefined; }
-      statusBox.replaceChildren(doc.createTextNode(message));
-      if (!settingsAction) return;
-      const settings = doc.createElement("button"); settings.type = "button"; settings.textContent = settingsAction === "setup" ? "Set up calendar import" : "Import settings";
-      settings.addEventListener("click", () => { void chromeApi.runtime.sendMessage({ type: "CALENDAR_HOURS_WORKDAY_SETUP" }); });
-      statusBox.append(doc.createTextNode(" "), settings);
+      const text = doc.createElement("span"); text.className = "calendar-hours-workday-status-text"; text.textContent = message;
+      if (settingsAction) {
+        const settings = doc.createElement("button"); settings.type = "button"; settings.textContent = settingsAction === "setup" ? "Set up calendar import" : "Import settings";
+        settings.addEventListener("click", () => { void chromeApi.runtime.sendMessage({ type: "CALENDAR_HOURS_WORKDAY_SETUP" }); });
+        text.append(doc.createTextNode(" "), settings);
+      }
+      const dismiss = doc.createElement("button"); dismiss.type = "button";
+      dismiss.className = "calendar-hours-workday-dismiss"; dismiss.textContent = "×";
+      dismiss.setAttribute("aria-label", "Dismiss calendar import message");
+      dismiss.addEventListener("click", () => {
+        const restoreFocus = statusBox.contains(doc.activeElement);
+        statusDismissed = true;
+        statusBox.remove();
+        if (restoreFocus) actionsButton()?.focus({ preventScroll: true });
+      });
+      statusBox.replaceChildren(text, dismiss);
+      alignStatus();
     }
     async function run() {
       if (busy) return; busy = true;
+      statusDismissed = false;
       let added = 0, updated = 0;
       try {
         const view = readView(doc, core);
@@ -378,6 +409,7 @@
       };
     }
     function inject() {
+      alignStatus();
       if (statusBox?.isConnected && !busy) {
         let current;
         try { current = readView(doc, core).signature; } catch { /* Not an Enter Time view. */ }

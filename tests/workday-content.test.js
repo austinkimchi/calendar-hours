@@ -69,6 +69,25 @@ function actionMenu(f) {
  f.doc.body.append(menu);
  return menu;
 }
+test('status aligns with Actions, dismisses for the current run, and returns on the next run',async()=>{
+ const f=fixture(),menu=actionMenu(f),trigger=f.doc.querySelector('#actions-menu-trigger');
+ let right=900,respond;
+ trigger.getBoundingClientRect=()=>({right});
+ f.dom.window.HTMLElement.prototype.getBoundingClientRect=function(){return {left:100}};
+ adapter.install(f.doc,{runtime:{sendMessage:()=>new Promise(resolve=>{respond=resolve})}},core,titleCore);
+ const item=menu.querySelector('[data-calendar-hours="workday-import"]');item.click();
+ let status=f.doc.querySelector('.calendar-hours-workday-status');assert.equal(status.style.width,'800px');
+ right=700;f.dom.window.dispatchEvent(new f.dom.window.Event('resize'));assert.equal(status.style.width,'600px');
+ assert.equal(status.querySelectorAll('button').length,1,'routine messages only show Dismiss');
+ const dismiss=status.querySelector('[aria-label="Dismiss calendar import message"]');dismiss.focus();dismiss.click();
+ assert.equal(f.doc.activeElement,trigger);assert.equal(f.doc.querySelector('.calendar-hours-workday-status'),null);
+ respond({ok:true,events:[],settings});await new Promise(r=>setTimeout(r,0));
+ assert.equal(f.doc.querySelector('.calendar-hours-workday-status'),null,'later progress does not reopen a dismissed message');
+ item.click();assert.ok(f.doc.querySelector('.calendar-hours-workday-status'));
+ respond({ok:false,needsSetup:true,reason:'Connect Google Calendar'});await new Promise(r=>setTimeout(r,0));
+ status=f.doc.querySelector('.calendar-hours-workday-status');assert.ok(status.textContent.includes('Set up calendar import'));
+ assert.equal(status.querySelectorAll('button').length,2);f.dom.window.close();
+});
 test('Actions opens with Calendar selected and Enter activates only Calendar',async()=>{
  const f=fixture(),menu=actionMenu(f),requests=[];let nativeEnter=0,priorClicks=0;
  menu.addEventListener('keydown',event=>{if(event.key==='Enter')nativeEnter++});

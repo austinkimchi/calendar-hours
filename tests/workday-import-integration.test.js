@@ -55,48 +55,39 @@ async function importEvents(f,events,changes={}) {
  for(const block of result.add)outcomes.push(await adapter.createBlock(f.doc,wd,base,block,s));
  return {result,outcomes};
 }
-test('multiple-calendar API → planner → visible Workday forms splits a draft and reruns without writes',async()=>{
+test('multi-calendar API to planner to forms updates exact work times and reruns without writes',async()=>{
  const urls=[];
  const events=await api.listEvents({accessToken:'test',core:wd,settings,dates:[date],fetcher:async url=>{
-  urls.push(new URL(url).pathname);return {ok:true,json:async()=>({items:url.includes('/work/')?[event('09:00','17:00')]:[event('12:00','12:30','lUnCh')]})};
+  urls.push(new URL(url).pathname);return {ok:true,json:async()=>({items:url.includes('/work/')?[event('09:00','12:00'),event('12:30','17:00')]:[event('12:00','12:30','Lunch')]})};
  }});
- const f=fixture([{id:'original',start:540,end:1020,reason:'Out',comment:'Keep this note'}]);
+ const f=fixture([{id:'original',start:540,end:690,reason:'Out',comment:'Keep this note'}]);
  const first=await importEvents(f,events);assert.deepEqual(first.outcomes,['updated','added']);
- assert.deepEqual(f.entries.map(e=>[e.id,e.start,e.end,e.reason,e.comment]),[['original',540,720,'Meal','Keep this note'],['new-1',750,1020,'Out','']]);
- assert.equal(f.entries.reduce((n,e)=>n+e.end-e.start,0),450);
- const second=await importEvents(f,events);assert.deepEqual(second.outcomes,['already-entered','already-entered']);assert.equal(f.saves.length,2);assert.equal(f.cancelled.length,2);
+ assert.deepEqual(f.entries.map(e=>[e.id,e.start,e.end,e.reason,e.comment]),[['original',540,720,'Out','Keep this note'],['new-1',750,1020,'Out','']]);
+ const second=await importEvents(f,events);assert.deepEqual(second.outcomes,[]);assert.equal(second.result.skipped.length,2);assert.equal(f.saves.length,2);
  assert.equal(urls.length,2);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
 });
-test('automatic meal creates two entries, selects Meal and Out, then makes no rerun writes',async()=>{
- const f=fixture(),events=[event('09:00','17:00')];
- await importEvents(f,events,{calendarMeals:false,autoMeal:true});
- assert.deepEqual(f.entries.map(e=>[e.start,e.end,e.reason]),[[540,840,'Meal'],[870,1020,'Out']]);
- await importEvents(f,events,{calendarMeals:false,autoMeal:true});assert.equal(f.saves.length,2);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
+test('saved enabled meal settings cannot split or change the reason of an imported work block',async()=>{
+ const f=fixture(),events=[{...event('10:00','18:00'),description:'Meal'},event('12:00','12:30','Lunch')];
+ await importEvents(f,events,{calendarMeals:true,autoMeal:true});
+ assert.deepEqual(f.entries.map(e=>[e.start,e.end,e.reason]),[[600,1080,'Out']]);
+ await importEvents(f,events,{calendarMeals:true,autoMeal:true});assert.equal(f.saves.length,1);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
 });
-test('reason-only correction changes Out to Meal, preserves comment and skips the next run',async()=>{
- const f=fixture([{id:'existing',start:540,end:720,reason:'Out',comment:'Original note'}]);
- const events=[event('09:00','12:00'),event('12:00','12:30','Lunch')];
- assert.deepEqual((await importEvents(f,events)).outcomes,['updated']);
- assert.deepEqual((await importEvents(f,events)).outcomes,['already-entered']);
- assert.equal(f.saves.length,1);assert.equal(f.saves[0].reason,'Meal');assert.equal(f.saves[0].comment,'Original note');f.dom.window.close();
-});
-test('submitted entries are left intact and reported as meal conflicts',async()=>{
+test('submitted drafts remain intact when calendar times change',async()=>{
  const f=fixture([{id:'submitted',start:540,end:1020,reason:'Out',status:'Submitted'}]);
- const r=await importEvents(f,[event('09:00','17:00'),event('12:00','12:30','Lunch')]);
- assert.equal(r.result.conflicts.length,2);assert.equal(f.saves.length,0);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
+ const r=await importEvents(f,[event('09:00','18:00')]);
+ assert.equal(r.result.conflicts.length,1);assert.equal(f.saves.length,0);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
 });
-
-test('batch waits for Workday to restore calendar access after both Save and Cancel',async()=>{
- const f=fixture([{id:'existing',start:540,end:720,reason:'Out'}],{closingDelay:75});
- const events=[event('09:00','12:00'),event('12:00','12:30','Lunch'),event('12:30','17:00')];
+for(const options of [{closingDelay:75},{staleHidden:true,overlayDelay:150}])test(`batch waits for form close before the next entry: ${JSON.stringify(options)}`,async()=>{
+ const f=fixture([{id:'existing',start:540,end:690,reason:'Out'}],options);
+ const events=[event('09:00','12:00'),event('12:30','17:00')];
  assert.deepEqual((await importEvents(f,events)).outcomes,['updated','added']);
- assert.deepEqual((await importEvents(f,events)).outcomes,['already-entered','already-entered']);
+ assert.deepEqual((await importEvents(f,events)).outcomes,[]);
  assert.equal(f.saves.length,2);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
 });
-
-test('rerun tolerates Workday stale ancestor aria-hidden only after the overlay clears',async()=>{
- const f=fixture([{id:'morning',start:600,end:720,reason:'Meal'},{id:'afternoon',start:750,end:1020,reason:'Out'}],{staleHidden:true,overlayDelay:150});
- const r=await importEvents(f,[event('10:00','12:00'),event('12:00','12:30','Lunch'),event('12:30','17:00')]);
- assert.deepEqual(r.outcomes,['already-entered','already-entered']);
- assert.equal(f.saves.length,0);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
+test('canceling an unchanged inspected draft waits for calendar readiness before a new entry',async()=>{
+ const f=fixture([{id:'existing',start:540,end:720,reason:'Out'}],{staleHidden:true,overlayDelay:150});
+ const base=adapter.readView(f.doc,wd),previous={date,start:540,end:720,type:'Hours',eventId:'existing'};
+ assert.equal(await adapter.updateBlock(f.doc,wd,base,{...previous,previous},settings),'already-entered');
+ assert.equal(await adapter.createBlock(f.doc,wd,base,{date,start:750,end:1020},settings),'added');
+ assert.equal(f.cancelled.length,1);assert.equal(f.saves.length,1);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
 });

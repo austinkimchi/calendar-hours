@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — Workday release candidate, October 27, 2026
+
+- Add opt-in Calendar-to-Workday draft imports with multi-calendar selection, exact times, a saved payroll time zone, and duplicate detection.
+- Update one overlapping unsubmitted entry when its Calendar times change; protect submitted entries and ambiguous overlaps.
+- Keep comments and unfinished blocks optional, with comments off by default.
+- Share one Google Calendar connection and preserve saved extension preferences.
+- Align import messages with Actions and add a subtle, keyboard-accessible dismiss button.
+- Exclude meal automation from the release, including previously enabled prototype settings. The meal and backend-performance experiments remain on separate branches.
+- Prepare release branding, packaging, privacy disclosures, and store submission notes. This candidate has not been submitted to a store.
+
 ## 0.2.14 — Workday developer preview, October 27, 2026
 
 - Select multiple calendars for Workday imports, with bounded concurrent reads and migration of saved single-calendar choices.

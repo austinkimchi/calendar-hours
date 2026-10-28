@@ -52,7 +52,7 @@
       }
     }
     // At most three calendar requests in flight; do not import a partial set if
-    // one calendar fails, since its missing meals could change payable hours.
+    // one calendar fails, since the import would contain an incomplete set of work blocks.
     await Promise.all(Array.from({ length: Math.min(3, ids.length) }, worker));
     if (failure) throw failure;
     const events = results.flat();
