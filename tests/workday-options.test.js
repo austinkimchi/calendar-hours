@@ -70,7 +70,8 @@ test('meal controls default off and disabled, then persist independent meal pref
  for(const n of ['calendarMeals','autoMeal'])assert.equal(el(n).checked,false);
  for(const n of ['mealWords','mealAfterHours','mealDurationMinutes'])assert.equal(el(n).disabled,true);
  assert.equal(el('mealWords').value,'Breakfast, Lunch, Dinner, Meal Break');assert.equal(el('mealAfterHours').value,'5');assert.equal(el('mealDurationMinutes').value,'30');
- el('calendarMeals').click();el('autoMeal').click();assert.equal(el('mealWords').disabled,false);assert.equal(el('mealAfterHours').disabled,false);
+ el('calendarMeals').click();assert.equal(el('mealAfterHours').disabled,false,'description-only meals expose their timing');
+ el('autoMeal').click();assert.equal(el('mealWords').disabled,false);assert.equal(el('mealAfterHours').disabled,false);
  el('mealWords').value='Pause, LUNCH';el('mealAfterHours').value='4.5';el('mealDurationMinutes').value='45';
  f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,0));
  const value=f.writes[0].workdayIntegration;assert.equal(value.keyword,'SCU Block');assert.deepEqual(Array.from(value.mealWords),['Pause','LUNCH']);assert.equal(value.mealAfterHours,4.5);assert.equal(value.mealDurationMinutes,45);

@@ -44,7 +44,10 @@
             count += (data.items || []).length;
             if (count > 10000) throw new Error("This range has too many events. Import one day at a time.");
             events.push(...(data.items || []).map(e => ({ summary: e.summary, status: e.status, start: e.start, end: e.end,
-              ...(settings.importComments === true ? { description: typeof e.description === "string" ? e.description : "" } : {}) })));
+              // Meal detection reads descriptions independently of whether the
+              // user wants those descriptions copied into Workday comments.
+              ...(settings.importComments === true || settings.calendarMeals === true ?
+                { description: typeof e.description === "string" ? e.description : "" } : {}) })));
             pageToken = data.nextPageToken;
           } while (pageToken && !failure);
           results[index] = events;

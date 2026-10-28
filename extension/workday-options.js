@@ -101,8 +101,8 @@
     status.textContent = "Unsaved changes";
   });
   function mealOptions() {
-    for (const [toggle, id, names] of [["calendarMeals", "calendar-meal-options", ["mealWords"]], ["autoMeal", "auto-meal-options", ["mealAfterHours", "mealDurationMinutes"]]]) {
-      const enabled = field(toggle).checked;
+    for (const [enabled, id, names] of [[field("calendarMeals").checked, "calendar-meal-options", ["mealWords"]],
+      [field("calendarMeals").checked || field("autoMeal").checked, "auto-meal-options", ["mealAfterHours", "mealDurationMinutes"]]]) {
       document.getElementById(id).hidden = !enabled;
       for (const name of names) field(name).disabled = !enabled;
     }
@@ -117,7 +117,7 @@
     const ids = chosenIds();
     if (field("enabled").checked && (!ready || !ids.length || ids.some(id => !calendars.some(c => c.id === id)))) { status.textContent = "Connect Google Calendar in General, then select available calendars here."; return; }
     if (field("calendarMeals").checked && !field("mealWords").value.trim()) { status.textContent = "Enter at least one meal phrase."; return; }
-    if (field("autoMeal").checked && ["mealAfterHours", "mealDurationMinutes"].some(name => !field(name).checkValidity())) { status.textContent = "Choose valid meal timing and duration."; return; }
+    if ((field("calendarMeals").checked || field("autoMeal").checked) && ["mealAfterHours", "mealDurationMinutes"].some(name => !field(name).checkValidity())) { status.textContent = "Choose valid meal timing and duration."; return; }
     const raw = Object.fromEntries([...form.elements].filter(e => e.name && e.name !== "calendarIds").map(e => [e.name, e.type === "checkbox" ? e.checked : e.value]));
     const value = core.settingsFrom({ ...raw, calendarIds: ids });
     value.calendarName = calendars.filter(c => ids.includes(c.id)).map(c => c.name).join(", ").slice(0, 200);
