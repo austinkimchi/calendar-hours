@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-`npm test`: all 127 tests pass, including Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.3.0.zip`.
+`npm test` covers Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.3.0.zip`.
 
 The tests cover:
 
@@ -16,11 +16,13 @@ The tests cover:
 - First-use setup routing, revoked permissions, removed calendars, and invalid settings.
 - Trusted message senders; Google access tokens stay in the service worker.
 - One shared authorization request for events and calendar-list permissions, with no forced repeat consent. Both permissions survive silent renewal, simultaneous connect requests share one window, and partial consent preserves the previous connection.
+- Packaged public-key identity derives the registered store ID across install paths; packaging rejects unknown keys and leaves the raw development manifest untouched.
 - General connection changes refresh the Workday picker without another authorization flow or preference changes. Legacy connections upgrade only on request; disconnect blocks imports while preserving their saved choices.
 - Paginated Google Calendar reads with recurrence expansion and the displayed range's time-zone boundaries.
 - Day/week date extraction, previous dates, cross-year weeks, and DST query boundaries.
 - Saved Workday zones remain fixed across device travel and source-event zones. Both occurrences of a repeated DST clock require manual entry, even when a block lies wholly within one occurrence. Ordinary daytime blocks on transition days remain importable. A multi-day block spanning the entire requested day is reported rather than silently ignored.
 - Exact minute times, lunch gaps, cancelled/all-day/future exclusions, duplicate reruns, source overlaps, and existing-entry conflicts.
+- Existing overnight entries stop imports before planning or opening another form, including entries starting outside the displayed day, cross-year entries, and midnight endpoints. They are never truncated into editable same-day drafts.
 - Individual entry form saves; wrong-date/existing-entry dialogs and navigation changes stop before saving.
 - Overwrite existing times to match calendar defaults on and preserves explicitly saved off choices. One-to-one overlap updates edit unsubmitted drafts in place, recheck the target before saving, and skip the matching interval on rerun. Submitted/unknown statuses, different time types, split/merge ambiguity, and concurrent entry changes are rejected.
 - Comments start blank on new entries. Optional Calendar descriptions are converted from inert rich text to plain text; titles are never used as comments. Existing comments are preserved with the option off and replaced with the option on.

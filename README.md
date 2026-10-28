@@ -29,7 +29,7 @@ The meal-description work remains on its paused branch while payroll behavior is
 
 New entries have **blank comments by default**. **Import event descriptions as comments** optionally copies Google Calendar's Description field as plain text, up to 1,000 characters, when adding or updating an entry. With it off, updates preserve existing comments. With it on, the description replaces the comment, including clearing it when the description is empty. Event titles are used for matching, never as comments.
 
-Overlapping source blocks are merged to avoid double-counting; adjacent blocks remain separate. Overnight, sub-minute and daylight-saving transition blocks require manual entry. A changed view or unexpected form stops the import. Successfully saved entries remain unsubmitted, including after a partial failure. **The extension never clicks Review or submits a time card.**
+Overlapping source blocks are merged to avoid double-counting; adjacent blocks remain separate. Overnight, sub-minute and daylight-saving transition blocks require manual entry. An existing overnight Workday entry stops the import so its next-day hours cannot be overlooked or overwritten. A changed view or unexpected form stops the import. Successfully saved entries remain unsubmitted, including after a partial failure. **The extension never clicks Review or submits a time card.**
 
 ## Features
 
@@ -44,7 +44,11 @@ Overlapping source blocks are merged to avoid double-counting; adjacent blocks r
 
 ## Getting Started
 
-To try the current source build, load [`extension/`](extension/) as an unpacked extension in Chrome or Edge. Refresh any open Google Calendar tabs after reloading the extension. [Store publication details](STORE_LISTING.md) are tracked separately.
+To test a release, download `calendar-hours-<version>.zip` from [GitHub Releases](https://github.com/austinkimchi/calendar-hours/releases), extract it into a permanent folder, and load that folder as an unpacked extension in Chrome or Edge. Release ZIPs include the public store key, keeping the ID `gkhggalcelmdidfdnllmdpaaapjiegig` consistent across computers and compatible with the registered Google OAuth redirect. Google sign-in still requires an approved test account while the consent app is in Testing.
+
+When updating an unpacked release, replace files in the same folder and reload that extension to keep its settings. An older unpacked install with a different ID is a separate installation: record its settings, disable it to avoid running two copies, and configure the new one. Its saved settings and connection do not automatically migrate between IDs. A store copy with the same ID and an unpacked release should be tested in separate browser profiles; the release does not need a second OAuth client.
+
+Loading the raw [`extension/`](extension/) source remains available for development, but its path-derived ID may need its own OAuth registration. Packaging does not change the source installation's ID or saved preferences. Refresh any open Google Calendar and Workday tabs after reloading. [Store publication details](STORE_LISTING.md) are tracked separately.
 
 Open a timed event, enter its start and end times, then type `/hours` in the title or press **Enter** or **Tab** to accept the faint inline duration suggestion. Accepting the suggestion only updates the title; save the event in Calendar afterward. Turn off **Show inline duration suggestions** in More options to hide the hint. Settings let you customize the format and matching phrases. Hover over a setting label or focus its field for routine help; key actions keep an ⓘ button. Tooltips do not shift the page and close immediately when the pointer leaves their label or icon. Press Escape or tap elsewhere to dismiss them.
 
@@ -68,7 +72,7 @@ npm run package
 
 Workday coverage includes multi-calendar fetching, exact intervals, overlap updates, saved-setting migration, disabled meal prototypes, form transitions, and duplicate-free reruns through simulated Workday forms.
 
-CI runs the tests and checks the package on pushes and pull requests. The package script writes a versioned ZIP under `dist/` with `manifest.json` at its root.
+CI runs the tests and checks the package on pushes and pull requests. The package script writes a versioned ZIP under `dist/` with `manifest.json` at its root. It injects `scripts/store-public-key.pem` into the staged manifest and verifies that its derived ID matches the registered store OAuth identity. This is a public key, not a signing credential; no private key is stored or packaged.
 
 ## Project Notes
 

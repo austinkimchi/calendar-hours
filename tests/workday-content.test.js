@@ -37,6 +37,26 @@ test('single-day and week extraction takes dates from rendered headers',()=>{
  const f=fixture();assert.deepEqual(adapter.readView(f.doc,core).dates,['2026-10-19']);f.dom.window.close();
  const w=fixture({day:false});assert.equal(adapter.readView(w.doc,core).dates.at(-1),'2026-10-25');w.dom.window.close();
 });
+test('overnight entries stop imports before next-day coverage can be lost',async()=>{
+ for(const [start,end,dates] of [
+  ['10-19-22-0','10-20-6-0',['2026-10-19','2026-10-20']],
+  ['10-18-22-0','10-19-6-0',['2026-10-19']],
+  ['12-31-22-0','1-1-6-0',['2027-01-01']],
+  ['10-18-22-0','10-19-0-0',['2026-10-19']]
+ ]) {
+  const f=fixture();
+  const entry=f.doc.createElement('div');
+  entry.setAttribute('data-automation-id','calendarevent');entry.setAttribute('role','link');
+  entry.setAttribute('data-automation-startdate',start);entry.setAttribute('data-automation-enddate',end);
+  entry.innerHTML='<span data-automation-id="calendarAppointmentTitle">Hours</span>';
+  f.doc.body.append(entry);
+  assert.throws(()=>adapter.readExisting(f.doc,dates),/spans midnight/);
+  const base=adapter.readView(f.doc,core);
+  await assert.rejects(adapter.createBlock(f.doc,core,base,{date:'2026-10-19',start:240,end:300},settings),/spans midnight/);
+  assert.equal(f.selection.length,0);assert.equal(f.saved.length,0);assert.equal(f.doc.querySelector('[role="dialog"]'),null);
+  f.dom.window.close();
+ }
+});
 test('individual draft save writes exact times with no comment by default; rerun skips',async()=>{
  const f=fixture(),base=adapter.readView(f.doc,core),block={date:'2026-10-19',start:547,end:765,title:'Work block (3.63 hours)'};
  assert.equal(await adapter.createBlock(f.doc,core,base,block,settings),'added');

@@ -33,6 +33,8 @@ Optional Workday import adds Auto-fill from Calendar to the Actions menu in the 
 
 Prepared from `workday-integration` for a pull request into `main`. Package: `dist/calendar-hours-0.3.0.zip`. The name is Calendar Hours, with no developer version suffix. Meal automation is hidden and disabled even for prior enabled settings; backend request experiments are not included.
 
+The release ZIP now includes the store's public key. Its derived ID is `gkhggalcelmdidfdnllmdpaaapjiegig`, matching the allowed OAuth ID and the existing `https://gkhggalcelmdidfdnllmdpaaapjiegig.chromiumapp.org/` redirect. This avoids path-dependent IDs on another computer. The source checkout keeps its development identity; existing development registrations remain supported. This changes build identity only, not OAuth audience: users must still be listed test accounts until Google production/verification is complete.
+
 Before store submission:
 
 - Verify the current dashboard state; the version/status statements above are historical observations.

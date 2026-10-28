@@ -35,10 +35,14 @@
         if (e.textContent.trim() === "Enter Time") return []; // transient unsaved selection
         throw new Error("An existing Workday block has unreadable times. Nothing was imported.");
       }
+      const sameDay = +start[1] === +end[1] && +start[2] === +end[2];
+      // A crossing entry also occupies the following day, even when its start
+      // is outside the displayed range. Do not truncate it into an editable
+      // same-day draft or ignore its next-day coverage before overlap checks.
+      if (!sameDay) throw new Error("An existing Workday entry spans midnight. Import stopped; check overnight entries manually.");
       const date = byMonthDay.get(`${+start[1]}-${+start[2]}`);
       if (!date) return [];
-      const sameDay = +start[1] === +end[1] && +start[2] === +end[2];
-      return [{ date, start: +start[3] * 60 + +start[4], end: sameDay ? +end[3] * 60 + +end[4] : 1440,
+      return [{ date, start: +start[3] * 60 + +start[4], end: +end[3] * 60 + +end[4],
         type: e.querySelector(aid("calendarAppointmentTitle"))?.textContent.trim() || "",
         status: e.querySelector('[data-automation-icontype]')?.getAttribute("data-automation-icontype") || "",
         eventId: e.getAttribute("data-automation-eventid") || "", element: e }];

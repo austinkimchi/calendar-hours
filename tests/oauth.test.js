@@ -3,18 +3,20 @@ const assert = require("node:assert/strict");
 const { webcrypto } = require("node:crypto");
 const oauth = require("../extension/oauth.js");
 
-test("Edge OAuth validates the registered redirect and keeps short-lived tokens local", async () => {
+for (const extensionId of ['oaainlebjpmnglnfajgnenicaeamaljo', 'gkhggalcelmdidfdnllmdpaaapjiegig']) test(`OAuth validates the registered redirect and keeps short-lived tokens local for ${extensionId}`, async () => {
+  delete require.cache[require.resolve('../extension/oauth.js')];
+  const oauth = require('../extension/oauth.js');
   let stored;
   let accessLevel;
   let authorization;
   const chrome = {
-    runtime: { id: "oaainlebjpmnglnfajgnenicaeamaljo" },
+    runtime: { id: extensionId },
     identity: {
-      getRedirectURL: () => "https://oaainlebjpmnglnfajgnenicaeamaljo.chromiumapp.org/",
+      getRedirectURL: () => `https://${extensionId}.chromiumapp.org/`,
       launchWebAuthFlow: async ({ url, interactive }) => {
         authorization = new URL(url);
         assert.equal(interactive, true);
-        return `https://oaainlebjpmnglnfajgnenicaeamaljo.chromiumapp.org/#access_token=test-access&token_type=Bearer&expires_in=3600&state=${authorization.searchParams.get("state")}`;
+        return `https://${extensionId}.chromiumapp.org/#access_token=test-access&token_type=Bearer&expires_in=3600&state=${authorization.searchParams.get("state")}`;
       }
     },
     storage: { local: {
