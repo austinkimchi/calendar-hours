@@ -21,10 +21,14 @@ Exact existing entries are skipped on rerun. **Overwrite existing times to match
 
 ### Unpaid meals
 
-Both meal features start **off**. Their fields are available only after enabling the corresponding option:
+Both meal triggers start **off** and can be enabled together. Their shared placement and length fields appear when either trigger is enabled:
 
-- **Use calendar events as meal breaks** matches a separate, case-insensitive list of phrases: `Breakfast, Lunch, Dinner, Meal Break` by default. Add your own phrase, such as `Meal`, if needed. A matching timed event defines an unpaid interval. The preceding paid entry ends at the meal start with **Out Reason = Meal**; work after the meal uses the normal Out Reason. A meal already in a gap is not deducted twice. Meal matching takes priority if an event also matches the work phrase.
-- **Add an automatic meal** inserts one meal per date after cumulative hours worked, excluding gaps. Defaults are **5 hours** and **30 minutes**, both configurable. It requires work to continue after the full meal. A calendar meal within or touching the validated day’s work span takes priority, so enabling both does not add a second meal.
+- **Add a meal when the description matches** looks for configurable whole words or phrases in the description of a matching work event, ignoring case. Defaults are `Breakfast, Lunch, Dinner, Meal Break`; add `Meal` or your own phrase if needed. The description does not need a time range. Reading it for meal detection is independent of copying comments to Workday.
+- **Add a meal based on hours worked** triggers a meal even without a keyword. Both triggers use the same configurable placement (**5 worked hours**) and length (**30 minutes**), excluding gaps from worked time. When both triggers match, only one meal is deducted for that day. Work must continue after the full meal; an unplaceable keyword meal produces a warning instead of guessing a different time.
+
+For example, a 10 AM–5:30 PM work event with `Meal` in its description and the defaults above becomes 10 AM–3 PM with **Out Reason = Meal**, a 3–3:30 PM unpaid gap, and 3:30–5:30 PM with **Out Reason = Out**: **7 worked hours**. Workday requires clock-out/in times, so the configured placement determines those times even though no interval is needed in the description.
+
+Existing separate events with meal titles remain supported by the keyword option for compatibility. Their actual intervals take priority over either generated trigger. A meal already in a work gap is not deducted twice, and meal-title matching takes priority when a title also matches the work phrase.
 
 For example, a 10 AM–5 PM work event and a 12–12:30 PM meal event produce 10 AM–12 PM with Out Reason Meal, an unpaid gap, and 12:30–5 PM with Out Reason Out: **6.5 worked hours**. Separate work events before and after the same meal work too. Do not create a separate Hours meal row in Workday: the live SCU test counted that interval as work and generated a meal premium.
 

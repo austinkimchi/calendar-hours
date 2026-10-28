@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.15 — Workday developer preview, October 27, 2026
+
+- Trigger a meal from configurable keywords in a work event’s description, independently of importing comments.
+- Allow keyword and hours-worked triggers together, with one shared meal deduction and configurable placement and length.
+- Preserve saved settings and support existing separate timed meal events.
+
 ## 0.2.14 — Workday developer preview, October 27, 2026
 
 - Select multiple calendars for Workday imports, with bounded concurrent reads and migration of saved single-calendar choices.

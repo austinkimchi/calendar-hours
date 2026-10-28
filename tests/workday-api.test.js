@@ -21,10 +21,10 @@ test('revoked access and removed calendars lead back to setup',async()=>{
   for(const status of [401,403,404]) await assert.rejects(api.listCalendars({accessToken:'test',fetcher:async()=>({ok:false,status})}),e=>e.needsSetup===true);
   await assert.rejects(api.listCalendars({accessToken:'test',fetcher:async()=>({ok:false,status:500})}),e=>!e.needsSetup);
 });
-test('Calendar descriptions are forwarded to Workday only when comment importing is enabled',async()=>{
-  for(const importComments of [false,true]) {
-    const events=await api.listEvents({accessToken:'test',core,settings:{calendarId:'chosen',timeZone:'UTC',importComments},dates:['2026-10-19'],fetcher:async()=>({ok:true,json:async()=>({items:[{summary:'Work block',description:'Project notes',attendees:['not needed']}]})})});
-    assert.equal(events[0].description,importComments?'Project notes':undefined);
+test('Calendar descriptions reach meal detection independently of comment importing',async()=>{
+  for(const importComments of [false,true]) for(const calendarMeals of [false,true]) {
+    const events=await api.listEvents({accessToken:'test',core,settings:{calendarId:'chosen',timeZone:'UTC',importComments,calendarMeals},dates:['2026-10-19'],fetcher:async()=>({ok:true,json:async()=>({items:[{summary:'Work block',description:'Project notes',attendees:['not needed']}]})})});
+    assert.equal(events[0].description,importComments||calendarMeals?'Project notes':undefined);
     assert.equal(events[0].attendees,undefined);
   }
 });

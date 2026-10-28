@@ -101,3 +101,32 @@ test('unfinished intervening work prevents assigning its meal to an earlier comp
  const result=wd.plan({events:[event('06:00','08:00'),event('09:00','17:00'),event('12:00','12:30','Lunch')],dates:[date],settings,core,now:Date.parse(`${date}T12:45:00-07:00`)});
  assert.deepEqual(times(result),[[360,480,'Out']]);
 });
+
+test('description and duration triggers work separately or together with one deduction',()=>{
+ for(const calendarMeals of [false,true]) for(const autoMeal of [false,true]) for(const description of ['Meal','Project work']) {
+  const r=plan([{...event('10:00','17:30'),description}],{calendarMeals,autoMeal,mealWords:['Meal']});
+  const triggered=autoMeal||(calendarMeals&&description==='Meal');
+  assert.deepEqual(times(r),triggered?[[600,900,'Meal'],[930,1050,'Out']]:[[600,1050,'Out']]);
+  assert.ok(r.add.every(b=>b.descriptions.length===0),'meal detection must not enable comment copying');
+ }
+});
+test('description matching uses configurable whole phrases and readable rich text',()=>{
+ for(const description of ['<div>lUnCh</div>','<p>Lu<b>n</b>ch</p>','L&#117;nch','x'.repeat(2000)+' Lunch']) {
+  assert.deepEqual(times(plan([{...event('10:00','17:30'),description}])),[[600,900,'Meal'],[930,1050,'Out']]);
+ }
+ for(const description of ['Luncheon','<a href="https://example.test/Lunch">Notes</a>','<!-- Lunch --><script>Lunch</script><style>Lunch</style>']) {
+  assert.deepEqual(times(plan([{...event('10:00','17:30'),description}])),[[600,1050,'Out']]);
+ }
+ assert.deepEqual(times(plan([{...event('10:00','17:30'),description:'REST&nbsp;PERIOD'}],{mealWords:['Rest period'],mealAfterHours:2,mealDurationMinutes:45})),[[600,720,'Meal'],[765,1050,'Out']]);
+});
+test('duplicate description matches and a legacy timed meal do not double deduct',()=>{
+ const work={...event('10:00','17:30'),description:'Lunch'};
+ assert.deepEqual(times(plan([work,work],{autoMeal:true})),[[600,900,'Meal'],[930,1050,'Out']]);
+ assert.deepEqual(times(plan([work,work,event('12:00','12:30','Lunch')],{autoMeal:true})),[[600,720,'Meal'],[750,1050,'Out']]);
+});
+test('unplaceable description meals warn and unfinished work does not trigger a deduction',()=>{
+ const r=plan([{...event('10:00','14:00'),description:'Lunch'}]);
+ assert.deepEqual(times(r),[[600,840,'Out']]);assert.match(r.warnings[0],/No meal was deducted/);
+ const future=wd.plan({events:[event('06:00','12:00'),{...event('13:00','17:00'),description:'Lunch'}],dates:[date],settings,core,now:Date.parse(`${date}T12:30:00-07:00`)});
+ assert.deepEqual(times(future),[[360,720,'Out']]);
+});

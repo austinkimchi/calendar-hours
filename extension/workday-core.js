@@ -107,7 +107,22 @@
     }
     return result;
   }
-  function applyMeals(blocks, meals, settings, warnings, allWork = blocks) {
+  function mealDescriptionText(value) {
+    // Calendar descriptions can contain HTML. Match readable text, never tag
+    // attributes, comments, or embedded script/style contents.
+    return String(value || "").replace(/<!--[^]*?-->/g, "")
+      .replace(/<(script|style|iframe|object)\b[^>]*>[^]*?<\/\1\s*>/gi, "")
+      .replace(/<\/?(?:br|p|div|li|blockquote|pre|h[1-6])\b[^>]*>/gi, " ")
+      .replace(/<[^>]*>/g, "")
+      .replace(/&(?:nbsp|amp|lt|gt|quot|apos|#(\d+)|#x([\da-f]+));/gi, (entity, decimal, hex) => {
+        if (decimal || hex) {
+          const n = parseInt(decimal || hex, hex ? 16 : 10);
+          return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : " ";
+        }
+        return ({ "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&apos;": "'" })[entity.toLowerCase()];
+      });
+  }
+  function applyMeals(blocks, meals, settings, warnings, allWork = blocks, keywordDates = new Set()) {
     // Ignore unrelated meals outside the day's work span. A meal in a gap
     // between work blocks still belongs to that day and suppresses a second meal.
     const breaks = union(meals, true).filter(meal => {
@@ -116,16 +131,21 @@
     });
     for (const date of new Set(blocks.map(b => b.date))) {
       const day = blocks.filter(b => b.date === date);
-      if (!settings.autoMeal || breaks.some(m => m.date === date)) continue;
+      const keywordTriggered = keywordDates.has(date);
+      if ((!settings.autoMeal && !keywordTriggered) || breaks.some(m => m.date === date)) continue;
       let remaining = Math.round(settings.mealAfterHours * 60);
+      let placed = false;
       for (const block of day) {
         const length = block.end - block.start;
         if (remaining > length) { remaining -= length; continue; }
         const start = block.start + remaining, end = start + settings.mealDurationMinutes;
-        if (day.some(b => b.end > end)) breaks.push({ date, start, end, title: "Automatic meal" });
-        else if (day.some(b => b.end > start)) warnings.push(`${date}: not enough remaining time for a full automatic meal; check this day manually.`);
+        if (day.some(b => b.end > end)) {
+          breaks.push({ date, start, end, title: keywordTriggered ? "Description meal" : "Automatic meal" });
+          placed = true;
+        } else if (!keywordTriggered && day.some(b => b.end > start)) warnings.push(`${date}: not enough remaining time for a full automatic meal; check this day manually.`);
         break; // at most one automatic meal per day
       }
+      if (keywordTriggered && !placed) warnings.push(`${date}: meal keyword found, but there is not enough work after the configured meal time. No meal was deducted; check the meal timing in import settings.`);
     }
     const combined = union(breaks, true), result = [];
     for (const block of blocks) {
@@ -157,7 +177,7 @@
     const s = settingsFrom(settings);
     if (!configured(s)) throw Object.assign(new Error("Finish Workday setup in Calendar Hours settings"), { needsSetup: true });
     const wanted = new Set(dates);
-    const blocks = [], allWork = [], meals = [], warnings = [], skipped = [];
+    const blocks = [], allWork = [], meals = [], warnings = [], skipped = [], keywordDates = new Set();
     for (const event of events) {
       const isMeal = s.calendarMeals && core.matchesAutoWords(event.summary || "", { matchingPhrases: s.mealWords.map(phrase => ({ phrase })) });
       const isWork = core.matchesAutoWords(event.summary || "", { matchingPhrases: [{ phrase: s.keyword }] });
@@ -184,12 +204,15 @@
         // its afternoon shift is not yet eligible for import.
         allWork.push({ date: a.date, start: a.minute, end: b.minute });
         if (!s.includeFuture && end > now) { skipped.push({ reason: "future", title: event.summary }); continue; }
+        if (s.calendarMeals && core.matchesAutoWords(mealDescriptionText(event.description), {
+          matchingPhrases: s.mealWords.map(phrase => ({ phrase }))
+        })) keywordDates.add(a.date);
       }
       (isMeal ? meals : blocks).push({ date: a.date, start: a.minute, end: b.minute, title: event.summary,
         descriptions: s.importComments && typeof event.description === "string" ? [event.description] : [],
         startIso: event.start.dateTime, endIso: event.end.dateTime });
     }
-    const merged = applyMeals(union(blocks), meals, s, warnings, allWork);
+    const merged = applyMeals(union(blocks), meals, s, warnings, allWork, keywordDates);
     const add = [], update = [], conflicts = [];
     const overlapsBlock = (a, b) => a.date === b.date && a.start < b.end && a.end > b.start;
     const resolved = new Set();
