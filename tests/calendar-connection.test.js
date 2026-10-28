@@ -19,7 +19,8 @@ async function harness({connected=false,calendarListAccess=false,fail=false}={})
    :{ok:false,needsSetup:true,reason:'Connect Google Calendar in General.'};
   throw new Error(`Unexpected message ${message.type}`);
  }}};
- for(const script of ['core.js','calendar-connection.js','options.js','workday-core.js','workday-options.js'])window.eval(fs.readFileSync(`extension/${script}`,'utf8'));
+ window.chrome.storage.onChanged={addListener(){},removeListener(){}};
+ for(const script of ['settings-sync.js','core.js','calendar-connection.js','options.js','workday-core.js','workday-options.js'])window.eval(fs.readFileSync(`extension/${script}`,'utf8'));
  await settle();await settle();
  return {dom,window,messages,writes,doc:window.document};
 }

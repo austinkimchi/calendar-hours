@@ -1,14 +1,17 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');const {JSDOM}=require('jsdom');
-async function harness(available=true,saved={},calendarZone="America/Los_Angeles"){const dom=new JSDOM(fs.readFileSync('extension/options.html','utf8'),{runScripts:'outside-only',url:'https://extension.test/options.html#workday'}),writes=[];
+const storageHarness=require('./helpers/settings-storage');
+const workday=require('../extension/workday-core');
+async function harness(available=true,saved={},calendarZone="America/Los_Angeles",overrides={}){const dom=new JSDOM(fs.readFileSync('extension/options.html','utf8'),{runScripts:'outside-only',url:'https://extension.test/options.html#workday'});
+ const store=storageHarness({workdayIntegration:saved,...overrides}),writes=store.writes;
  dom.window.HTMLElement.prototype.scrollIntoView=function(){};
- dom.window.chrome={storage:{sync:{get:async()=>({workdayIntegration:saved}),set:async v=>writes.push(v)}},runtime:{sendMessage:async()=>available?{ok:true,calendars:[{id:'work-test',name:'Work',timeZone:calendarZone}]}:{ok:false,needsSetup:true,reason:'Reconnect Google Calendar'}}};
- dom.window.eval(fs.readFileSync('extension/workday-core.js','utf8'));dom.window.eval(fs.readFileSync('extension/workday-options.js','utf8'));await new Promise(r=>setTimeout(r,10));
- return {dom,writes,form:dom.window.document.querySelector('#workday-settings')};
+ dom.window.chrome={storage:store.storage,runtime:{sendMessage:async()=>available?{ok:true,calendars:[{id:'work-test',name:'Work',timeZone:calendarZone}]}:{ok:false,needsSetup:true,reason:'Reconnect Google Calendar'}}};
+ dom.window.eval(fs.readFileSync('extension/settings-sync.js','utf8'));dom.window.eval(fs.readFileSync('extension/workday-core.js','utf8'));dom.window.eval(fs.readFileSync('extension/workday-options.js','utf8'));await new Promise(r=>setTimeout(r,10));
+ return {dom,writes,store,value:()=>workday.settingsFromStorage(store.data),form:dom.window.document.querySelector('#workday-settings')};
 }
 test('setup persists selected calendar and independent import keyword, without changing title settings',async()=>{
  const f=await harness(),el=n=>f.form.elements.namedItem(n);f.form.querySelector('[name=calendarIds]').checked=true;f.form.querySelector('[name=calendarIds]').dispatchEvent(new f.dom.window.Event('change',{bubbles:true}));el('keyword').value='Work block';el('enabled').checked=true;
  f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,10));
- assert.equal(f.writes.length,1);assert.deepEqual(Object.keys(f.writes[0]),['workdayIntegration']);assert.equal(f.writes[0].workdayIntegration.calendarId,'work-test');assert.equal(f.writes[0].workdayIntegration.keyword,'Work block');assert.equal(f.writes[0].workdayIntegration.timeZone,'America/Los_Angeles');f.dom.window.close();
+ assert.equal(f.writes.length,1);assert.ok(Object.keys(f.writes[0]).every(key=>key.startsWith('workdayIntegration.')));assert.equal(f.value().calendarId,'work-test');assert.equal(f.value().keyword,'Work block');assert.equal(f.value().timeZone,'America/Los_Angeles');f.dom.window.close();
 });
 test('missing calendar access and invalid time zones cannot enable an import',async()=>{
  for(const available of [false,true]){const f=await harness(available);f.form.elements.namedItem('enabled').checked=true;if(f.form.querySelector('[name=calendarIds]'))f.form.querySelector('[name=calendarIds]').checked=true;f.form.elements.namedItem('keyword').value='Work block';f.form.elements.namedItem('timeZone').value='invalid';f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,5));assert.equal(f.writes.length,0);f.dom.window.close()}
@@ -29,9 +32,9 @@ test('time zone dropdown preserves saved zones and saves a new choice without re
   zone.dispatchEvent(new f.dom.window.Event('input', {bubbles:true}));
   f.form.dispatchEvent(new f.dom.window.Event('submit', {cancelable:true}));
   await new Promise(resolve => setTimeout(resolve, 0));
-  assert.equal(f.writes[0].workdayIntegration.timeZone, 'America/New_York');
-  assert.equal(f.writes[0].workdayIntegration.includeFuture, true);
-  assert.equal(f.writes[0].workdayIntegration.outReason, 'Out');
+  assert.equal(f.value().timeZone, 'America/New_York');
+  assert.equal(f.value().includeFuture, true);
+  assert.equal(f.value().outReason, 'Out');
   assert.equal(f.form.elements.namedItem('outReason').required, true);
   f.dom.window.close();
  }
@@ -58,20 +61,20 @@ test('overlap updates default on and an explicitly saved off choice survives reo
  f.form.elements.namedItem('importComments').click();
  f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));
  await new Promise(resolve=>setTimeout(resolve,0));
- assert.equal(f.writes[0].workdayIntegration.updateOverlaps,false);
- assert.equal(f.writes[0].workdayIntegration.importComments,true);
- const reopened=await harness(true,f.writes[0].workdayIntegration);
+ assert.equal(f.value().updateOverlaps,false);
+ assert.equal(f.value().importComments,true);
+ const reopened=await harness(true,saved,'America/Los_Angeles',f.store.data);
  assert.equal(reopened.form.elements.namedItem('updateOverlaps').checked,false);
  assert.equal(reopened.form.elements.namedItem('importComments').checked,true);
  reopened.dom.window.close();f.dom.window.close();
 });
-test('release hides retired meal controls and saves old enabled flags as disabled',async()=>{
+test('release hides retired meal controls and ignores old enabled flags without rewriting preferences',async()=>{
  const f=await harness(true,{enabled:true,calendarId:'work-test',keyword:'SCU Block',timeZone:'UTC',calendarMeals:true,autoMeal:true,mealWords:['Lunch']}),el=n=>f.form.elements.namedItem(n);
  for(const name of ['calendarMeals','autoMeal','mealWords','mealAfterHours','mealDurationMinutes'])assert.equal(el(name),null);
  assert.equal(f.writes.length,0,'opening settings does not reset stored preferences');
  f.form.dispatchEvent(new f.dom.window.Event('submit',{cancelable:true}));await new Promise(r=>setTimeout(r,0));
- const value=f.writes[0].workdayIntegration;assert.equal(value.calendarMeals,false);assert.equal(value.autoMeal,false);
- assert.equal(value.keyword,'SCU Block');assert.equal(value.enabled,true);assert.equal(value.timeZone,'UTC');f.dom.window.close();
+ const value=f.value();assert.equal(value.calendarMeals,false);assert.equal(value.autoMeal,false);
+ assert.equal(value.keyword,'SCU Block');assert.equal(value.enabled,true);assert.equal(value.timeZone,'UTC');assert.equal(f.writes.length,0,'saving an unchanged form leaves the legacy object intact');f.dom.window.close();
 });
 test('unavailable saved calendars remain checked and cannot be silently dropped on save',async()=>{
  const f=await harness(true,{enabled:true,calendarIds:['work-test','missing-meals'],keyword:'SCU Block',timeZone:'UTC'});

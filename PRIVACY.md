@@ -1,5 +1,9 @@
 # Calendar Hours privacy policy
 
+Browser settings sync — October 27, 2026
+
+Calendar Hours uses the browser provider's built-in sync service for preferences when browser sync is enabled. Chrome and Edge have separate sync services. Formatting, matching phrases, feature switches, and Workday calendar selections/import preferences can sync between installations with the same extension ID under the same browser account. OAuth tokens remain in local extension storage and are not included. The automatically detected device/Calendar time zone remains in tab memory; the explicitly chosen Workday payroll zone is a synced preference. No Firebase service or new account is used. Saving a preference does not confirm delivery to another device; your browser controls that delivery.
+
 Workday import — October 27, 2026
 
 The optional Workday integration adds access to `https://www.myworkday.com/*`. When you select Auto-fill from Calendar, it reads the displayed Enter Time dates and existing time blocks, requests the selected Google calendars’ events for those dates, and matches event titles to import start/end times. It saves these entries as unsubmitted through the visible form. An optional setting also updates one overlapping, unsubmitted draft in place when it corresponds to one calendar block. New comments are blank by default, and existing comments are preserved during time updates. If you enable Import event descriptions as comments, Calendar descriptions are sent to your Workday organization as plain-text comments (up to 1,000 characters), replacing comments on updated entries. Event titles are never copied to comments. Calendar data is sent to your Workday organization only when you start an import; the developer receives none of it.

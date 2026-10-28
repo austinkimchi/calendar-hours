@@ -13,6 +13,7 @@ Calendar Hours adds the elapsed time to Google Calendar event titles. A 10:15amâ
 - Match phrases such as `Work block` and enable **Auto-update** separately for each phrase. Titles with an existing duration can also update after time changes.
 - Connect Google Calendar for fast title saves when moving or resizing a one-time event. The first-install welcome page offers this connection; the regular Calendar editor method remains available without it.
 - Optionally import matching calendar blocks into Workday as unsubmitted time entries, with duplicate detection and updates to overlapping drafts.
+- Keep preferences across computers using your browser's built-in sync.
 
 ## Preview
 
@@ -38,6 +39,22 @@ An older unpacked copy with a different ID has separate settings. Record its set
 Developers can load [`extension/`](extension/) directly, but its path-derived ID may need its own OAuth registration. Packaging preserves the source installation's identity and preferences.
 
 </details>
+
+## Settings across computers
+
+Calendar Hours uses browser sync automatically; it needs no Firebase account or extra Google Calendar permission.
+
+1. Install the same extension build/ID on each computer.
+2. Sign into the same **browser account** and enable extension/settings sync in that browser's profile settings.
+3. Change a preference. Open Calendar Hours settings on the other computer to check that it arrived. Workday preferences still require **Save import settings**.
+
+**Chrome syncs with Chrome; Edge syncs with Edge.** These services do not share settings with each other. Signing into Google Calendar alone does not enable browser sync. Development and release builds with different extension IDs have separate preferences.
+
+Formatting, matching phrases, feature switches, and Workday import preferences sync. Google sign-in tokens stay on each device, so connect Google Calendar separately where needed. Workday's saved payroll time zone syncs; automatic detection of the device/Calendar time zone remains local.
+
+Open settings pages receive incoming changes without discarding unsaved edits. Saves write only edited preferences, so changes to different preferences can merge. Changes to the same preference, phrase list, or calendar selection follow the browser's conflict resolution. An unsaved local edit is kept until you save it.
+
+**Saved in this browser** confirms local storage, not delivery to another computer. While offline or with browser sync disabled, settings remain local; the browser handles delivery when sync is available. Update all devices to this build: older versions do not understand the new per-preference Workday storage. [Sync behavior and verification](SYNC_TESTING.md).
 
 ## Time zones
 

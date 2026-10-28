@@ -14,17 +14,19 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 test("settings migrate phrases into rows and save each Dynamic choice", async () => {
   const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
   const { window } = dom;
-  let saved;
+  let saved = {};
   let removed;
   window.chrome = {
     storage: { sync: {
       get: async () => ({ autoWords: "SCU Block, Study session", keepUpdated: true, automatic: true }),
-      set: async value => { saved = value; },
+      set: async value => { Object.assign(saved, value); },
       remove: async keys => { removed = keys; }
     } }
   };
   window.eval(core);
   window.eval(helpScript);
+  window.chrome.storage.onChanged = { addListener() {}, removeListener() {} };
+  window.eval(fs.readFileSync(path.join(extension, "settings-sync.js"), "utf8"));
   window.eval(options);
   await settle();
 
@@ -53,17 +55,17 @@ test("settings migrate phrases into rows and save each Dynamic choice", async ()
     { phrase: "Study session", dynamic: false },
     { phrase: "Work block", dynamic: false }
   ]);
-  assert.equal(saved.automatic, true);
+  assert.equal(saved.automatic, undefined, "unchanged preferences are not rewritten");
   assert.equal(saved.minutesTemplate, undefined, "minutes should inherit the latest hours template until first enabled");
-  assert.deepEqual(Array.from(removed), ["autoWords", "keepUpdated"]);
-  assert.equal(window.document.querySelector("#status").textContent, "Saved");
+  assert.equal(removed, undefined, "legacy values remain readable until each preference is edited");
+  assert.equal(window.document.querySelector("#status").textContent, "Saved in this browser");
 
   window.document.querySelectorAll(".rule-dynamic input")[0].click();
   assert.equal(window.document.querySelector('[name="replaceExisting"]').disabled, true);
   window.document.querySelector("#settings").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
   await settle();
-  assert.equal(saved.updateExistingHours, true);
-  assert.equal(saved.replaceExisting, true);
+  assert.equal(saved.updateExistingHours, undefined);
+  assert.equal(saved.replaceExisting, undefined);
   dom.window.close();
 });
 
@@ -74,6 +76,8 @@ test("first-time options enable both defaults while saved off choices stay off",
     window.chrome = { storage: { sync: { get: async () => saved, set: async () => {}, remove: async () => {} } } };
     window.eval(core);
     window.eval(helpScript);
+    window.chrome.storage.onChanged = { addListener() {}, removeListener() {} };
+    window.eval(fs.readFileSync(path.join(extension, "settings-sync.js"), "utf8"));
     window.eval(options);
     await settle();
     assert.equal(window.document.querySelector('[name="automatic"]').checked, expected);
@@ -85,21 +89,23 @@ test("first-time options enable both defaults while saved off choices stay off",
 test("turning on minutes below an hour saves the setting without an extra Save click", async () => {
   const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
   const { window } = dom;
-  let saved;
+  let saved = {};
   window.chrome = { storage: { sync: {
     get: async () => ({}),
-    set: async value => { saved = value; },
+    set: async value => { Object.assign(saved, value); },
     remove: async () => {}
   } } };
   window.eval(core);
   window.eval(helpScript);
+  window.chrome.storage.onChanged = { addListener() {}, removeListener() {} };
+  window.eval(fs.readFileSync(path.join(extension, "settings-sync.js"), "utf8"));
   window.eval(options);
   await settle();
   window.document.querySelector('[name="minutesBelowHour"]').click();
   await settle();
   assert.equal(saved.minutesBelowHour, true);
   assert.equal(saved.minutesTemplate, "({value} {unit})");
-  assert.equal(window.document.querySelector("#status").textContent, "Saved");
+  assert.equal(window.document.querySelector("#status").textContent, "Saved in this browser");
   dom.window.close();
 });
 
@@ -112,6 +118,8 @@ test("the locked replacement setting explains which update option requires it", 
   } } };
   window.eval(core);
   window.eval(helpScript);
+  window.chrome.storage.onChanged = { addListener() {}, removeListener() {} };
+  window.eval(fs.readFileSync(path.join(extension, "settings-sync.js"), "utf8"));
   window.eval(options);
   await settle();
 
@@ -141,14 +149,16 @@ test("the locked replacement setting explains which update option requires it", 
 test("enabling minutes starts with the current hours template and keeps later customization", async () => {
   const dom = new JSDOM(html, { runScripts: "outside-only", url: "https://example.test/options.html" });
   const { window } = dom;
-  let saved;
+  let saved = {};
   window.chrome = { storage: { sync: {
     get: async () => ({ template: "— {value} {unit}", unit: "hrs" }),
-    set: async value => { saved = value; },
+    set: async value => { Object.assign(saved, value); },
     remove: async () => {}
   } } };
   window.eval(core);
   window.eval(helpScript);
+  window.chrome.storage.onChanged = { addListener() {}, removeListener() {} };
+  window.eval(fs.readFileSync(path.join(extension, "settings-sync.js"), "utf8"));
   window.eval(options);
   await settle();
 

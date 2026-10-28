@@ -129,7 +129,7 @@ async function workdayCalendars() {
 async function workdayEvents(message) {
   const core = globalThis.CalendarHoursWorkday;
   core.validateDates(message.dates);
-  const settings = core.settingsFrom((await chrome.storage.sync.get(core.settingsKey))[core.settingsKey]);
+  const settings = core.settingsFromStorage(await chrome.storage.sync.get(null));
   if (!core.configured(settings)) return { ok: false, needsSetup: true, reason: "Choose your calendar, import phrase and time zone in Calendar Hours settings." };
   const accessToken = await globalThis.CalendarHoursOAuth.getAccessToken();
   if (!accessToken) return { ok: false, needsSetup: true, reason: "Reconnect Google Calendar in Calendar Hours settings." };

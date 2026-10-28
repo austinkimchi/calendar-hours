@@ -22,6 +22,9 @@
         <button type="button" id="disconnect-api" class="secondary-button" hidden>Disconnect</button>
       </div>
       <p id="api-status" role="status">Checking connection…</p>
+      <h3 class="help-label" data-help="browser-sync-help" tabindex="0">Sync across devices</h3>
+      <p class="sync-note">Settings use your browser’s sync. Sign in to the same browser account on each computer and enable extension sync.</p>
+      <div id="browser-sync-help" class="info-panel" hidden>Chrome syncs with Chrome; Edge syncs with Edge. Use the same Calendar Hours extension ID on each device. Development builds with different IDs have separate settings. Connect Google Calendar separately on each device; sign-in tokens stay on that device. Changes are saved locally first and sync when your browser allows it. Calendar Hours cannot check whether browser sync is enabled or confirm delivery to another device.</div>
     </section>
     <form id="settings">
       <section aria-labelledby="titles-heading">
@@ -148,6 +151,7 @@
   <script src="settings-help.js"></script>
   <script src="calendar-connection.js"></script>
   <script src="core.js"></script>
+  <script src="settings-sync.js"></script>
   <script src="options.js"></script>
   <script src="workday-core.js"></script>
   <script src="workday-options.js"></script>

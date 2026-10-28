@@ -21,23 +21,49 @@ function run(html, saved = {}, options = {}) {
   window.HTMLElement.prototype.getBoundingClientRect = function () { return { left: 10, top: 10, bottom: 50, right: 610, width: 600, height: 40 }; };
   const initialTitle = window.document.querySelector('input[aria-label="Title"],input[aria-label="Add title"]');
   if (initialTitle) { initialTitle.focus(); initialTitle.setSelectionRange(initialTitle.value.length, initialTitle.value.length); }
-  let listener;
+  let listener, storageListener;
   const hintStorage = options.hintStorage || {};
   window.chrome = {
     storage: {
       sync: {
-        get: async () => ({ ...saved, ...hintStorage }),
+        get: options.getSettings || (async () => ({ ...saved, ...hintStorage })),
         set: async values => { Object.assign(hintStorage, values); }
       },
-      onChanged: { addListener() {} }
+      onChanged: { addListener(fn) { storageListener = fn; } }
     },
     runtime: { onMessage: { addListener(fn) { listener = fn; } }, sendMessage: options.sendMessage || (async () => ({ ok: false })) }
   };
   window.eval(coreScript);
   window.eval(zonesScript);
   window.eval(contentScript);
-  return { dom, window, send: message => new Promise(resolve => listener(message, {}, resolve)) };
+  return { dom, window, receiveSettings: patch => storageListener(Object.fromEntries(Object.entries(patch).map(([key, newValue]) => [key, { newValue }])), "sync"),
+    send: message => new Promise(resolve => listener(message, {}, resolve)) };
 }
+
+test("incoming settings refresh a live title suggestion and keep inherited minutes formatting", async t => {
+  const app = run(`<input aria-label="Title" value="Study"><input aria-label="Start date" data-date="20261021" value="Oct 21, 2026">
+    <input aria-label="Start time" value="10:00am"><input aria-label="End date" data-date="20261021" value="Oct 21, 2026">
+    <input aria-label="End time" value="10:45am"><input type="checkbox" aria-label="All day">`, { minutesBelowHour: true });
+  t.after(() => app.dom.window.close());
+  await settle();
+  app.receiveSettings({ template: "[{value} {unit}]" });
+  await settle();
+  assert.match(app.window.document.querySelector(".calendar-hours-suggestion").textContent, /\[45 minutes\]/);
+  app.receiveSettings({ showSuggestion: false }); await settle();
+  assert.equal(app.window.document.querySelector(".calendar-hours-suggestion"), null);
+});
+
+test("an incoming preference during startup survives an older content-script storage read", async t => {
+  let finishRead;
+  const app = run(`<input aria-label="Title" value="Study"><input aria-label="Start date" data-date="20261021" value="Oct 21, 2026">
+    <input aria-label="Start time" value="10:00am"><input aria-label="End date" data-date="20261021" value="Oct 21, 2026">
+    <input aria-label="End time" value="10:45am"><input type="checkbox" aria-label="All day">`, {},
+    { getSettings: () => new Promise(resolve => { finishRead = resolve; }) });
+  t.after(() => app.dom.window.close());
+  app.receiveSettings({ showSuggestion: false }); finishRead({ showSuggestion: true });
+  await settle();
+  assert.equal(app.window.document.querySelector(".calendar-hours-suggestion"), null);
+});
 
 test("keyword replaces itself in the full editor without saving the event", async t => {
   const app = run(`<input aria-label="Title" value="SCU Block /hours">
