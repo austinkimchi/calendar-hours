@@ -87,6 +87,21 @@
   function assertView(doc, core, expected) {
     if (readView(doc, core).signature !== expected.signature) throw new Error("The displayed dates changed. Import stopped; already saved entries remain unsubmitted.");
   }
+  async function waitForCalendarReady(doc) {
+    await waitFor(() => {
+      const toolbar = doc.querySelector(aid("calendarToolbar"));
+      if (!visible(toolbar) || toolbar.closest('[inert]') ||
+          [...doc.querySelectorAll('[role="dialog"][aria-modal="true"]')].some(visible)) return false;
+      if (!toolbar.closest('[aria-hidden="true"]')) return true;
+      // Workday sometimes leaves aria-hidden on the application frame after
+      // Cancel, even though the form is gone and the calendar accepts input.
+      // Require a real hit test so an overlay or closing transition still blocks.
+      const actions = toolbar.querySelector('button[aria-label="Actions"]');
+      if (!visible(actions) || actions.disabled || actions.getAttribute("aria-disabled") === "true") return false;
+      const rect = actions.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && actions.contains(doc.elementFromPoint?.(rect.left + rect.width / 2, rect.top + rect.height / 2));
+    }, "Workday has not finished closing its time-entry form. Refresh the calendar before retrying.");
+  }
   async function cancelDraft(doc, dialog) {
     button(dialog, "Cancel").click();
     const result = await waitFor(() => !dialog.isConnected ||
@@ -96,6 +111,7 @@
       button(result, "Discard").click();
       await waitFor(() => !dialog.isConnected && !result.isConnected, "Workday did not discard the unsaved draft");
     }
+    await waitForCalendarReady(doc);
   }
   function updateTarget(doc, base, block, settings) {
     const previous = block.previous;
@@ -173,15 +189,30 @@
       const typeList = [...dialog.querySelectorAll('[role="listbox"]')].find(e => label(e) === "items selected for Time Type");
       const selected = typeList?.querySelector('[role="option"]')?.textContent.trim();
       if (selected !== settings.timeType) throw settingsError(`Workday selected ${selected || "no time type"}. Choose the matching Time Type in import settings.`);
-      setInput(field(dialog, "In"), core.clock(block.start));
-      setInput(field(dialog, "Out"), core.clock(block.end));
+      const reason = block.outReason || settings.outReason;
+      const outReasonField = () => [...dialog.querySelectorAll('[role="combobox"]')].find(e => label(e).startsWith("Out Reason"));
+      const reasonValue = () => {
+        const el = outReasonField();
+        return (el?.querySelector(aid("selectSelectedOption"))?.textContent ?? el?.textContent ?? "").replace(/\s+selected\s*$/, "").trim().replace(/^Out Reason\s*/, "").trim();
+      };
+      if (updating && block.previous.start === block.start && block.previous.end === block.end && reasonValue() === reason &&
+          (!settings.importComments || field(dialog, "Comment").value === commentText(doc, block.descriptions))) {
+        await cancelDraft(doc, dialog);
+        return "already-entered";
+      }
+      if (normalizedClock(field(dialog, "In").value) !== normalizedClock(core.clock(block.start)) ||
+          normalizedClock(field(dialog, "Out").value) !== normalizedClock(core.clock(block.end))) {
+        setInput(field(dialog, "In"), core.clock(block.start));
+        setInput(field(dialog, "Out"), core.clock(block.end));
+      }
       const outReason = [...dialog.querySelectorAll('[role="combobox"]')].find(e => label(e).startsWith("Out Reason"));
       if (!outReason) throw new Error("Workday's Out Reason field is unavailable");
-      if (!outReason.textContent.replace(/\s+selected\s*$/, "").trim().endsWith(settings.outReason)) {
+      if (reasonValue() !== reason) {
         outReason.click();
-        const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === settings.outReason), settingsError("The configured Out Reason was not found. Check Out Reason in import settings."));
+        const option = await waitFor(() => [...doc.querySelectorAll('[role="option"]')].find(e => visible(e) && e.textContent.trim() === reason), settingsError(reason === "Meal" ? "Workday does not offer Meal as an Out Reason. Check the meal options in import settings." : "The configured Out Reason was not found. Check Out Reason in import settings."));
         option.click();
       }
+      await waitFor(() => reasonValue() === reason, "Workday did not accept the requested Out Reason. Nothing was saved.");
       if (settings.importComments || !updating) {
         const comment = settings.importComments ? commentText(doc, block.descriptions) : "";
         setInput(field(dialog, "Comment"), comment);
@@ -206,6 +237,7 @@
       await waitFor(() => !dialog.isConnected, "Workday did not confirm this entry. Check the open form before retrying.");
       await waitFor(() => readExisting(doc, base.dates).some(e => e.date === block.date && e.start === block.start && e.end === block.end && e.type === settings.timeType &&
         (!updating || (e.eventId === block.previous.eventId && e.status === "Not Submitted"))), "Workday closed the form but did not show the saved entry. Check the calendar before retrying.");
+      await waitForCalendarReady(doc);
       return updating ? "updated" : "added";
     } catch (error) {
       if (!saved && dialog.isConnected) {
@@ -256,8 +288,8 @@
         let already = plan.skipped.filter(e => e.reason === "already-entered").length;
         for (const block of plan.update) {
           showStatus(`Updating ${view.title}: ${updated + 1} of ${plan.update.length}…`);
-          await updateBlock(doc, core, view, block, response.settings);
-          updated++;
+          const result = await updateBlock(doc, core, view, block, response.settings);
+          if (result === "updated") updated++; else already++;
         }
         for (const block of plan.add) {
           showStatus(`Importing ${view.title}: ${added + 1} of ${plan.add.length}…`);

@@ -30,16 +30,32 @@
     core.validateDates(dates);
     const timeMin = new Date(core.midnight(dates[0], settings.timeZone)).toISOString();
     const timeMax = new Date(core.midnight(core.addDays(dates.at(-1), 1), settings.timeZone)).toISOString();
-    const events = []; let pageToken;
-    do {
-      const params = new URLSearchParams({ timeMin, timeMax, singleEvents: "true", orderBy: "startTime", showDeleted: "false", maxResults: "2500" });
-      if (pageToken) params.set("pageToken", pageToken);
-      const data = await read(`/calendars/${encodeURIComponent(settings.calendarId)}/events?${params}`, accessToken, fetcher);
-      events.push(...(data.items || []).map(e => ({ summary: e.summary, status: e.status, start: e.start, end: e.end,
-        ...(settings.importComments === true ? { description: typeof e.description === "string" ? e.description : "" } : {}) })));
-      if (events.length > 10000) throw new Error("This range has too many events. Import one day at a time.");
-      pageToken = data.nextPageToken;
-    } while (pageToken);
+    const ids = core.settingsFrom(settings).calendarIds;
+    if (!ids.length) throw Object.assign(new Error("Choose at least one import calendar in settings."), { needsSetup: true });
+    const results = new Array(ids.length); let next = 0, count = 0, failure;
+    async function worker() {
+      while (next < ids.length && !failure) {
+        const index = next++, events = []; let pageToken;
+        try {
+          do {
+            const params = new URLSearchParams({ timeMin, timeMax, singleEvents: "true", orderBy: "startTime", showDeleted: "false", maxResults: "2500" });
+            if (pageToken) params.set("pageToken", pageToken);
+            const data = await read(`/calendars/${encodeURIComponent(ids[index])}/events?${params}`, accessToken, fetcher);
+            count += (data.items || []).length;
+            if (count > 10000) throw new Error("This range has too many events. Import one day at a time.");
+            events.push(...(data.items || []).map(e => ({ summary: e.summary, status: e.status, start: e.start, end: e.end,
+              ...(settings.importComments === true ? { description: typeof e.description === "string" ? e.description : "" } : {}) })));
+            pageToken = data.nextPageToken;
+          } while (pageToken && !failure);
+          results[index] = events;
+        } catch (error) { failure = error; }
+      }
+    }
+    // At most three calendar requests in flight; do not import a partial set if
+    // one calendar fails, since its missing meals could change payable hours.
+    await Promise.all(Array.from({ length: Math.min(3, ids.length) }, worker));
+    if (failure) throw failure;
+    const events = results.flat();
     return events;
   }
   return { listCalendars, listEvents };

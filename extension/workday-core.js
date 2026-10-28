@@ -22,10 +22,17 @@
     try { new Intl.DateTimeFormat("en-US", { timeZone: zone }).format(); return typeof zone === "string" && !!zone; }
     catch { return false; }
   }
+  const defaultMealWords = ["Breakfast", "Lunch", "Dinner", "Meal Break"];
   function settingsFrom(value = {}) {
+    const calendarIds = [...new Set((Array.isArray(value.calendarIds) ? value.calendarIds : [value.calendarId])
+      .filter(id => typeof id === "string" && id.trim()).map(id => id.trim().slice(0, 1000)))].slice(0, 10);
+    const mealWords = Array.isArray(value.mealWords) ? value.mealWords :
+      typeof value.mealWords === "string" ? value.mealWords.split(/[,\n]/) : defaultMealWords;
+    const bounded = (v, fallback, min, max) => Number.isFinite(Number(v)) && Number(v) >= min && Number(v) <= max ? Number(v) : fallback;
     return {
       enabled: value.enabled === true,
-      calendarId: typeof value.calendarId === "string" ? value.calendarId.trim().slice(0, 1000) : "",
+      calendarIds,
+      calendarId: calendarIds[0] || "", // compatibility with older saved settings
       calendarName: typeof value.calendarName === "string" ? value.calendarName.slice(0, 200) : "",
       keyword: typeof value.keyword === "string" ? value.keyword.trim().slice(0, 80) : "",
       timeZone: validZone(value.timeZone) ? value.timeZone : "",
@@ -33,12 +40,18 @@
       outReason: typeof value.outReason === "string" && value.outReason.trim() ? value.outReason.trim().slice(0, 80) : "Out",
       includeFuture: value.includeFuture === true,
       updateOverlaps: value.updateOverlaps !== false,
-      importComments: value.importComments === true
+      importComments: value.importComments === true,
+      calendarMeals: value.calendarMeals === true,
+      mealWords: [...new Map(mealWords.filter(word => typeof word === "string" && word.trim())
+        .map(word => [word.trim().toLowerCase(), word.trim().slice(0, 80)])).values()].slice(0, 20),
+      autoMeal: value.autoMeal === true,
+      mealAfterHours: bounded(value.mealAfterHours, 5, 0.25, 16),
+      mealDurationMinutes: Math.round(bounded(value.mealDurationMinutes, 30, 1, 180))
     };
   }
   function configured(value) {
     const s = settingsFrom(value);
-    return s.enabled && !!s.calendarId && !!s.keyword && !!s.timeZone;
+    return s.enabled && s.calendarIds.length > 0 && !!s.keyword && !!s.timeZone && (!s.calendarMeals || s.mealWords.length > 0);
   }
   function parts(timestamp, timeZone) {
     const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
@@ -82,18 +95,79 @@
     const h = Math.floor(minute / 60) % 24;
     return `${h % 12 || 12}:${pad(minute % 60)} ${h >= 12 ? "PM" : "AM"}`;
   }
+  function union(blocks, adjacent = false) {
+    const result = [];
+    for (const block of [...blocks].sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start || a.end - b.end)) {
+      const prev = result.at(-1);
+      if (prev && prev.date === block.date && (adjacent ? block.start <= prev.end : block.start < prev.end)) {
+        prev.end = Math.max(prev.end, block.end);
+        if (prev.title !== block.title) prev.title = `${prev.title}; ${block.title}`.slice(0, 1000);
+        prev.descriptions = [...new Set([...(prev.descriptions || []), ...(block.descriptions || [])])];
+      } else result.push({ ...block });
+    }
+    return result;
+  }
+  function applyMeals(blocks, meals, settings, warnings, allWork = blocks) {
+    // Ignore unrelated meals outside the day's work span. A meal in a gap
+    // between work blocks still belongs to that day and suppresses a second meal.
+    const breaks = union(meals, true).filter(meal => {
+      const day = allWork.filter(b => b.date === meal.date);
+      return day.length && meal.start <= Math.max(...day.map(b => b.end)) && meal.end >= Math.min(...day.map(b => b.start));
+    });
+    for (const date of new Set(blocks.map(b => b.date))) {
+      const day = blocks.filter(b => b.date === date);
+      if (!settings.autoMeal || breaks.some(m => m.date === date)) continue;
+      let remaining = Math.round(settings.mealAfterHours * 60);
+      for (const block of day) {
+        const length = block.end - block.start;
+        if (remaining > length) { remaining -= length; continue; }
+        const start = block.start + remaining, end = start + settings.mealDurationMinutes;
+        if (day.some(b => b.end > end)) breaks.push({ date, start, end, title: "Automatic meal" });
+        else if (day.some(b => b.end > start)) warnings.push(`${date}: not enough remaining time for a full automatic meal; check this day manually.`);
+        break; // at most one automatic meal per day
+      }
+    }
+    const combined = union(breaks, true), result = [];
+    for (const block of blocks) {
+      let cursor = block.start;
+      const pieces = [];
+      for (const meal of combined.filter(m => m.date === block.date && m.start <= block.end && m.end > block.start)) {
+        if (meal.start > cursor) pieces.push({ ...block, start: cursor, end: meal.start, outReason: "Meal", mealApplied: true });
+        cursor = Math.max(cursor, meal.end);
+        if (cursor >= block.end) break;
+      }
+      if (cursor < block.end) pieces.push({ ...block, start: cursor, outReason: settings.outReason });
+      if (!pieces.length) warnings.push(`${block.date}: a meal covers the entire work block; no paid entry was planned. Any existing entry needs manual correction.`);
+      // Only a single exact draft of this original source span can be split automatically.
+      const changed = pieces.length !== 1 || pieces[0]?.start !== block.start || pieces[0]?.end !== block.end;
+      for (const piece of pieces) result.push({ ...piece, ...(changed ? { mealSource: { start: block.start, end: block.end } } : {}) });
+    }
+    // A meal entirely inside an existing gap still identifies the preceding
+    // clock-out. Preserve the gap's actual times and don't deduct it again.
+    for (const meal of combined) {
+      const before = result.filter(b => b.date === meal.date && b.end <= meal.start).sort((a, b) => b.end - a.end)[0];
+      if (before && (before.end === meal.start || !allWork.some(b => b.date === meal.date && b.start < meal.start && b.end > before.end))) {
+        before.outReason = "Meal";
+      }
+    }
+    return result;
+  }
   function plan({ events, dates, settings, existing = [], core, now = Date.now() }) {
     validateDates(dates);
     const s = settingsFrom(settings);
     if (!configured(s)) throw Object.assign(new Error("Finish Workday setup in Calendar Hours settings"), { needsSetup: true });
     const wanted = new Set(dates);
-    const blocks = [], warnings = [], skipped = [];
+    const blocks = [], allWork = [], meals = [], warnings = [], skipped = [];
     for (const event of events) {
-      if (!core.matchesAutoWords(event.summary || "", { matchingPhrases: [{ phrase: s.keyword }] })) continue;
+      const isMeal = s.calendarMeals && core.matchesAutoWords(event.summary || "", { matchingPhrases: s.mealWords.map(phrase => ({ phrase })) });
+      const isWork = core.matchesAutoWords(event.summary || "", { matchingPhrases: [{ phrase: s.keyword }] });
+      if (!isMeal && !isWork) continue;
       if (event.status === "cancelled" || !event.start?.dateTime || !event.end?.dateTime) continue;
       const start = Date.parse(event.start.dateTime), end = Date.parse(event.end.dateTime);
-      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) { warnings.push("A matching event has invalid times."); continue; }
-      if (!s.includeFuture && end > now) { skipped.push({ reason: "future", title: event.summary }); continue; }
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+        if (isMeal) throw new Error("A matching meal event has invalid times. Correct it in Calendar before importing.");
+        warnings.push("A matching event has invalid times."); continue;
+      }
       const a = parts(start, s.timeZone), b = parts(end, s.timeZone);
       if (a.date > dates.at(-1) || b.date < dates[0]) continue;
       const uniqueInstant = p => core.wallTimeInstant(core.parseCalendarDate(p.date),
@@ -101,29 +175,42 @@
       // Workday's In/Out dialog has no date/offset fields. Fail closed on overnight or DST-ambiguous shifts.
       if (a.date !== b.date || a.second || b.second || (end - start) / 60000 !== b.minute - a.minute ||
           uniqueInstant(a) !== start || uniqueInstant(b) !== end) {
+        if (isMeal) throw new Error(`${event.summary}: overnight, sub-minute or daylight-saving meal needs manual correction before importing.`);
         warnings.push(`${event.summary}: overnight, sub-minute or daylight-saving time block needs manual entry.`); continue;
       }
       if (!wanted.has(a.date)) continue;
-      blocks.push({ date: a.date, start: a.minute, end: b.minute, title: event.summary,
+      if (!isMeal) {
+        // Associate completed meals with the full validated workday, even when
+        // its afternoon shift is not yet eligible for import.
+        allWork.push({ date: a.date, start: a.minute, end: b.minute });
+        if (!s.includeFuture && end > now) { skipped.push({ reason: "future", title: event.summary }); continue; }
+      }
+      (isMeal ? meals : blocks).push({ date: a.date, start: a.minute, end: b.minute, title: event.summary,
         descriptions: s.importComments && typeof event.description === "string" ? [event.description] : [],
         startIso: event.start.dateTime, endIso: event.end.dateTime });
     }
-    blocks.sort((a, b) => a.date.localeCompare(b.date) || a.start - b.start || a.end - b.end);
-    const merged = [];
-    for (const block of blocks) {
-      const prev = merged.at(-1);
-      if (prev && prev.date === block.date && block.start < prev.end) {
-        prev.end = Math.max(prev.end, block.end);
-        if (prev.title !== block.title) prev.title = `${prev.title}; ${block.title}`.slice(0, 1000);
-        prev.descriptions = [...new Set([...prev.descriptions, ...block.descriptions])];
-      } else merged.push({ ...block });
-    }
+    const merged = applyMeals(union(blocks), meals, s, warnings, allWork);
     const add = [], update = [], conflicts = [];
     const overlapsBlock = (a, b) => a.date === b.date && a.start < b.end && a.end > b.start;
+    const resolved = new Set();
+    if (s.updateOverlaps) for (const entry of existing) {
+      if (entry.type !== s.timeType || entry.status !== "Not Submitted" || !entry.eventId) continue;
+      const group = merged.filter(b => overlapsBlock(entry, b));
+      if (group.length < 2 || !group.every(b => b.mealSource?.start === entry.start && b.mealSource?.end === entry.end &&
+          existing.filter(e => overlapsBlock(e, b)).length === 1)) continue;
+      update.push({ ...group[0], previous: { date: entry.date, start: entry.start, end: entry.end, type: entry.type, eventId: entry.eventId } });
+      add.push(...group.slice(1));
+      group.forEach(b => resolved.add(b));
+    }
     for (const block of merged) {
+      if (resolved.has(block)) continue;
       const overlaps = existing.filter(e => overlapsBlock(e, block));
       const entry = overlaps[0];
-      if (overlaps.length === 1 && entry.start === block.start && entry.end === block.end && entry.type === s.timeType) {
+      const exact = overlaps.length === 1 && entry.start === block.start && entry.end === block.end && entry.type === s.timeType;
+      // Calendar tiles do not expose Out Reason. With meals enabled, inspect an
+      // editable exact entry's form, cancel if already correct, otherwise save it.
+      const reasonCheck = (s.calendarMeals || s.autoMeal) && entry?.outReason !== block.outReason;
+      if (exact && !reasonCheck) {
         skipped.push({ ...block, reason: "already-entered" });
       } else if (s.updateOverlaps && overlaps.length === 1 && entry.type === s.timeType &&
           entry.status === "Not Submitted" && entry.eventId && merged.filter(b => overlapsBlock(entry, b)).length === 1) {
@@ -133,5 +220,5 @@
     }
     return { add, update, skipped, conflicts, warnings, matched: merged.length };
   }
-  return { settingsKey, settingsFrom, configured, validDate, validZone, addDays, parts, midnight, validateDates, datesFromLabels, clock, plan };
+  return { defaultMealWords, settingsKey, settingsFrom, configured, validDate, validZone, addDays, parts, midnight, validateDates, datesFromLabels, clock, plan };
 });
