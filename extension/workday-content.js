@@ -90,8 +90,16 @@
   async function waitForCalendarReady(doc) {
     await waitFor(() => {
       const toolbar = doc.querySelector(aid("calendarToolbar"));
-      return visible(toolbar) && !toolbar.closest('[aria-hidden="true"],[inert]') &&
-        ![...doc.querySelectorAll('[role="dialog"][aria-modal="true"]')].some(visible);
+      if (!visible(toolbar) || toolbar.closest('[inert]') ||
+          [...doc.querySelectorAll('[role="dialog"][aria-modal="true"]')].some(visible)) return false;
+      if (!toolbar.closest('[aria-hidden="true"]')) return true;
+      // Workday sometimes leaves aria-hidden on the application frame after
+      // Cancel, even though the form is gone and the calendar accepts input.
+      // Require a real hit test so an overlay or closing transition still blocks.
+      const actions = toolbar.querySelector('button[aria-label="Actions"]');
+      if (!visible(actions) || actions.disabled || actions.getAttribute("aria-disabled") === "true") return false;
+      const rect = actions.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && actions.contains(doc.elementFromPoint?.(rect.left + rect.width / 2, rect.top + rect.height / 2));
     }, "Workday has not finished closing its time-entry form. Refresh the calendar before retrying.");
   }
   async function cancelDraft(doc, dialog) {

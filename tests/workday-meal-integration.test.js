@@ -4,11 +4,13 @@ const wd=require('../extension/workday-core'),core=require('../extension/core'),
 const date='2026-10-19';
 const settings={enabled:true,calendarIds:['work','meals'],keyword:'SCU Block',timeZone:'UTC',timeType:'Hours',outReason:'Out',calendarMeals:true,updateOverlaps:true};
 const event=(a,b,summary='SCU Block')=>({summary,start:{dateTime:`${date}T${a}:00Z`},end:{dateTime:`${date}T${b}:00Z`}});
-function fixture(initial=[],{ignoreReason=false,closingDelay=0}={}) {
+function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false,overlayDelay=0}={}) {
  const dom=new JSDOM(`<h1>Enter Time</h1><div data-automation-id="calendarToolbar"><button aria-label="Actions" aria-expanded="true" id="actions"></button><h2 data-automation-id="dateRangeTitle">Monday, October 19, 2026</h2><span data-automation-id="calendarViewSelection">Day</span></div><div data-automation-id="weeklyBody"><div data-automation-id="dayCell-2026-10-19">10/19</div></div><div class="gwt-appointment-panel">${'<div class="minor-time-interval"></div>'.repeat(96)}<div data-automation-id="timedDaySeparator_0"></div><div class="hit-target"></div></div><button>Review</button><button>Submit</button><button>Next</button>`,{url:'https://www.myworkday.com/scu/'});
  const doc=dom.window.document,entries=[],saves=[],cancelled=[],forbidden=[];
  dom.window.HTMLElement.prototype.getClientRects=function(){return this.hidden?[]:[{}]};dom.window.HTMLElement.prototype.scrollIntoView=function(){};
- const panel=doc.querySelector('.gwt-appointment-panel');panel.getBoundingClientRect=()=>({left:0,top:0,width:700,height:1440});doc.elementFromPoint=()=>panel.querySelector('.hit-target');
+ let overlayUntil=0;
+ const actions=doc.querySelector('#actions');actions.getBoundingClientRect=()=>({left:800,top:0,width:100,height:40});
+ const panel=doc.querySelector('.gwt-appointment-panel');panel.getBoundingClientRect=()=>({left:0,top:0,width:700,height:1440});doc.elementFromPoint=(x)=>x>800 ? (Date.now()<overlayUntil ? doc.body : actions) : panel.querySelector('.hit-target');
  const minutes=value=>{const [,h,m,ampm]=/^(\d+):(\d+) (AM|PM)$/.exec(value);return (+h%12+(ampm==='PM'?12:0))*60 + +m};
  function render(entry){
   let el=entry.el;
@@ -19,10 +21,11 @@ function fixture(initial=[],{ignoreReason=false,closingDelay=0}={}) {
  }
  function close(d){
   d.remove();
+  if(staleHidden){doc.body.setAttribute('aria-hidden','true');overlayUntil=Date.now()+overlayDelay;}
   if(closingDelay){const toolbar=doc.querySelector('[data-automation-id=calendarToolbar]');toolbar.setAttribute('aria-hidden','true');setTimeout(()=>toolbar.removeAttribute('aria-hidden'),closingDelay);}
  }
  function open(entry){
-  if(doc.querySelector('[data-automation-id=calendarToolbar]').hasAttribute('aria-hidden')){forbidden.push('Open while closing');return;}
+  if(Date.now()<overlayUntil || doc.querySelector('[data-automation-id=calendarToolbar]').hasAttribute('aria-hidden')){forbidden.push('Open while closing');return;}
   const d=doc.createElement('div');d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.setAttribute('aria-label','Enter Time');
   d.innerHTML=`<p>10/19/2026</p><span data-automation-id="promptOption">${entry?.status||'Not Submitted'}</span><div role="listbox" aria-label="items selected for Time Type"><div role="option">Hours</div></div><label>In<input id="in" value="${entry?wd.clock(entry.start):''}"></label><label>Out<input id="out" value="${entry?wd.clock(entry.end):''}"></label><div role="combobox" aria-label="Out Reason"><div data-automation-id="selectSelectedOption">${entry?.reason||'Out'}</div><div>${entry?.reason||'Out'} selected</div></div><span data-automation-id="numericText">${entry?(entry.end-entry.start)/60:0}</span><label for="comment">Comment</label><textarea id="comment">${entry?.comment||''}</textarea><button>Cancel</button>${entry?'<button>Delete</button>':''}<button>OK</button>`;
   doc.body.append(d);
@@ -89,4 +92,11 @@ test('batch waits for Workday to restore calendar access after both Save and Can
  assert.deepEqual((await importEvents(f,events)).outcomes,['updated','added']);
  assert.deepEqual((await importEvents(f,events)).outcomes,['already-entered','already-entered']);
  assert.equal(f.saves.length,2);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
+});
+
+test('rerun tolerates Workday stale ancestor aria-hidden only after the overlay clears',async()=>{
+ const f=fixture([{id:'morning',start:600,end:720,reason:'Meal'},{id:'afternoon',start:750,end:1020,reason:'Out'}],{staleHidden:true,overlayDelay:150});
+ const r=await importEvents(f,[event('10:00','12:00'),event('12:00','12:30','Lunch'),event('12:30','17:00')]);
+ assert.deepEqual(r.outcomes,['already-entered','already-entered']);
+ assert.equal(f.saves.length,0);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
 });
