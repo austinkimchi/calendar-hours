@@ -90,6 +90,14 @@ test('one long work event and two already-split work events produce the same unp
 });
 test('a calendar meal in the validated workday suppresses an extra automatic meal before later work finishes',()=>{
  const result=wd.plan({events:[event('09:00','15:00'),event('15:15','15:45','Lunch'),event('16:00','20:00')],dates:[date],settings:{...settings,autoMeal:true},core,now:Date.parse(`${date}T15:45:00-07:00`)});
- assert.deepEqual(times(result),[[540,900,'Out']]);
+ assert.deepEqual(times(result),[[540,900,'Meal']]);
  assert.equal(result.skipped.filter(b=>b.reason==='future').length,1);
+});
+
+test('meal inside an existing gap marks the nearest preceding clock-out without changing hours',()=>{
+ assert.deepEqual(times(plan([event('09:00','12:00'),event('12:15','12:45','Lunch'),event('13:00','17:00')])),[[540,720,'Meal'],[780,1020,'Out']]);
+});
+test('unfinished intervening work prevents assigning its meal to an earlier completed block',()=>{
+ const result=wd.plan({events:[event('06:00','08:00'),event('09:00','17:00'),event('12:00','12:30','Lunch')],dates:[date],settings,core,now:Date.parse(`${date}T12:45:00-07:00`)});
+ assert.deepEqual(times(result),[[360,480,'Out']]);
 });

@@ -142,6 +142,14 @@
       const changed = pieces.length !== 1 || pieces[0]?.start !== block.start || pieces[0]?.end !== block.end;
       for (const piece of pieces) result.push({ ...piece, ...(changed ? { mealSource: { start: block.start, end: block.end } } : {}) });
     }
+    // A meal entirely inside an existing gap still identifies the preceding
+    // clock-out. Preserve the gap's actual times and don't deduct it again.
+    for (const meal of combined) {
+      const before = result.filter(b => b.date === meal.date && b.end <= meal.start).sort((a, b) => b.end - a.end)[0];
+      if (before && (before.end === meal.start || !allWork.some(b => b.date === meal.date && b.start < meal.start && b.end > before.end))) {
+        before.outReason = "Meal";
+      }
+    }
     return result;
   }
   function plan({ events, dates, settings, existing = [], core, now = Date.now() }) {
