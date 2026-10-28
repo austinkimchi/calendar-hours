@@ -63,11 +63,19 @@ test('exact existing draft is split by updating it first and then adding the rem
  assert.deepEqual(r.update.map(b=>[b.start,b.end,b.outReason,b.previous.eventId]),[[540,720,'Meal','draft']]);
  assert.deepEqual(times(r),[[750,1020,'Out']]);assert.equal(r.conflicts.length,0);
 });
-test('splitting refuses submitted, wrong type, duplicate and inexact original drafts',()=>{
- for(const entries of [[draft(540,1020,{status:'Submitted'})],[draft(540,1020,{type:'Vacation'})],[draft(540,1020),draft(600,700,{eventId:'other'})],[draft(540,1000)]]) {
+test('splitting refuses submitted, wrong type, duplicate and ambiguous original drafts',()=>{
+ for(const entries of [[draft(540,1020,{status:'Submitted'})],[draft(540,1020,{type:'Vacation'})],[draft(540,1020),draft(600,700,{eventId:'other'})],[draft(540,1020),draft(720,750,{eventId:'meal-row'})]]) {
   const r=plan([event('09:00','17:00'),event('12:00','12:30','Lunch')],{},entries);assert.equal(r.update.length,0);assert.equal(r.add.length,0);assert.equal(r.conflicts.length,2);
  }
  const r=plan([event('09:00','17:00'),event('12:00','12:30','Lunch')],{updateOverlaps:false},[draft(540,1020)]);assert.equal(r.update.length,0);
+});
+test('one changed calendar span can update and split its unique draft together',()=>{
+ const work={...event('10:00','18:00'),description:'Lunch'};
+ const r=plan([work],{},[draft(600,1050)]);
+ assert.deepEqual(r.update.map(b=>[b.start,b.end,b.previous.end]),[[600,900,1050]]);
+ assert.deepEqual(times(r),[[930,1080,'Out']]);assert.equal(r.conflicts.length,0);
+ const ambiguous=plan([work,event('18:00','19:00')],{},[draft(600,1140)]);
+ assert.equal(ambiguous.update.length,0);assert.equal(ambiguous.add.length,0);assert.equal(ambiguous.conflicts.length,3);
 });
 test('exact entries with unknown or changed Out Reason must be inspected, not silently skipped',()=>{
  const events=[event('09:00','12:00'),event('12:00','13:00','Lunch')];

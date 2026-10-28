@@ -158,7 +158,8 @@
       }
       if (cursor < block.end) pieces.push({ ...block, start: cursor, outReason: settings.outReason });
       if (!pieces.length) warnings.push(`${block.date}: a meal covers the entire work block; no paid entry was planned. Any existing entry needs manual correction.`);
-      // Only a single exact draft of this original source span can be split automatically.
+      // Retain the original source span so the planner can map a draft to all
+      // of its paid pieces before applying a meal split.
       const changed = pieces.length !== 1 || pieces[0]?.start !== block.start || pieces[0]?.end !== block.end;
       for (const piece of pieces) result.push({ ...piece, ...(changed ? { mealSource: { start: block.start, end: block.end } } : {}) });
     }
@@ -212,15 +213,21 @@
         descriptions: s.importComments && typeof event.description === "string" ? [event.description] : [],
         startIso: event.start.dateTime, endIso: event.end.dateTime });
     }
-    const merged = applyMeals(union(blocks), meals, s, warnings, allWork, keywordDates);
+    const sources = union(blocks);
+    const merged = applyMeals(sources, meals, s, warnings, allWork, keywordDates);
     const add = [], update = [], conflicts = [];
     const overlapsBlock = (a, b) => a.date === b.date && a.start < b.end && a.end > b.start;
     const resolved = new Set();
     if (s.updateOverlaps) for (const entry of existing) {
       if (entry.type !== s.timeType || entry.status !== "Not Submitted" || !entry.eventId) continue;
-      const group = merged.filter(b => overlapsBlock(entry, b));
-      if (group.length < 2 || !group.every(b => b.mealSource?.start === entry.start && b.mealSource?.end === entry.end &&
-          existing.filter(e => overlapsBlock(e, b)).length === 1)) continue;
+      // Match one draft to one original calendar span, even if its end/start
+      // changed. Multiple source spans or existing entries remain ambiguous.
+      const candidates = sources.filter(b => overlapsBlock(entry, b));
+      if (candidates.length !== 1) continue;
+      const source = candidates[0];
+      if (existing.filter(e => overlapsBlock(e, source)).length !== 1) continue;
+      const group = merged.filter(b => b.date === source.date && b.mealSource?.start === source.start && b.mealSource?.end === source.end);
+      if (group.length < 2) continue;
       update.push({ ...group[0], previous: { date: entry.date, start: entry.start, end: entry.end, type: entry.type, eventId: entry.eventId } });
       add.push(...group.slice(1));
       group.forEach(b => resolved.add(b));

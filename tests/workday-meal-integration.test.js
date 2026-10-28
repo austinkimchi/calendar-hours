@@ -84,6 +84,15 @@ test('description keyword API → forms splits once with both triggers on and le
  assert.deepEqual((await importEvents(f,events,s)).outcomes,['already-entered','already-entered']);
  assert.equal(f.saves.length,2);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
 });
+test('edited end time and description meal split update the unique draft in the same import',async()=>{
+ const f=fixture([{id:'full',start:600,end:1050,reason:'Out',comment:''}]);
+ const events=[{...event('10:00','18:00'),description:'Lunch'}];
+ assert.deepEqual((await importEvents(f,events)).outcomes,['updated','added']);
+ assert.deepEqual(f.entries.map(e=>[e.start,e.end,e.reason]),[[600,900,'Meal'],[930,1080,'Out']]);
+ assert.equal(f.entries.reduce((n,e)=>n+e.end-e.start,0),450);
+ assert.deepEqual((await importEvents(f,events)).outcomes,['already-entered','already-entered']);
+ assert.equal(f.saves.length,2);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
+});
 test('reason-only correction changes Out to Meal, preserves comment and skips the next run',async()=>{
  const f=fixture([{id:'existing',start:540,end:720,reason:'Out',comment:'Original note'}]);
  const events=[event('09:00','12:00'),event('12:00','12:30','Lunch')];
