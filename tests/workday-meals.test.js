@@ -118,6 +118,9 @@ test('description matching uses configurable whole phrases and readable rich tex
   assert.deepEqual(times(plan([{...event('10:00','17:30'),description}])),[[600,1050,'Out']]);
  }
  assert.deepEqual(times(plan([{...event('10:00','17:30'),description:'REST&nbsp;PERIOD'}],{mealWords:['Rest period'],mealAfterHours:2,mealDurationMinutes:45})),[[600,720,'Meal'],[765,1050,'Out']]);
+ for(const description of ['Meal&nbsp;&nbsp;Break','<div>Meal </div><div>Break</div>','Meal\n\tBreak']) {
+  assert.deepEqual(times(plan([{...event('10:00','17:30'),description}])),[[600,900,'Meal'],[930,1050,'Out']]);
+ }
 });
 test('duplicate description matches and a legacy timed meal do not double deduct',()=>{
  const work={...event('10:00','17:30'),description:'Lunch'};

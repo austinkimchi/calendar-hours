@@ -120,7 +120,7 @@
           return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : " ";
         }
         return ({ "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&apos;": "'" })[entity.toLowerCase()];
-      });
+      }).replace(/\s+/gu, " ").trim();
   }
   function applyMeals(blocks, meals, settings, warnings, allWork = blocks, keywordDates = new Set()) {
     // Ignore unrelated meals outside the day's work span. A meal in a gap
