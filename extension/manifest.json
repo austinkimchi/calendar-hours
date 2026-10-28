@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Calendar Hours",
-  "version": "0.2.13",
-  "description": "Add calculated hours or minutes to Google Calendar event titles.",
+  "version": "0.3.0",
+  "description": "Add durations to Google Calendar titles and import calendar work blocks into Workday.",
   "permissions": [
     "storage",
     "identity"
@@ -23,6 +23,20 @@
       ],
       "css": [
         "content.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.myworkday.com/*"
+      ],
+      "js": [
+        "core.js",
+        "workday-core.js",
+        "workday-content.js"
+      ],
+      "css": [
+        "workday.css"
       ],
       "run_at": "document_idle"
     }

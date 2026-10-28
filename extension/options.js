@@ -6,9 +6,6 @@
   const status = document.querySelector("#status");
   const replaceHelpButton = document.querySelector("#replace-help-button");
   const replaceHelp = document.querySelector("#replace-help");
-  const apiStatus = document.querySelector("#api-status");
-  const connectApi = document.querySelector("#connect-api");
-  const disconnectApi = document.querySelector("#disconnect-api");
   const names = Object.keys(core.defaults).filter(name => name !== "matchingPhrases");
   let minutesTemplateInitialized = false;
   let lastHoursUnit = core.defaults.unit;
@@ -26,7 +23,7 @@
     phraseInput.value = phrase;
     const labelRow = () => {
       const name = phraseInput.value.trim() || "this phrase";
-      dynamicInput.setAttribute("aria-label", `Dynamic mode for ${name}`);
+      dynamicInput.setAttribute("aria-label", `Auto-update for ${name}`);
       removeButton.setAttribute("aria-label", `Remove ${name}`);
     };
     phraseInput.addEventListener("input", labelRow);
@@ -64,10 +61,10 @@
       replaceHelpButton.setAttribute("aria-expanded", "false");
     }
     replaceHelp.textContent = dynamicEnabled && updateEnabled
-      ? "Dynamic and automatic time-change updates both need to replace the old duration. Turn both off to change this setting."
+      ? "Auto-update and updates to existing durations both need to replace the old duration. Turn both off to change this setting."
       : dynamicEnabled
-        ? "Dynamic needs to replace the old duration when an event's time changes. Turn off Dynamic for all phrases to change this setting."
-        : "Automatic time-change updates need to replace the old duration. Turn off ‘Update hours or minutes when times change’ to change this setting.";
+        ? "Auto-update needs to replace the old duration when an event's time changes. Turn off Auto-update for all phrases to change this setting."
+        : "Updates to existing durations need to replace the old duration. Turn off ‘Update existing durations when times change’ to change this setting.";
   }
 
   function showMinutesFormat() {
@@ -75,7 +72,6 @@
     const showMinutes = alwaysMinutes || form.elements.namedItem("minutesBelowHour").checked;
     document.querySelector("#hours-format").hidden = alwaysMinutes;
     document.querySelector("#below-hour-option").hidden = alwaysMinutes;
-    document.querySelector("#below-hour-hint").hidden = alwaysMinutes;
     document.querySelector("#minutes-format").hidden = !showMinutes;
     form.elements.namedItem("template").required = !alwaysMinutes;
     form.elements.namedItem("minutesTemplate").required = showMinutes;
@@ -130,19 +126,6 @@
     else saveTimer = setTimeout(() => { void saveSettings().catch(() => {}); }, 350);
   }
 
-  async function refreshApiStatus() {
-    if (!chrome.runtime?.sendMessage) return;
-    try {
-      const result = await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_API_STATUS" });
-      apiStatus.textContent = result.connected ? "Connected" : result.configured
-        ? "Connect to use fast saves" : "OAuth client unavailable for this build";
-      connectApi.hidden = result.connected || !result.configured;
-      disconnectApi.hidden = !result.connected;
-    } catch (error) {
-      apiStatus.textContent = `Connection status unavailable: ${error.message}`;
-    }
-  }
-
   chrome.storage.sync.get(null).then(saved => {
     const cfg = core.settingsFrom(saved);
     minutesTemplateInitialized = typeof saved.minutesTemplate === "string" && saved.minutesTemplate.includes("{value}");
@@ -156,37 +139,6 @@
     lastHoursUnit = cfg.unit;
     lastMinutesUnit = cfg.minutesUnit;
     preview();
-    void refreshApiStatus();
-  });
-
-  connectApi.addEventListener("click", async () => {
-    connectApi.disabled = true;
-    apiStatus.textContent = "Connecting…";
-    try {
-      const result = await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_API_CONNECT" });
-      if (!result?.connected) throw new Error(result?.reason || "Google Calendar did not connect");
-      form.elements.namedItem("apiSync").checked = true;
-      changed(true);
-      await refreshApiStatus();
-    } catch (error) {
-      apiStatus.textContent = `Could not connect: ${error.message}`;
-    } finally {
-      connectApi.disabled = false;
-    }
-  });
-
-  disconnectApi.addEventListener("click", async () => {
-    disconnectApi.disabled = true;
-    try {
-      await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_API_DISCONNECT" });
-      form.elements.namedItem("apiSync").checked = false;
-      changed(true);
-      await refreshApiStatus();
-    } catch (error) {
-      apiStatus.textContent = `Could not disconnect: ${error.message}`;
-    } finally {
-      disconnectApi.disabled = false;
-    }
   });
 
   form.elements.namedItem("minutesBelowHour").addEventListener("change", event => {
@@ -221,17 +173,6 @@
   form.addEventListener("change", () => { preview(); changed(true); });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden && saveTimer) void saveSettings().catch(() => {});
-  });
-
-  const helpButton = document.querySelector("#dynamic-help-button");
-  const help = document.querySelector("#dynamic-help");
-  helpButton.addEventListener("click", () => {
-    help.hidden = !help.hidden;
-    helpButton.setAttribute("aria-expanded", String(!help.hidden));
-  });
-  replaceHelpButton.addEventListener("click", () => {
-    replaceHelp.hidden = !replaceHelp.hidden;
-    replaceHelpButton.setAttribute("aria-expanded", String(!replaceHelp.hidden));
   });
 
   form.addEventListener("submit", async event => {

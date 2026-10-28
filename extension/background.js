@@ -1,4 +1,4 @@
-if (typeof importScripts === "function") importScripts("core.js", "api-sync.js", "oauth.js");
+if (typeof importScripts === "function") importScripts("core.js", "api-sync.js", "oauth.js", "workday-core.js", "workday-api.js");
 
 chrome.runtime.onInstalled.addListener(details => {
   if (details.reason !== "install") return;
@@ -101,9 +101,40 @@ async function syncGridEvent(message, sender) {
 }
 
 async function connectCalendar() {
-  const result = await globalThis.CalendarHoursOAuth.connect();
-  if (result.connected) await chrome.storage.sync.set({ apiSync: true });
-  return result;
+  return globalThis.CalendarHoursOAuth.connect();
+}
+
+function trustedWorkday(sender) {
+  try {
+    return !!sender.tab?.id && new URL(sender.url).origin === "https://www.myworkday.com";
+  } catch { return false; }
+}
+
+function trustedSettings(sender) {
+  try {
+    const url = new URL(sender.url);
+    url.hash = ""; url.search = "";
+    return ["options.html", "welcome.html"].some(page => url.href === chrome.runtime.getURL(page));
+  } catch { return false; }
+}
+
+async function workdayCalendars() {
+  const status = await globalThis.CalendarHoursOAuth.status();
+  if (!status.calendarListAccess) return { ok: false, needsSetup: true, reason: "Connect Google Calendar in General to choose an import calendar." };
+  const accessToken = await globalThis.CalendarHoursOAuth.getAccessToken();
+  if (!accessToken) return { ok: false, needsSetup: true, reason: "Reconnect Google Calendar in General to choose your import calendar." };
+  return { ok: true, calendars: await globalThis.CalendarHoursWorkdayApi.listCalendars({ accessToken }) };
+}
+
+async function workdayEvents(message) {
+  const core = globalThis.CalendarHoursWorkday;
+  core.validateDates(message.dates);
+  const settings = core.settingsFrom((await chrome.storage.sync.get(core.settingsKey))[core.settingsKey]);
+  if (!core.configured(settings)) return { ok: false, needsSetup: true, reason: "Choose your calendar, import phrase and time zone in Calendar Hours settings." };
+  const accessToken = await globalThis.CalendarHoursOAuth.getAccessToken();
+  if (!accessToken) return { ok: false, needsSetup: true, reason: "Reconnect Google Calendar in Calendar Hours settings." };
+  const events = await globalThis.CalendarHoursWorkdayApi.listEvents({ accessToken, settings, dates: message.dates, core });
+  return { ok: true, settings, events };
 }
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
@@ -111,19 +142,27 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     CALENDAR_HOURS_GRID_SYNC: () => syncGridEvent(message, sender),
     CALENDAR_HOURS_API_STATUS: () => globalThis.CalendarHoursOAuth.status(),
     CALENDAR_HOURS_API_CONNECT: connectCalendar,
-    CALENDAR_HOURS_API_DISCONNECT: () => globalThis.CalendarHoursOAuth.disconnect()
+    CALENDAR_HOURS_API_DISCONNECT: () => globalThis.CalendarHoursOAuth.disconnect(),
+    CALENDAR_HOURS_WORKDAY_CALENDARS: () => workdayCalendars(),
+    // Compatibility with already-open older settings tabs; one shared OAuth path.
+    CALENDAR_HOURS_WORKDAY_CONNECT: async () => { await connectCalendar(); return workdayCalendars(); },
+    CALENDAR_HOURS_WORKDAY_EVENTS: () => workdayEvents(message),
+    CALENDAR_HOURS_WORKDAY_SETUP: async () => {
+      await chrome.tabs.create({ url: chrome.runtime.getURL("options.html#workday") });
+      return { ok: true };
+    }
   };
   const handle = handlers[message?.type];
   if (!handle) return;
-  const trustedPages = ["options.html", "welcome.html"].map(page => chrome.runtime.getURL(page));
-  if (message.type !== "CALENDAR_HOURS_GRID_SYNC" &&
-      !trustedPages.includes(sender.url)) {
-    respond({ ok: false, reason: "Open Calendar Hours settings or its welcome page to manage this connection" });
+  const fromWorkday = ["CALENDAR_HOURS_WORKDAY_EVENTS", "CALENDAR_HOURS_WORKDAY_SETUP"].includes(message.type);
+  if ((fromWorkday && !trustedWorkday(sender)) ||
+      (!fromWorkday && message.type !== "CALENDAR_HOURS_GRID_SYNC" && !trustedSettings(sender))) {
+    respond({ ok: false, reason: "Open Calendar Hours settings or Workday Enter Time to use this action" });
     return;
   }
   Promise.resolve().then(handle).then(respond, error => {
-    console.warn("Calendar Hours background update failed:", error);
-    respond({ ok: false, reason: error.message });
+    // Do not log request payloads, calendar events or credentials.
+    respond({ ok: false, reason: error.message, needsSetup: !!error.needsSetup });
   });
   return true;
 });

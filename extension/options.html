@@ -12,26 +12,38 @@
       <div class="mark" aria-hidden="true">◷</div>
       <div><h1>Calendar Hours</h1><p>Choose when durations appear and how they look.</p></div>
     </header>
+    <section id="general" aria-labelledby="general-heading">
+      <h2 id="general-heading">General</h2>
+      <h3 class="help-label" data-help="google-connection-help" tabindex="0">Google Calendar</h3>
+      <p class="section-intro">One connection for title updates and Workday import.</p>
+      <div id="google-connection-help" class="info-panel" hidden>Connect once to let Calendar Hours view and edit calendar events and read your calendar list. These permissions are requested together and shared by all Calendar features. Each feature keeps its own on/off setting. Disconnecting removes access for all features.</div>
+      <div class="api-controls">
+        <button type="button" id="connect-api" class="secondary-button">Connect Google Calendar</button>
+        <button type="button" id="disconnect-api" class="secondary-button" hidden>Disconnect</button>
+      </div>
+      <p id="api-status" role="status">Checking connection…</p>
+    </section>
     <form id="settings">
-      <section aria-labelledby="general-heading">
-        <h2 id="general-heading">General</h2>
-        <p class="section-intro">Add a phrase for each kind of event you want Calendar Hours to recognize.</p>
-        <div class="rules-header"><span>Matching phrase</span><span>Dynamic <button type="button" id="dynamic-help-button" class="info-button" aria-label="What is Dynamic mode?" aria-controls="dynamic-help" aria-expanded="false">i</button></span><span></span></div>
-        <div id="dynamic-help" class="info-panel" hidden>Dynamic updates the duration when you change event times or move or resize a matching one-time event. After a grid change, it saves the corrected title through Google Calendar. Repeating events need manual review.</div>
+      <section aria-labelledby="titles-heading">
+        <div class="heading-with-help"><h2 id="titles-heading" class="help-label" data-help="matching-help" tabindex="0">Event titles</h2></div>
+        <div id="matching-help" class="info-panel" hidden>Add a word or phrase for each kind of event you want to recognize. Matching uses whole words or phrases and ignores capitalization.</div>
+        <div class="rules-header"><span>Event title contains</span><span>Auto-update <button type="button" id="dynamic-help-button" class="info-button" aria-label="About automatic duration updates" aria-controls="dynamic-help" aria-expanded="false">i</button></span><span></span></div>
+        <div id="dynamic-help" class="info-panel" hidden>Auto-update keeps the duration correct when you edit times or move or resize a matching one-time event. After a grid change, it saves the updated title through Google Calendar. Repeating events need manual review.</div>
         <div id="rules" aria-label="Matching phrases"></div>
         <button type="button" id="add-rule" class="secondary-button">+ Add phrase</button>
-        <p class="hint after-rules">Matching ignores case and uses whole words or phrases.</p>
-        <label class="check"><input type="checkbox" name="automatic" checked> Automatically add duration to matching titles</label>
+        <label class="check after-rules"><input type="checkbox" name="automatic" checked> Add duration to matching titles</label>
       </section>
 
       <section aria-labelledby="hours-heading">
-        <h2 id="hours-heading">Hours</h2>
-        <label>Display duration as <select name="displayUnit"><option value="hours">Hours</option><option value="minutes">Minutes</option></select></label>
-        <label class="check" id="below-hour-option"><input type="checkbox" name="minutesBelowHour"> Show minutes for durations under 1 hour</label>
-        <p class="hint" id="below-hour-hint">When enabled, longer events still use hours. Choosing Minutes above uses minutes for every duration.</p>
+        <h2 id="hours-heading">Duration format</h2>
+        <label>Display units <select name="displayUnit"><option value="hours">Hours</option><option value="minutes">Minutes</option></select></label>
+        <div id="below-hour-option">
+          <div class="check-with-help"><label class="check help-label" data-help="below-hour-hint"><input type="checkbox" name="minutesBelowHour"> Use minutes under 1 hour</label></div>
+          <div class="info-panel" id="below-hour-hint" hidden>Longer events still use hours. Choose Minutes above to use minutes for every duration.</div>
+        </div>
         <div class="grid">
           <label>Rounding <select name="rounding"><option value="nearest">Nearest</option><option value="down">Down</option><option value="up">Up</option><option value="truncate">Truncate</option></select></label>
-          <label>Minute increment <select name="incrementMinutes"><option value="1">1 minute</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></label>
+          <label>Round to <select name="incrementMinutes"><option value="1">1 minute</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></label>
         </div>
         <div id="hours-format">
           <h3>Hours format</h3>
@@ -41,8 +53,11 @@
             <label>Singular unit <input name="singularUnit" maxlength="24" value="hour" placeholder="hour or hr"></label>
           </div>
           <label class="check"><input type="checkbox" name="trimZeros" checked> Hide trailing zeros, such as 3.20 → 3.2</label>
-          <label>Hours title template <input name="template" maxlength="100" value="({value} {unit})" required></label>
-          <p class="hint">Use <code>{value}</code> for the number and <code>{unit}</code> for the unit.</p>
+          <div class="field-with-help">
+            <div class="field-heading"><label for="hours-template" class="help-label" data-help="hours-template-help">Title pattern</label></div>
+            <input id="hours-template" name="template" maxlength="100" value="({value} {unit})" required>
+          </div>
+          <div id="hours-template-help" class="info-panel" hidden>Use <code>{value}</code> for the number and <code>{unit}</code> for the unit. For example, <code>({value} {unit})</code> becomes <code>(2 hours)</code>.</div>
         </div>
         <div id="minutes-format" hidden>
           <h3>Minutes format</h3>
@@ -50,45 +65,91 @@
             <label>Plural unit <input name="minutesUnit" maxlength="24" value="minutes" placeholder="minutes or mins"></label>
             <label>Singular unit <input name="minutesSingularUnit" maxlength="24" value="minute" placeholder="minute or min"></label>
           </div>
-          <label>Minutes title template <input name="minutesTemplate" maxlength="100" value="({value} {unit})" required></label>
-          <p class="hint">When you first enable minutes, this starts with your Hours title template. You can then customize it separately.</p>
+          <div class="field-with-help">
+            <div class="field-heading"><label for="minutes-template" class="help-label" data-help="minutes-template-help">Title pattern</label></div>
+            <input id="minutes-template" name="minutesTemplate" maxlength="100" value="({value} {unit})" required>
+          </div>
+          <div id="minutes-template-help" class="info-panel" hidden>Use <code>{value}</code> for the number and <code>{unit}</code> for the unit. This starts with your hours pattern when you first enable minutes; you can then customize it separately.</div>
         </div>
         <div class="preview"><div>3 hours 10 minutes: <strong id="preview">Work session (3.17 hours)</strong></div><div>45 minutes: <strong id="short-preview">Work session (0.75 hours)</strong></div><div>1 hour: <strong id="singular-preview">Work session (1 hour)</strong></div></div>
       </section>
 
       <section aria-labelledby="other-heading">
         <h2 id="other-heading">More options</h2>
-        <label>Typed keyword <input name="keyword" maxlength="40" value="/hours" required></label>
-        <p class="hint">Type this in an event title to replace it with the calculated duration.</p>
-        <label class="check"><input type="checkbox" name="showSuggestion" checked> Show inline duration suggestions</label>
-        <p class="hint">A faint duration appears at the end of the title while you type. Press Enter or Tab to add it, or Escape to dismiss it. Accepting a suggestion does not save the event.</p>
+        <div class="field-with-help">
+          <div class="field-heading"><label for="typing-shortcut" class="help-label" data-help="typing-help">Typing shortcut</label></div>
+          <input id="typing-shortcut" name="keyword" maxlength="40" value="/hours" required>
+        </div>
+        <div id="typing-help" class="info-panel" hidden>Type this in an event title to replace it with the calculated duration.</div>
+        <div class="check-with-help"><label class="check help-label" data-help="suggestion-help"><input type="checkbox" name="showSuggestion" checked> Show inline duration suggestions</label></div>
+        <div id="suggestion-help" class="info-panel" hidden>A faint duration appears at the end of the title while you type. Press Enter or Tab to add it, or Escape to dismiss it. Accepting a suggestion does not save the event.</div>
         <div class="check-with-help">
-          <label class="check"><input type="checkbox" name="replaceExisting" checked> Replace a previous duration when I add it again</label>
+          <label class="check"><input type="checkbox" name="replaceExisting" checked> Replace the old duration when adding a new one</label>
           <button type="button" id="replace-help-button" class="info-button" aria-label="Why is duration replacement locked?" aria-controls="replace-help" aria-expanded="false" hidden>i</button>
         </div>
         <div id="replace-help" class="info-panel" hidden></div>
-        <label class="check"><input type="checkbox" name="updateExistingHours" checked> Update hours or minutes when times change</label>
-        <p class="hint">Applies to titles that already end in a duration, including one added with the keyword or suggestion. Matching phrases use their own Dynamic switch. Grid changes save automatically; editor changes need Calendar's Save.</p>
-        <h3>Grid saves</h3>
-        <label class="check"><input type="checkbox" name="apiSync"> Use faster saves without opening an editor tab</label>
-        <p class="hint">Connect your Google Calendar account once. Calendar Hours checks that the new time has saved, then updates only the event title. If the connection is unavailable, it uses the regular editor method.</p>
-        <div class="api-controls">
-          <button type="button" id="connect-api" class="secondary-button">Connect Google Calendar</button>
-          <button type="button" id="disconnect-api" class="secondary-button" hidden>Disconnect</button>
-          <span id="api-status" role="status">Checking connection…</span>
-        </div>
+        <div class="check-with-help"><label class="check"><input type="checkbox" name="updateExistingHours" checked> Update existing durations when times change</label><button type="button" class="info-button" aria-label="About updating existing durations" aria-controls="existing-help" aria-expanded="false">i</button></div>
+        <div id="existing-help" class="info-panel" hidden>Applies to titles that already end in a duration, including one added with the typing shortcut or suggestion. Matching phrases use their own Auto-update switch. Grid changes save automatically; editor changes need Calendar's Save.</div>
+        <h3>Saving changes</h3>
+        <div class="check-with-help"><label class="check help-label" data-help="saving-help"><input type="checkbox" name="apiSync"> Use faster saves</label></div>
+        <div id="saving-help" class="info-panel" hidden>Uses the shared Google Calendar connection in General to save without opening an editor tab. Calendar Hours checks that the new time has saved, then updates only the event title. If the connection is unavailable, it uses the regular editor method.</div>
       </section>
       <footer><button type="submit" class="primary-button">Save settings</button><span id="status" role="status">Changes save automatically.</span></footer>
+    </form>
+    <form id="workday-settings">
+      <section id="workday" aria-labelledby="workday-heading">
+        <div class="heading-with-help"><h2 id="workday-heading" class="help-label" data-help="workday-setup-help" tabindex="0">Workday import <span class="dev-badge">Preview</span></h2></div>
+        <p class="section-intro">In Workday, choose Actions → Auto-fill from Calendar.</p>
+        <div id="workday-setup-help" class="info-panel" hidden>
+          <ol class="setup-steps"><li>Connect Google Calendar in General, then choose your work calendar here.</li><li>Enter a phrase to match event titles and choose the time zone shown in Workday.</li><li>Save, then open Workday's Enter Time page. Auto-fill from Calendar imports into the day or week you are viewing.</li></ol>
+          This preview supports the English Workday Enter Time day/week view. Breaks must already be excluded from matching work events.
+        </div>
+        <p id="workday-connection" role="status" hidden></p>
+        <a id="workday-manage-connection" class="connection-link" href="#general" hidden>Manage Google Calendar connection</a>
+        <div class="field-with-help">
+          <div class="field-heading calendar-heading"><label id="workday-calendar-label" class="help-label" data-help="workday-calendar-help">Calendars</label><button type="button" id="workday-refresh" class="text-button">Refresh calendars</button></div>
+          <div id="workday-calendars" class="calendar-checklist" role="group" aria-labelledby="workday-calendar-label">Connect in General to choose calendars</div>
+          <div id="workday-calendar-help" class="info-panel" hidden>Select up to 10 calendars containing work events. All selected calendars use the matching phrases below. Reads run up to three at a time; no entries are imported if any calendar cannot be read.</div>
+        </div>
+        <div class="field-with-help">
+          <div class="field-heading"><label for="workday-phrase" class="help-label" data-help="workday-phrase-help">Event title contains</label></div>
+          <input id="workday-phrase" name="keyword" maxlength="80" placeholder="e.g. SCU Block" required>
+        </div>
+        <div id="workday-phrase-help" class="info-panel" hidden>Matches whole words or phrases, ignoring capitalization. For example, SCU Block matches SCU Block (2 hours). This is separate from your event title rules above.</div>
+        <div class="field-with-help">
+          <div class="field-heading"><label for="workday-time-zone" class="help-label" data-help="workday-zone-help">Time zone</label></div>
+          <select id="workday-time-zone" name="timeZone" required><option value="">Choose a time zone</option></select>
+        </div>
+        <div id="workday-zone-help" class="info-panel" hidden>Choose the time zone shown in Workday. Calendar start and end times are converted to this zone, including daylight saving time. This saved Workday zone stays fixed when your device travels. Choosing your first calendar suggests its time zone. Adding other calendars preserves the selected Workday zone.</div>
+        <div class="grid">
+          <label>Time Type <input name="timeType" value="Hours" maxlength="80" required></label>
+          <label>Out Reason <input name="outReason" value="Out" maxlength="80" required></label>
+        </div>
+        <div class="check-with-help"><label class="check help-label" data-help="workday-future-help"><input name="includeFuture" type="checkbox"> Include unfinished blocks</label></div>
+        <div id="workday-future-help" class="info-panel" hidden>Also imports events that are still in progress or have not started yet. Leave this off to import only completed blocks.</div>
+        <div class="check-with-help"><label class="check help-label" data-help="workday-overlap-help"><input name="updateOverlaps" type="checkbox" checked> Overwrite existing times to match calendar</label></div>
+        <div id="workday-overlap-help" class="info-panel" hidden>On by default. Uses Calendar's times to update an overlapping Workday draft when you run Auto-fill. Updates one draft per calendar block, using the selected Time Type. Submitted entries, different time types, and overlaps involving multiple blocks need manual correction. Deleted events and blocks moved entirely outside their old times are not removed from Workday.</div>
+        <div class="check-with-help"><label class="check help-label" data-help="workday-comments-help"><input name="importComments" type="checkbox"> Import event descriptions as comments</label></div>
+        <div id="workday-comments-help" class="info-panel" hidden>Off by default: new entries have no comment, and existing comments are kept when updating times. When on, Calendar's Description field becomes the Workday comment for added or updated entries, replacing any existing comment. An empty description clears the comment. Formatting is converted to plain text, up to 1,000 characters. Event titles are never used as comments.</div>
+        <div class="check-with-help"><label class="check help-label" data-help="workday-import-help"><input name="enabled" type="checkbox"> Enable Workday import</label></div>
+        <div id="workday-import-help" class="info-panel" hidden>Imports exact start and end times. Existing matching entries are skipped. Overwrite existing times to match calendar updates overlapping drafts when enabled. Other conflicts need manual correction. Lunch gaps stay empty. Overnight and daylight-saving transition blocks require manual entry. This feature never reviews or submits a time card.</div>
+        <p class="save-note">Imported entries are saved as drafts.</p>
+        <footer><button type="submit" class="primary-button">Save import settings</button><span id="workday-status" role="status"></span></footer>
+      </section>
     </form>
   </main>
   <template id="rule-template">
     <div class="rule-row">
       <input class="rule-phrase" type="text" maxlength="80" aria-label="Matching phrase" placeholder="e.g. Work block">
-      <label class="rule-dynamic"><input type="checkbox" aria-label="Dynamic mode for this phrase"><span>Enable</span></label>
+      <label class="rule-dynamic"><input type="checkbox" aria-label="Auto-update for this phrase"><span>Enable</span></label>
       <button type="button" class="remove-rule" aria-label="Remove phrase">Remove</button>
     </div>
   </template>
+  <script src="settings-help.js"></script>
+  <script src="calendar-connection.js"></script>
   <script src="core.js"></script>
   <script src="options.js"></script>
+  <script src="workday-core.js"></script>
+  <script src="workday-options.js"></script>
 </body>
 </html>

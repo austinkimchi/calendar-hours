@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.0 — Workday import preview, October 27, 2026
+
+- Add opt-in Calendar-to-Workday draft imports with multi-calendar selection, exact times, a saved payroll time zone, and duplicate detection.
+- Update one overlapping unsubmitted entry when its Calendar times change; protect submitted entries and ambiguous overlaps.
+- Keep comments and unfinished blocks optional, with comments off by default.
+- Share one Google Calendar connection and preserve saved extension preferences.
+- Align import messages with Actions and add a subtle, keyboard-accessible dismiss button.
+- Exclude meal automation from the release, including previously enabled prototype settings. The meal and backend-performance experiments remain on separate branches.
+- Stop imports when an existing Workday entry crosses midnight, including when it starts before the displayed day, so next-day overlaps cannot be missed.
+- Include the public store key in release ZIPs so unpacked installs retain the registered OAuth ID across computers. Raw source installs keep their existing development identity.
+- Prepare release branding, packaging, privacy disclosures, and store submission notes. Google OAuth remains limited to approved test accounts; this version has not been submitted to a store.
+
+## 0.2.14 — Workday developer preview, October 27, 2026
+
+- Select multiple calendars for Workday imports, with bounded concurrent reads and migration of saved single-calendar choices.
+- Add optional unpaid meals from independent calendar phrases, with Breakfast, Lunch, Dinner, and Meal Break defaults.
+- Add an optional configurable automatic meal after five worked hours, lasting thirty minutes by default. Both meal features start off; calendar meals take priority.
+- Set the preceding entry’s Out Reason to Meal, safely split exact unsubmitted drafts, and avoid saving unchanged entries on rerun.
+- Stop before writes when selected calendars cannot be read or meal times are unsafe to interpret.
+
 ## 0.2.13 — October 27, 2026
 
 - Follow Google Calendar’s primary and event-specific time zones automatically, with the current device zone as fallback. No additional connection or permission is required.

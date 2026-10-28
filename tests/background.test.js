@@ -80,7 +80,7 @@ test("connected API mode saves a grid resize without creating an editor tab", as
   assert.equal(syncCalls[0].accessToken, "test-token");
 });
 
-test("first installation opens welcome and its connect action enables fast saves", async () => {
+test("first installation opens welcome and shared connection preserves feature preferences", async () => {
   let installed;
   let handler;
   const opened = [];
@@ -110,5 +110,5 @@ test("first installation opens welcome and its connect action enables fast saves
   assert.equal(connectCalls, 0);
   assert.equal((await send("chrome-extension://example/welcome.html", "CALENDAR_HOURS_API_CONNECT")).connected, true);
   assert.equal(connectCalls, 1);
-  assert.equal(saved[0].apiSync, true);
+  assert.equal(saved.length, 0);
 });
