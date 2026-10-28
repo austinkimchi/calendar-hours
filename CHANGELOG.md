@@ -1,12 +1,13 @@
 # Changelog
 
-## Unreleased — Browser settings sync
+## 0.3.1 — Browser settings sync, October 27, 2026
 
 - Apply incoming synced preferences to open settings pages while keeping unsaved local edits.
 - Save only edited settings, with separate Workday preference keys to preserve independent changes from other devices.
 - Read existing settings without resetting them or publishing defaults on startup; preserve the older Workday object as a migration fallback.
 - Explain browser-account setup, same-browser/extension-ID requirements, and device-local Google connections in General.
 - Report local save success accurately and retain unsaved changes after storage errors.
+- Preserve the registered store extension ID and existing Calendar OAuth permissions in the release ZIP.
 
 ## 0.3.0 — Workday import preview, October 27, 2026
 
