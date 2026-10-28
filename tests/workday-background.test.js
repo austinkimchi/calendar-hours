@@ -1,6 +1,6 @@
 const test=require('node:test');const assert=require('node:assert/strict');const vm=require('node:vm');const fs=require('node:fs');
 const core=require('../extension/workday-core.js');
-function harness(settings){let listener;const reads=[],opened=[];const chrome={commands:{onCommand:{addListener(){}}},runtime:{getURL:p=>`chrome-extension://example/${p}`,onInstalled:{addListener(){}},onMessage:{addListener(f){listener=f}}},tabs:{create:async o=>opened.push(o)},storage:{sync:{get:async()=>({workdayIntegration:settings})}}};
+function harness(settings,overrides={}){let listener;const reads=[],opened=[];const chrome={commands:{onCommand:{addListener(){}}},runtime:{getURL:p=>`chrome-extension://example/${p}`,onInstalled:{addListener(){}},onMessage:{addListener(f){listener=f}}},tabs:{create:async o=>opened.push(o)},storage:{sync:{get:async()=>({workdayIntegration:settings,...overrides})}}};
 vm.runInNewContext(fs.readFileSync('extension/background.js','utf8'),{chrome,URL,console,setTimeout,globalThis:{CalendarHoursWorkday:core,CalendarHoursOAuth:{status:async()=>({calendarListAccess:true}),getAccessToken:async()=>'private-test-token',connect:async()=>({connected:true})},CalendarHoursWorkdayApi:{listEvents:async input=>{reads.push(input);return []},listCalendars:async()=>[]}}});
 return {reads,opened,send:(message,sender)=>new Promise(resolve=>listener(message,sender,resolve))};}
 const sender={tab:{id:1},url:'https://www.myworkday.com/example/enter-time'};
@@ -23,4 +23,10 @@ test('background disables stored meal flags before fetching and sending import s
  const result=await h.send({type:'CALENDAR_HOURS_WORKDAY_EVENTS',dates:['2026-10-19']},sender);
  assert.equal(result.ok,true);
  for(const value of [result.settings,h.reads[0].settings]){assert.equal(value.calendarMeals,false);assert.equal(value.autoMeal,false)}
+});
+test('background imports use per-field synced preferences over the legacy object',async()=>{
+ const h=harness({...settings,includeFuture:true,updateOverlaps:true},{'workdayIntegration.calendarIds':['new-calendar'],'workdayIntegration.includeFuture':false,'workdayIntegration.updateOverlaps':false,'workdayIntegration.timeZone':'America/New_York'});
+ const result=await h.send({type:'CALENDAR_HOURS_WORKDAY_EVENTS',dates:['2026-10-19']},sender);
+ assert.equal(result.ok,true);
+ for(const value of [result.settings,h.reads[0].settings]){assert.deepEqual(value.calendarIds,['new-calendar']);assert.equal(value.includeFuture,false);assert.equal(value.updateOverlaps,false);assert.equal(value.timeZone,'America/New_York')}
 });

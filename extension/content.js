@@ -598,15 +598,21 @@
     childList: true, characterData: true, subtree: true
   });
 
+  let storedSettings = {}, loadingSettings = true;
+  const loadingChanges = {};
   settingsReady = chrome.storage.sync.get(null).then(saved => {
-    settings = core.settingsFrom(saved);
+    storedSettings = { ...saved, ...loadingChanges };
+    loadingSettings = false;
+    settings = core.settingsFrom(storedSettings);
     scanGridChanges();
     queueUpdate();
   });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync") return;
     const patch = Object.fromEntries(Object.entries(changes).map(([key, change]) => [key, change.newValue]));
-    settings = core.settingsFrom({ ...settings, ...patch });
+    if (loadingSettings) Object.assign(loadingChanges, patch);
+    Object.assign(storedSettings, patch);
+    settings = core.settingsFrom(storedSettings);
     queueUpdate();
   });
   chrome.runtime.onMessage.addListener((message, sender, respond) => {

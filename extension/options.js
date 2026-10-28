@@ -1,6 +1,7 @@
 (function () {
   "use strict";
   const core = globalThis.CalendarHoursCore;
+  const syncCore = globalThis.CalendarHoursSettingsSync;
   const form = document.querySelector("#settings");
   const rules = document.querySelector("#rules");
   const status = document.querySelector("#status");
@@ -11,9 +12,10 @@
   let lastHoursUnit = core.defaults.unit;
   let lastMinutesUnit = core.defaults.minutesUnit;
   let saveTimer = null;
-  let saveRevision = 0;
-  let savedRevision = 0;
-  let saveQueue = Promise.resolve();
+  let initialized = false;
+  let visible = {};
+  form.inert = true;
+  const sync = syncCore.create({ storage: chrome.storage, read: core.settingsFrom, onUpdate: render });
 
   function addRule(phrase = "", dynamic = false) {
     const row = document.querySelector("#rule-template").content.firstElementChild.cloneNode(true);
@@ -40,12 +42,47 @@
     }));
   }
 
-  function values() {
+  function rawValues() {
     const fields = Object.fromEntries(names.map(name => {
       const field = form.elements.namedItem(name);
-      return [name, field.type === "checkbox" ? field.checked : field.value];
+      return [name, field.type === "checkbox" ? field.checked
+        : ["decimals", "incrementMinutes"].includes(name) ? Number(field.value) : field.value];
     }));
-    return core.settingsFrom({ ...fields, matchingPhrases: matchingPhrases() });
+    return { ...fields, matchingPhrases: matchingPhrases() };
+  }
+  const values = () => core.settingsFrom(rawValues());
+
+  function captureChanges() {
+    const next = rawValues();
+    sync.edit(Object.fromEntries(Object.entries(next).filter(([key, value]) =>
+      (key !== "minutesTemplate" || minutesTemplateInitialized) && !syncCore.equal(value, visible[key]))));
+    if (minutesTemplateInitialized && !sync.raw().minutesTemplate) sync.edit({ minutesTemplate: next.minutesTemplate }, { force: true });
+    visible = next;
+  }
+
+  function render(cfg, { reason, dirty }) {
+    for (const name of names) {
+      if (dirty.has(name)) continue;
+      const field = form.elements.namedItem(name);
+      if (field.type === "checkbox") field.checked = cfg[name];
+      else if (field.value !== String(cfg[name])) field.value = String(cfg[name]);
+    }
+    if (!dirty.has("matchingPhrases") && !syncCore.equal(matchingPhrases(), cfg.matchingPhrases)) {
+      rules.replaceChildren();
+      for (const rule of cfg.matchingPhrases) addRule(rule.phrase, rule.dynamic);
+    }
+    if (!dirty.has("minutesTemplate")) {
+      const template = sync.raw().minutesTemplate;
+      minutesTemplateInitialized = typeof template === "string" && template.includes("{value}");
+    }
+    lastHoursUnit = form.elements.namedItem("unit").value;
+    lastMinutesUnit = form.elements.namedItem("minutesUnit").value;
+    preview();
+    visible = rawValues();
+    if (reason === "incoming") status.textContent = dirty.size
+      ? "Settings updated in another window or device. Your unsaved changes are kept."
+      : "Settings updated in this browser.";
+    else if (reason === "saved") status.textContent = dirty.size ? "Unsaved changes" : "Saved in this browser";
   }
 
   function updateReplaceExisting() {
@@ -96,50 +133,36 @@
   function saveSettings() {
     clearTimeout(saveTimer);
     saveTimer = null;
-    const revision = saveRevision;
+    if (!initialized) return Promise.resolve();
+    captureChanges();
     if (!form.checkValidity() || !form.elements.namedItem("template").value.includes("{value}") ||
         !form.elements.namedItem("minutesTemplate").value.includes("{value}")) {
       status.textContent = "Finish the title template to save changes";
-      return saveQueue;
+      return Promise.resolve();
     }
     const cfg = values();
-    if (!minutesTemplateInitialized) delete cfg.minutesTemplate;
     status.textContent = "Saving…";
-    saveQueue = saveQueue.catch(() => {}).then(async () => {
-      if (revision !== saveRevision) return;
-      await chrome.storage.sync.set(cfg);
-      await chrome.storage.sync.remove(["autoWords", "keepUpdated"]);
-      savedRevision = revision;
-      if (revision === saveRevision) status.textContent = "Saved";
+    return sync.save(cfg).then(() => {
+      status.textContent = sync.dirtyKeys().size ? "Unsaved changes" : "Saved in this browser";
     }).catch(error => {
-      if (revision === saveRevision) status.textContent = `Could not save: ${error.message}`;
+      status.textContent = `Could not save: ${error.message}. Your changes are kept here; try Save settings again.`;
       throw error;
     });
-    return saveQueue;
   }
 
   function changed(immediate = false) {
-    saveRevision++;
+    if (!initialized) return;
+    captureChanges();
     status.textContent = "Unsaved changes";
     clearTimeout(saveTimer);
     if (immediate) void saveSettings().catch(() => {});
     else saveTimer = setTimeout(() => { void saveSettings().catch(() => {}); }, 350);
   }
 
-  chrome.storage.sync.get(null).then(saved => {
-    const cfg = core.settingsFrom(saved);
-    minutesTemplateInitialized = typeof saved.minutesTemplate === "string" && saved.minutesTemplate.includes("{value}");
-    for (const name of names) {
-      const field = form.elements.namedItem(name);
-      if (field.type === "checkbox") field.checked = cfg[name];
-      else field.value = String(cfg[name]);
-    }
-    rules.replaceChildren();
-    for (const rule of cfg.matchingPhrases) addRule(rule.phrase, rule.dynamic);
-    lastHoursUnit = cfg.unit;
-    lastMinutesUnit = cfg.minutesUnit;
-    preview();
+  sync.load().then(() => { initialized = true; form.inert = false; }).catch(error => {
+    status.textContent = `Could not load settings: ${error.message}. Reload this page to try again.`;
   });
+  window.addEventListener("pagehide", event => { if (!event.persisted) sync.dispose(); });
 
   form.elements.namedItem("minutesBelowHour").addEventListener("change", event => {
     if (event.target.checked) initializeMinutesTemplate();
@@ -177,7 +200,6 @@
 
   form.addEventListener("submit", async event => {
     event.preventDefault();
-    if (saveRevision === savedRevision) saveRevision++;
     await saveSettings().catch(() => {});
   });
 })();

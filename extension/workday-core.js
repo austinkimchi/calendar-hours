@@ -47,6 +47,21 @@
     const s = settingsFrom(value);
     return s.enabled && s.calendarIds.length > 0 && !!s.keyword && !!s.timeZone;
   }
+  // Read legacy installations without writing defaults on startup. New edits
+  // use one sync item per preference so independent offline edits can merge.
+  const syncFields = ["enabled", "calendarIds", "calendarName", "keyword", "timeZone", "timeType", "outReason", "includeFuture", "updateOverlaps", "importComments"];
+  function settingsFromStorage(data = {}) {
+    const value = { ...data[settingsKey] };
+    for (const name of syncFields) {
+      const key = `${settingsKey}.${name}`;
+      if (Object.hasOwn(data, key)) value[name] = data[key];
+    }
+    return settingsFrom(value);
+  }
+  function settingsPatch(fields) {
+    return Object.fromEntries(syncFields.filter(name => Object.hasOwn(fields, name))
+      .map(name => [`${settingsKey}.${name}`, fields[name]]));
+  }
   function parts(timestamp, timeZone) {
     const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
       timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
@@ -140,5 +155,5 @@
     }
     return { add, update, skipped, conflicts, warnings, matched: merged.length };
   }
-  return { settingsKey, settingsFrom, configured, validDate, validZone, addDays, parts, midnight, validateDates, datesFromLabels, clock, plan };
+  return { settingsKey, settingsFrom, settingsFromStorage, settingsPatch, configured, validDate, validZone, addDays, parts, midnight, validateDates, datesFromLabels, clock, plan };
 });

@@ -43,3 +43,12 @@ Before store submission:
 - Reload the candidate and smoke-test the release UI. Prior live import evidence and current automated regression coverage are documented in `WORKDAY_TESTING.md`.
 
 No store upload, public policy publication, or automatic merge is performed by preparing this candidate.
+
+
+## 0.3.1 browser settings sync release
+
+Package: `dist/calendar-hours-0.3.1.zip`. Adds conflict-aware browser settings updates and per-preference Workday storage. Update all participating devices to this build; Chrome syncs with Chrome and Edge with Edge under the same browser account and extension ID. Live transport between two computers remains unverified.
+
+The release retains extension ID `gkhggalcelmdidfdnllmdpaaapjiegig`, the existing browser-sign-in OAuth client and redirect, and the same two Calendar scopes. Google OAuth configuration is tied to the client, redirect and permissions, not the extension version number. No new consent scope is needed for browser settings sync. The raw development build keeps its existing ID.
+
+A GitHub release does not publish a Chrome Web Store update or complete Google's OAuth verification. Keep the documented test-user restriction until the Google Auth Platform audience/verification status changes. The linked public privacy policy must include the current policy before the next store submission.
