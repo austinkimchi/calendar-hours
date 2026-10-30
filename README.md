@@ -88,6 +88,10 @@ npm run package
 
 CI runs the tests and checks the package on pushes and pull requests. The package script writes a versioned ZIP under `dist/` with `manifest.json` at its root. It includes the public store key and checks that the resulting ID matches the registered OAuth identity. No private signing key is needed.
 
+## Website
+
+The [Calendar Hours site](https://calendarhours.austin.kim/) and its [privacy policy](https://calendarhours.austin.kim/privacy/) live in [`site/`](site/). Cloudflare Pages deploys that directory from `main` with no build command, so updating the page is a normal repository change. Keep the web policy in step with [`PRIVACY.md`](PRIVACY.md) when extension data use changes.
+
 ## Project Notes
 
 - [Changelog](CHANGELOG.md)
