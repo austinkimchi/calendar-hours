@@ -86,7 +86,7 @@ npm test
 npm run package
 ```
 
-CI runs the tests and checks the package on pushes and pull requests. The package script writes a versioned ZIP under `dist/` with `manifest.json` at its root. It includes the public store key and checks that the resulting ID matches the registered OAuth identity. No private signing key is needed.
+CI runs the tests and checks the package in UTC, Los Angeles, and Madrid on pushes and pull requests. The package script writes a versioned ZIP under `dist/` with `manifest.json` at its root. It includes the public store key and checks that the resulting ID matches the registered OAuth identity. No private signing key is needed.
 
 ## Website
 

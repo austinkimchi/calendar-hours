@@ -18,6 +18,15 @@
   let accessLevelReady;
   let renewalInFlight;
   let connectionInFlight;
+  let disconnectInFlight;
+  let connectionRevision = 0;
+  let credentialWrites = Promise.resolve();
+
+  function changeCredentials(change) {
+    const pending = credentialWrites.catch(() => {}).then(change);
+    credentialWrites = pending;
+    return pending;
+  }
 
   function clientIdFor(extensionId) { return extensionIds.has(extensionId) ? webClientId : null; }
 
@@ -49,7 +58,9 @@
     return (await chromeApi.storage.local.get(storageKey))[storageKey] || null;
   }
 
-  async function authorize(chromeApi = chrome, cryptoApi = crypto, interactive = true, scopes = sharedScopes) {
+  async function authorize(chromeApi = chrome, cryptoApi = crypto, interactive = true, scopes = sharedScopes, revision = connectionRevision) {
+    if (disconnectInFlight) await disconnectInFlight;
+    if (revision !== connectionRevision) throw new Error("Google connection changed before sign-in started. Try connecting again.");
     const clientId = clientIdFor(chromeApi.runtime.id);
     if (!clientId) throw new Error("This extension ID has no Calendar Hours OAuth client");
     const redirectUri = chromeApi.identity.getRedirectURL();
@@ -69,30 +80,40 @@
     const grantedScopes = (values.get("scope") || scopes.join(" ")).split(/\s+/);
     if (scopes.some(s => !grantedScopes.includes(s))) throw new Error("Google did not grant all requested Calendar permissions");
     await trustedStorage(chromeApi);
-    await chromeApi.storage.local.set({ [storageKey]: {
-      accessToken, expiresAt: Date.now() + Math.max(0, expiresIn - 60) * 1000,
-      extensionId: chromeApi.runtime.id, scopes: grantedScopes
-    } });
+    await changeCredentials(async () => {
+      if (revision !== connectionRevision) throw new Error("Google connection changed before sign-in finished. Try connecting again.");
+      await chromeApi.storage.local.set({ [storageKey]: {
+        accessToken, expiresAt: Date.now() + Math.max(0, expiresIn - 60) * 1000,
+        extensionId: chromeApi.runtime.id, scopes: grantedScopes
+      } });
+    });
+    if (revision !== connectionRevision) throw new Error("Google connection changed before sign-in finished. Try connecting again.");
     return { connected: true, calendarListAccess: grantedScopes.includes(calendarListScope) };
   }
 
   async function connect(chromeApi = chrome, cryptoApi = crypto) {
     if (!connectionInFlight) {
-      connectionInFlight = authorize(chromeApi, cryptoApi, true, sharedScopes)
-        .finally(() => { connectionInFlight = null; });
+      const revision = ++connectionRevision;
+      const pending = authorize(chromeApi, cryptoApi, true, sharedScopes, revision)
+        .finally(() => { if (connectionInFlight === pending) connectionInFlight = null; });
+      connectionInFlight = pending;
     }
     return connectionInFlight;
   }
 
   async function getAccessToken(chromeApi = chrome, cryptoApi = crypto) {
+    if (disconnectInFlight) return null;
+    const revision = connectionRevision;
     const value = await stored(chromeApi);
+    if (revision !== connectionRevision) return null;
     if (!value || value.extensionId !== chromeApi.runtime.id) return null;
     if (value.accessToken && value.expiresAt > Date.now()) return value.accessToken;
     if (!renewalInFlight) {
-      renewalInFlight = authorize(chromeApi, cryptoApi, false, value.scopes || [scope])
-        .then(() => stored(chromeApi).then(next => next.accessToken))
+      const pending = authorize(chromeApi, cryptoApi, false, value.scopes || [scope], revision)
+        .then(() => stored(chromeApi).then(next => revision === connectionRevision ? next?.accessToken || null : null))
         .catch(() => null)
-        .finally(() => { renewalInFlight = null; });
+        .finally(() => { if (renewalInFlight === pending) renewalInFlight = null; });
+      renewalInFlight = pending;
     }
     return renewalInFlight;
   }
@@ -105,15 +126,23 @@
   }
 
   async function disconnect(chromeApi = chrome, fetcher = fetch) {
-    const value = await stored(chromeApi);
-    if (value?.accessToken) {
-      await fetcher("https://oauth2.googleapis.com/revoke", {
-        method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ token: value.accessToken }).toString()
-      }).catch(() => {});
-    }
-    await chromeApi.storage.local.remove(storageKey);
-    return { connected: false };
+    // Invalidate in-flight grants immediately. Serialize removal after any
+    // already-started storage write so a late renewal cannot reconnect us.
+    connectionRevision++;
+    connectionInFlight = renewalInFlight = null;
+    const pending = changeCredentials(async () => {
+      const value = await stored(chromeApi);
+      await chromeApi.storage.local.remove(storageKey);
+      if (value?.accessToken) {
+        await fetcher("https://oauth2.googleapis.com/revoke", {
+          method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ token: value.accessToken }).toString()
+        }).catch(() => {});
+      }
+      return { connected: false };
+    }).finally(() => { if (disconnectInFlight === pending) disconnectInFlight = null; });
+    disconnectInFlight = pending;
+    return pending;
   }
 
   return { clientIdFor, authorizationUrl, connect, getAccessToken, status, disconnect };

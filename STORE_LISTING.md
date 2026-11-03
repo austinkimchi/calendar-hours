@@ -1,5 +1,15 @@
 # Chrome Web Store submission notes
 
+## 0.3.2 reliability update — prepared November 4, 2026
+
+Package: `dist/calendar-hours-0.3.2.zip`, SHA-256 `6b9e21479d5a708603001c3217aa06a30a410aad8a8839510a16253aacd7529d`.
+
+Fixes zero-padded Workday date validation, immediate-save duration updates, and OAuth disconnect/reconnect races. No new permission, OAuth scope, data collection, or settings UI is introduced. Existing generic screenshots and the current privacy disclosure still describe this update. [Audit and live verification](RELEASE_TESTING.md) documents the release gates and limits.
+
+Suggested listing release note: **Version 0.3.2 fixes Workday imports on single-digit dates, keeps duration titles correct when saving quick time edits, and improves Google connection reliability.**
+
+The package is prepared locally. Verify the signed-in dashboard before uploading; no v0.3.2 store submission is implied by these preparation notes.
+
 **Name:** Calendar Hours
 
 **Short description:** Add durations to Google Calendar titles and import calendar work blocks into Workday.

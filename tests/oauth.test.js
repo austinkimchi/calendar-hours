@@ -89,3 +89,58 @@ test('legacy event-only connections upgrade only after an explicit shared connec
  await oauth.connect(h.chrome,webcrypto);
  assert.equal(h.launches.length,1);assert.equal((await oauth.status(h.chrome)).calendarListAccess,true);
 });
+
+test('disconnect during silent renewal cannot restore the removed connection',async()=>{
+ delete require.cache[require.resolve('../extension/oauth.js')];
+ const api=require('../extension/oauth.js');
+ const h=sharedHarness({accessToken:'expired',extensionId:'oaainlebjpmnglnfajgnenicaeamaljo',expiresAt:0,scopes:['https://www.googleapis.com/auth/calendar.events']});
+ h.chrome.storage.local.remove=async()=>{await h.chrome.storage.local.set({calendarHoursOAuth:undefined})};
+ let finish;h.hold=new Promise(resolve=>{finish=resolve});
+ const token=api.getAccessToken(h.chrome,webcrypto);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.launches.length,1);
+ await api.disconnect(h.chrome,async()=>({ok:true}));
+ finish();
+ assert.equal(await token,null);
+ assert.equal((await api.status(h.chrome)).connected,false);
+ assert.equal(h.saved,undefined);
+});
+
+test('disconnect waits out a token write and a new connect waits for revocation',async()=>{
+ delete require.cache[require.resolve('../extension/oauth.js')];
+ const api=require('../extension/oauth.js'),h=sharedHarness();
+ const set=h.chrome.storage.local.set;
+ let releaseWrite,writing,releaseRevoke,revoking;
+ const writeStarted=new Promise(resolve=>{writing=resolve});
+ const revokeStarted=new Promise(resolve=>{revoking=resolve});
+ h.chrome.storage.local.set=async value=>{writing();await new Promise(resolve=>{releaseWrite=resolve});await set(value)};
+ h.chrome.storage.local.remove=async()=>{await set({calendarHoursOAuth:undefined})};
+ const oldConnection=api.connect(h.chrome,webcrypto);
+ const rejected=assert.rejects(oldConnection,/connection changed/);
+ await writeStarted;
+ const disconnected=api.disconnect(h.chrome,async()=>{revoking();await new Promise(resolve=>{releaseRevoke=resolve});return {ok:true}});
+ assert.equal(await api.getAccessToken(h.chrome,webcrypto),null);
+ releaseWrite();await rejected;await revokeStarted;
+ assert.equal(h.saved,undefined);
+ h.chrome.storage.local.set=set;
+ const newConnection=api.connect(h.chrome,webcrypto);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.launches.length,1,'new authorization must wait for old grant revocation');
+ releaseRevoke();await disconnected;
+ assert.equal((await newConnection).connected,true);
+ assert.equal(h.launches.length,2);assert.equal((await api.status(h.chrome)).connected,true);
+});
+
+test('a late silent renewal cannot overwrite a newer explicit connection',async()=>{
+ delete require.cache[require.resolve('../extension/oauth.js')];
+ const api=require('../extension/oauth.js');
+ const h=sharedHarness({accessToken:'expired',extensionId:'oaainlebjpmnglnfajgnenicaeamaljo',expiresAt:0,scopes:['https://www.googleapis.com/auth/calendar.events']});
+ let finish;h.hold=new Promise(resolve=>{finish=resolve});
+ const renewal=api.getAccessToken(h.chrome,webcrypto);
+ await new Promise(resolve=>setImmediate(resolve));
+ h.hold=null;await api.connect(h.chrome,webcrypto);
+ const connected=h.saved;
+ finish();assert.equal(await renewal,null);
+ assert.equal(h.saved,connected);
+ assert.equal((await api.status(h.chrome)).calendarListAccess,true);
+});
