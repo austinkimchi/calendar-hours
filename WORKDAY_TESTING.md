@@ -24,12 +24,23 @@ The tests cover:
 - Exact minute times, lunch gaps, cancelled/all-day/future exclusions, duplicate reruns, source overlaps, and existing-entry conflicts.
 - Existing overnight entries stop imports before planning or opening another form, including entries starting outside the displayed day, cross-year entries, and midnight endpoints. They are never truncated into editable same-day drafts.
 - Individual entry form saves; wrong-date/existing-entry dialogs and navigation changes stop before saving.
+- The date guard accepts both padded and unpadded month/day fields (for example, `11/02/2026` and `11/2/2026`) while rejecting another day, month, year, swapped fields, or malformed extra zeros. No device-time-zone conversion is used for the dialog date.
 - Overwrite existing times to match calendar defaults on and preserves explicitly saved off choices. One-to-one overlap updates edit unsubmitted drafts in place, recheck the target before saving, and skip the matching interval on rerun. Submitted/unknown statuses, different time types, split/merge ambiguity, and concurrent entry changes are rejected.
 - Comments start blank on new entries. Optional Calendar descriptions are converted from inert rich text to plain text; titles are never used as comments. Existing comments are preserved with the option off and replaced with the option on.
 - Workday zero-padded times, delayed edit-form fields/buttons, asynchronous duration calculation, and Discard Changes cleanup for unsaved drafts.
 - Explicitly no Review, Submit, Next or Delete action in the import adapter.
 
 ## Live browser verification
+
+### November 2026 date-format regression
+
+A live inspection reproduced the false "different date" error: the week grid displayed `11/2`, while its Enter Time dialog displayed `11/02/2026`. The old guard stripped zeros from the expected date but required an exact unpadded string. This also affected updating drafts on single-digit dates and was independent of travel.
+
+The regression failed before the fix and passes afterward. An API → planner → simulated Workday form test covers a Madrid source timestamp that belongs to the preceding California payroll date, then updates the draft and reruns without duplicates. All 153 tests pass; the 57 Workday tests also pass with process time zones `Europe/Madrid` and `America/Los_Angeles`. Different-date rejection and the no-submit checks remain covered.
+
+After the user reloaded the unpacked extension, a live import of the displayed week succeeded: five matching blocks were added through the visible Workday forms. Each saved date and exact start/end matched the source Calendar view, including a late-evening block that remained on the preceding payroll date while the device was in Madrid. All five entries remained Not Submitted. A Workday page reload preserved their identifiers, dates, times, and statuses. A second import reported `0 added, 0 updated, 5 already entered`, with all five records unchanged. No Review or Submit action was taken. The earlier diagnostic form was canceled without saving; screenshots and personal entry identifiers remain outside the repository.
+
+### Earlier live coverage
 
 Prior branch builds were verified on the English Workday Enter Time calendar using the approved developer extension and the user's saved Google Calendar setup:
 

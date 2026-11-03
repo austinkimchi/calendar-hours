@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2 — Reliability fixes, November 4, 2026
+
+- Accept Workday's zero-padded dates so imports and draft updates work on single-digit days and months while still rejecting a different date.
+- Apply pending duration updates before Calendar handles Enter, Save, or form submission, including rapid time edits and under-hour minute formatting. Respect each phrase's Auto-update setting.
+- Prevent late Google sign-in or silent-renewal responses from restoring a disconnected account or overwriting a newer connection. Serialize credential changes and wait for revocation before reconnecting.
+- Add regression tests for date padding, travel across payroll dates, immediate saves, and connection races. Run the full CI suite in UTC, Los Angeles, and Madrid.
+
 ## 0.3.1 — Browser settings sync, October 27, 2026
 
 - Apply incoming synced preferences to open settings pages while keeping unsaved local edits.

@@ -119,11 +119,17 @@
     return { ok: true, message: `Added ${result.formatted.text} to the title. Save the event in Calendar.`, reason };
   }
 
-  function applyPendingKeyword(reason) {
+  function applyPendingChanges(reason) {
     if (contextInvalidated) return;
     const editor = findEditor();
-    if (!editor || !settings.keyword || !editor.title.value.toLowerCase().includes(settings.keyword.toLowerCase())) return;
+    if (!editor) return;
+    const hasKeyword = settings.keyword && editor.title.value.toLowerCase().includes(settings.keyword.toLowerCase());
+    const pendingTimeEdit = timeEditedFor === editor.title.value && core.shouldUpdateDuration(editor.title.value, settings);
+    if (!hasKeyword && !pendingTimeEdit) return;
+    // Flush eligible time edits before Calendar's save handlers, even when
+    // its Save/Enter arrives before our normal debounced update.
     apply(reason);
+    timeEditedFor = null;
   }
 
   function hideChip() {
@@ -557,7 +563,7 @@
     }
     if (event.key === "Enter" && !event.isComposing && !composing && !event.repeat &&
         (event.target === editor.title || editor.root.contains(event.target))) {
-      applyPendingKeyword("keyword before Enter");
+      applyPendingChanges("pending duration before Enter");
     }
   }, true);
   document.addEventListener("keyup", event => {
@@ -583,10 +589,10 @@
       queueUpdate();
     }
     if (button && (button.getAttribute("aria-label") === "Save" || button.textContent.trim() === "Save")) {
-      applyPendingKeyword("keyword before Save");
+      applyPendingChanges("pending duration before Save");
     }
   }, true);
-  document.addEventListener("submit", () => applyPendingKeyword("keyword before submit"), true);
+  document.addEventListener("submit", () => applyPendingChanges("pending duration before submit"), true);
   window.addEventListener("resize", queueUpdate);
   window.addEventListener("scroll", queueUpdate, true);
   new MutationObserver(changes => {

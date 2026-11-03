@@ -4,8 +4,10 @@ const wd=require('../extension/workday-core'),core=require('../extension/core'),
 const date='2026-10-19';
 const settings={enabled:true,calendarIds:['work','meals'],keyword:'SCU Block',timeZone:'UTC',timeType:'Hours',outReason:'Out',calendarMeals:true,updateOverlaps:true};
 const event=(a,b,summary='SCU Block')=>({summary,start:{dateTime:`${date}T${a}:00Z`},end:{dateTime:`${date}T${b}:00Z`}});
-function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false,overlayDelay=0}={}) {
- const dom=new JSDOM(`<h1>Enter Time</h1><div data-automation-id="calendarToolbar"><button aria-label="Actions" aria-expanded="true" id="actions"></button><h2 data-automation-id="dateRangeTitle">Monday, October 19, 2026</h2><span data-automation-id="calendarViewSelection">Day</span></div><div data-automation-id="weeklyBody"><div data-automation-id="dayCell-2026-10-19">10/19</div></div><div class="gwt-appointment-panel">${'<div class="minor-time-interval"></div>'.repeat(96)}<div data-automation-id="timedDaySeparator_0"></div><div class="hit-target"></div></div><button>Review</button><button>Submit</button><button>Next</button>`,{url:'https://www.myworkday.com/scu/'});
+function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false,overlayDelay=0,date:formDate=date}={}) {
+ const [year,month,day]=formDate.split('-'),monthDay=`${+month}-${+day}`;
+ const heading=new Intl.DateTimeFormat('en-US',{dateStyle:'full',timeZone:'UTC'}).format(new Date(`${formDate}T00:00:00Z`));
+ const dom=new JSDOM(`<h1>Enter Time</h1><div data-automation-id="calendarToolbar"><button aria-label="Actions" aria-expanded="true" id="actions"></button><h2 data-automation-id="dateRangeTitle">${heading}</h2><span data-automation-id="calendarViewSelection">Day</span></div><div data-automation-id="weeklyBody"><div data-automation-id="dayCell-${formDate}">${+month}/${+day}</div></div><div class="gwt-appointment-panel">${'<div class="minor-time-interval"></div>'.repeat(96)}<div data-automation-id="timedDaySeparator_0"></div><div class="hit-target"></div></div><button>Review</button><button>Submit</button><button>Next</button>`,{url:'https://www.myworkday.com/scu/'});
  const doc=dom.window.document,entries=[],saves=[],cancelled=[],forbidden=[];
  dom.window.HTMLElement.prototype.getClientRects=function(){return this.hidden?[]:[{}]};dom.window.HTMLElement.prototype.scrollIntoView=function(){};
  let overlayUntil=0;
@@ -16,7 +18,7 @@ function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false
   let el=entry.el;
   if(!el){el=entry.el=doc.createElement('div');doc.body.append(el);el.onclick=()=>open(entry)}
   el.setAttribute('role','link');el.setAttribute('data-automation-id','calendarevent');el.setAttribute('data-automation-eventid',entry.id);
-  for(const part of ['start','end'])el.setAttribute(`data-automation-${part}date`,`10-19-${Math.floor(entry[part]/60)}-${entry[part]%60}`);
+  for(const part of ['start','end'])el.setAttribute(`data-automation-${part}date`,`${monthDay}-${Math.floor(entry[part]/60)}-${entry[part]%60}`);
   el.innerHTML=`<span data-automation-id="calendarAppointmentTitle">Hours</span><span data-automation-icontype="${entry.status||'Not Submitted'}">${entry.status||'Not Submitted'}</span>`;
  }
  function close(d){
@@ -27,7 +29,7 @@ function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false
  function open(entry){
   if(Date.now()<overlayUntil || doc.querySelector('[data-automation-id=calendarToolbar]').hasAttribute('aria-hidden')){forbidden.push('Open while closing');return;}
   const d=doc.createElement('div');d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.setAttribute('aria-label','Enter Time');
-  d.innerHTML=`<p>10/19/2026</p><span data-automation-id="promptOption">${entry?.status||'Not Submitted'}</span><div role="listbox" aria-label="items selected for Time Type"><div role="option">Hours</div></div><label>In<input id="in" value="${entry?wd.clock(entry.start):''}"></label><label>Out<input id="out" value="${entry?wd.clock(entry.end):''}"></label><div role="combobox" aria-label="Out Reason"><div data-automation-id="selectSelectedOption">${entry?.reason||'Out'}</div><div>${entry?.reason||'Out'} selected</div></div><span data-automation-id="numericText">${entry?(entry.end-entry.start)/60:0}</span><label for="comment">Comment</label><textarea id="comment">${entry?.comment||''}</textarea><button>Cancel</button>${entry?'<button>Delete</button>':''}<button>OK</button>`;
+  d.innerHTML=`<p>${month}/${day}/${year}</p><span data-automation-id="promptOption">${entry?.status||'Not Submitted'}</span><div role="listbox" aria-label="items selected for Time Type"><div role="option">Hours</div></div><label>In<input id="in" value="${entry?wd.clock(entry.start):''}"></label><label>Out<input id="out" value="${entry?wd.clock(entry.end):''}"></label><div role="combobox" aria-label="Out Reason"><div data-automation-id="selectSelectedOption">${entry?.reason||'Out'}</div><div>${entry?.reason||'Out'} selected</div></div><span data-automation-id="numericText">${entry?(entry.end-entry.start)/60:0}</span><label for="comment">Comment</label><textarea id="comment">${entry?.comment||''}</textarea><button>Cancel</button>${entry?'<button>Delete</button>':''}<button>OK</button>`;
   doc.body.append(d);
   const reason=d.querySelector('[role=combobox]');
   reason.onclick=()=>{
@@ -90,4 +92,28 @@ test('canceling an unchanged inspected draft waits for calendar readiness before
  assert.equal(await adapter.updateBlock(f.doc,wd,base,{...previous,previous},settings),'already-entered');
  assert.equal(await adapter.createBlock(f.doc,wd,base,{date,start:750,end:1020},settings),'added');
  assert.equal(f.cancelled.length,1);assert.equal(f.saves.length,1);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
+});
+test('travel import keeps the configured payroll date through API, padded dialog, update and rerun',async()=>{
+ const payrollDate='2026-11-02',timeZone='America/Los_Angeles';
+ const s={...settings,calendarIds:['work'],timeZone};
+ const f=fixture([],{date:payrollDate});
+ try {
+  // In Madrid this event is already November 3. Workday is configured for
+  // California, where it is still November 2, 11:00–11:30 PM.
+  const source={summary:'SCU Block',start:{dateTime:'2026-11-03T08:00:00+01:00',timeZone:'Europe/Madrid'},end:{dateTime:'2026-11-03T08:30:00+01:00',timeZone:'Europe/Madrid'}};
+  const events=await api.listEvents({accessToken:'test',core:wd,settings:s,dates:[payrollDate],fetcher:async url=>{
+   const params=new URL(url).searchParams;
+   assert.equal(params.get('timeMin'),'2026-11-02T08:00:00.000Z');
+   assert.equal(params.get('timeMax'),'2026-11-03T08:00:00.000Z');
+   return {ok:true,json:async()=>({items:[source]})};
+  }});
+  const first=await importEvents(f,events,s);
+  assert.deepEqual(first.outcomes,['added']);assert.equal(first.result.add[0].date,payrollDate);
+  assert.deepEqual(f.entries.map(e=>[e.start,e.end]),[[1380,1410]]);
+  events[0].end.dateTime='2026-11-03T08:45:00+01:00';
+  assert.deepEqual((await importEvents(f,events,s)).outcomes,['updated']);
+  assert.deepEqual(f.entries.map(e=>[e.start,e.end]),[[1380,1425]]);
+  assert.deepEqual((await importEvents(f,events,s)).outcomes,[]);
+  assert.equal(f.saves.length,2);assert.deepEqual(f.forbidden,[]);
+ } finally { f.dom.window.close(); }
 });

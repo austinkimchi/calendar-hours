@@ -125,6 +125,30 @@ test("clicking Calendar Save immediately after a keyword applies the duration fi
   app.dom.window.close();
 });
 
+for (const trigger of ["Enter", "Save", "submit"]) test(`immediate ${trigger} after a time edit updates an existing suffix before Calendar saves`, async t => {
+  for (const dynamic of [true, false, null]) {
+    const app = run(`<div role="dialog"><form><input aria-label="Title" value="Work session (1 hour)">
+      <input aria-label="Start date" data-date="20261104" value="Nov 4, 2026"><input aria-label="Start time" value="9am">
+      <input aria-label="End date" data-date="20261104" value="Nov 4, 2026"><input aria-label="End time" value="10am">
+      <button type="button">Save</button></form></div>`, {minutesBelowHour:true,
+      matchingPhrases:dynamic === null ? [] : [{phrase:"Work session",dynamic}]});
+    t.after(() => app.dom.window.close());
+    await Promise.resolve();
+    const {document, Event, KeyboardEvent} = app.window;
+    const title = document.querySelector('[aria-label="Title"]');
+    const end = document.querySelector('[aria-label="End time"]');
+    end.value = "9:30am";
+    end.dispatchEvent(new Event("input", {bubbles:true}));
+    let titleAtSave;
+    const type = trigger === "Enter" ? "keydown" : trigger === "Save" ? "click" : "submit";
+    document.addEventListener(type, () => { titleAtSave = title.value; });
+    if (trigger === "Enter") end.dispatchEvent(new KeyboardEvent("keydown", {key:"Enter",bubbles:true,cancelable:true}));
+    else if (trigger === "Save") document.querySelector("button").click();
+    else document.querySelector("form").dispatchEvent(new Event("submit", {bubbles:true,cancelable:true}));
+    assert.equal(titleAtSave, dynamic === false ? "Work session (1 hour)" : "Work session (30 minutes)");
+  }
+});
+
 test("quick composer summary offers suggestion and accepts Tab", async () => {
   const app = run(`<div role="dialog"><input aria-label="Add title" value="SCU Block">
     <span data-key="startDate">Sunday, October 18</span>

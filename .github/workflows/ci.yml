@@ -10,6 +10,11 @@ permissions:
 jobs:
   test-and-package:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        timezone: [UTC, America/Los_Angeles, Europe/Madrid]
+    env:
+      TZ: ${{ matrix.timezone }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6

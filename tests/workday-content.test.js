@@ -70,6 +70,33 @@ test('unexpected date or existing-entry dialog is cancelled before saving',async
    assert.equal(f.saved.length,0);assert.equal(f.cancelled,1);assert.deepEqual(f.forbidden,[]);f.dom.window.close();
  }
 });
+test('Workday date validation accepts optional month/day zeros but still rejects a different date',async()=>{
+ for(const [date,dialogDate,accepted] of [
+  ['2026-11-02','11/02/2026',true],
+  ['2026-11-02','11/2/2026',true],
+  ['2026-01-02','01/02/2026',true],
+  ['2026-01-02','1/02/2026',true],
+  ['2026-01-02','01/2/2026',true],
+  ['2026-11-02','11/03/2026',false],
+  ['2026-11-02','02/11/2026',false],
+  ['2026-11-02','11/02/2025',false],
+  ['2026-11-02','011/02/2026',false],
+  ['2026-01-02','01/002/2026',false]
+ ]) {
+  const f=fixture({date,dialogDate}),block={date,start:720,end:1020,title:'Work block'};
+  try {
+   const save=adapter.createBlock(f.doc,core,adapter.readView(f.doc,core),block,settings);
+   if(accepted) {
+    assert.equal(await save,'added',dialogDate);
+    assert.deepEqual(f.saved,[{start:'12:00 PM',end:'5:00 PM',comment:''}]);
+   } else {
+    await assert.rejects(save,/different date/,dialogDate);
+    assert.equal(f.saved.length,0);assert.equal(f.cancelled,1);
+   }
+   assert.deepEqual(f.forbidden,[]);
+  } finally { f.dom.window.close(); }
+ }
+});
 test('navigation during import stops before opening any form',async()=>{
  const f=fixture(),base=adapter.readView(f.doc,core);f.doc.querySelector('[data-automation-id^="dayCell-"]').textContent='10/20';
  await assert.rejects(adapter.createBlock(f.doc,core,base,{date:'2026-10-19',start:540,end:600},settings),/displayed dates changed/);assert.equal(f.saved.length,0);f.dom.window.close();

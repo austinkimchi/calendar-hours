@@ -178,7 +178,10 @@
         } catch { return false; }
       }, "Workday's time-entry form did not finish loading. Nothing was saved.");
       const [year, month, day] = block.date.split("-").map(Number);
-      if (!new RegExp(`(?<!\\d)${month}/${day}/${year}(?!\\d)`).test(dialog.textContent)) throw new Error("Workday opened a different date. Nothing was saved.");
+      // Workday pads the dialog date (11/02/2026) even when its grid uses
+      // 11/2. Compare the same calendar day without device-zone conversion.
+      const datePart = value => value < 10 ? `0?${value}` : String(value);
+      if (!new RegExp(`(?<!\\d)${datePart(month)}/${datePart(day)}/${year}(?!\\d)`).test(dialog.textContent)) throw new Error("Workday opened a different date. Nothing was saved.");
       const existingDialog = [...dialog.querySelectorAll("button")].some(e => visible(e) && label(e) === "Delete");
       const draftDialog = () => [...dialog.querySelectorAll(aid("promptOption"))].some(e => visible(e) && label(e) === "Not Submitted");
       if (!updating && existingDialog) throw new Error("Workday opened an existing entry. Nothing was changed.");
