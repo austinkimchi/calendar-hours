@@ -27,3 +27,9 @@ Reviewed the Calendar editor/grid update paths, API version/time checks, OAuth l
 ## Limits
 
 OAuth race ordering is tested with controlled deferred browser/storage responses; no live account disconnection or forced credential race was performed. The existing connected-account path was exercised by the live Workday API reads. Fresh sign-in on a second computer and browser-managed sync delivery remain separate acceptance checks. Google OAuth approval and Chrome Web Store approval are separate external review states.
+
+## Release destinations
+
+- GitHub v0.3.2 is published. The downloaded release ZIP matched the tested local package byte for byte: SHA-256 `6b9e21479d5a708603001c3217aa06a30a410aad8a8839510a16253aacd7529d`.
+- On November 4, 2026, that same ZIP was uploaded to the Chrome Web Store. The dashboard confirmed the v0.3.2 draft was submitted and pending review, with automatic publication after approval selected; v0.3.1 remained published.
+- Saved listing changes include the release fixes, current connection instructions, the dedicated homepage and domain privacy-policy links. No permissions or data-use categories changed. Private dashboard evidence remains outside the repository.
