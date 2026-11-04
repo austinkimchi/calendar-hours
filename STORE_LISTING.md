@@ -1,14 +1,16 @@
 # Chrome Web Store submission notes
 
-## 0.3.2 reliability update — prepared November 4, 2026
+## 0.3.2 reliability update — submitted November 4, 2026
 
 Package: `dist/calendar-hours-0.3.2.zip`, SHA-256 `6b9e21479d5a708603001c3217aa06a30a410aad8a8839510a16253aacd7529d`.
 
 Fixes zero-padded Workday date validation, immediate-save duration updates, and OAuth disconnect/reconnect races. No new permission, OAuth scope, data collection, or settings UI is introduced. Existing generic screenshots and the current privacy disclosure still describe this update. [Audit and live verification](RELEASE_TESTING.md) documents the release gates and limits.
 
-Suggested listing release note: **Version 0.3.2 fixes Workday imports on single-digit dates, keeps duration titles correct when saving quick time edits, and improves Google connection reliability.**
+Saved listing release note: **Version 0.3.2 fixes Workday imports on single-digit dates, keeps duration titles correct when saving quick time edits, and improves Google connection reliability.**
 
-The package is prepared locally. Verify the signed-in dashboard before uploading; no v0.3.2 store submission is implied by these preparation notes.
+The tested GitHub release ZIP was uploaded to the PKimchi dashboard. Google confirmed submission, and the dashboard showed **Pending review** for the v0.3.2 draft with **Published 0.3.1**. Automatic publication after approval was selected. This is a submission confirmation, not a v0.3.2 publication confirmation.
+
+The listing now links to the verified Calendar Hours homepage and domain privacy policy. Its description and reviewer instructions explain the optional Google connection without the obsolete test-user-only claim; this does not assert OAuth verification approval. The three existing generic screenshots and permission/data disclosures were retained.
 
 **Name:** Calendar Hours
 
@@ -16,7 +18,15 @@ The package is prepared locally. Verify the signed-in dashboard before uploading
 
 **Detailed description:**
 
-Calendar Hours turns event start and end times into a title suffix such as `Work session (3.17 hours)` or `Quick task (45 minutes)`. In Google Calendar's event editor, accept a faint inline duration suggestion with Enter or Tab, type `/hours`, use the keyboard shortcut, or enable automatic insertion for titles matching your chosen phrases. Each phrase can use Dynamic mode to keep its duration current when you move or resize a one-time event. You can also update titles that already have a duration suffix after time changes. Choose hours or minutes, show minutes only below one hour, and customize rounding, increments, singular and plural units, and title templates. An optional Google Calendar connection supports faster saves without opening an editor tab; enable Use faster saves separately in settings. That connection is currently available only to approved OAuth test users while Google verification is pending. Without it, the extension can use Calendar's editor to save qualifying grid changes. Manual editor changes still use Calendar's Save button. Event calculations happen in your browser; Calendar data is not sent to the developer.
+Calendar Hours turns Google Calendar event times into title suffixes such as “Work session (3.17 hours)” or “Quick task (45 minutes).” Add a duration from an inline suggestion, /hours, a keyboard shortcut, or matching phrases. Choose hours or minutes, rounding, units, and title templates. Auto-update can keep qualifying one-time event titles current after moves or resizes.
+
+Optionally connect Google Calendar for faster title saves through the Calendar API. Google sign-in and Calendar permissions are required for API features; Calendar’s normal editor remains available without this connection.
+
+Optional Workday import reads your selected Google calendars and adds matching work blocks as unsubmitted time entries in Workday’s Enter Time page. It checks for duplicates and can update one overlapping draft. You review and submit entries yourself. Event descriptions are copied to comments only if you enable that choice.
+
+Formatting and import preferences can sync through your browser account when browser sync is enabled. Google OAuth tokens remain on each device. Calendar and Workday data are not sent to the developer. See the privacy policy for details.
+
+Version 0.3.2 fixes Workday imports on single-digit dates, keeps duration titles correct when saving quick time edits, and improves Google connection reliability.
 
 **Single purpose:** Turn Google Calendar work blocks into accurate time records: display their duration in event titles and optionally transfer their recorded intervals into Workday drafts.
 
@@ -26,13 +36,13 @@ Optional Workday import adds Auto-fill from Calendar to the Actions menu in the 
 
 **Data disclosure:** Requested Workday imports send selected calendar start/end times, and optionally event descriptions, to the user’s Workday organization. No time card is reviewed or submitted automatically.  The extension processes event title and time fields locally in the browser. With optional direct saving, it sends the selected event's identifier, title, and time check to Google's Calendar API under the user's own account and changes only the event title. It does not send event data to the developer, use analytics, or run a developer server. If direct saving is unavailable, qualifying one-time grid changes can use Google Calendar's editor and Save button. Preferences use browser sync storage, if enabled by the browser; optional OAuth tokens use local extension storage. The Google connection can be removed in Settings. See the public privacy policy for details.
 
-**Privacy policy:** The [Calendar Hours domain policy](https://calendarhours.austin.kim/privacy/) is the canonical public policy and matches the OAuth consent-screen link. The existing Web Store listing still points to the [public Gist](https://gist.github.com/austinkimchi/6069defb02ecb9c38b5b2c7d4feb65c7), updated to match `PRIVACY.md` on October 29, 2026. Change that listing link to the domain policy when listing edits unlock after the pending review.
+**Homepage and privacy policy:** The submitted v0.3.2 listing points to the [Calendar Hours homepage](https://calendarhours.austin.kim/) and [domain privacy policy](https://calendarhours.austin.kim/privacy/), both verified in Edge on November 4, 2026. The policy matches the OAuth consent-screen link. This replaces the previous GitHub homepage and public Gist policy links in the draft; the published listing changes only after approval.
 
 **Listing assets:** `store-assets/settings-screenshot.png`, `store-assets/settings-format-screenshot.png`, and `store-assets/settings-other-screenshot.png` show the core settings page at 1280 × 800. They use generic example phrases. All three remain on the listing, with `settings-screenshot.png` first. The original 0.1.0 screenshot with a personal example was removed from the v0.3.1 draft with the user's approval. The package includes the icon and short description. The current screenshots cover core duration settings; they do not show the optional Workday import.
 
 **Distribution:** Free, Unlisted, all regions, English (US). After approval, the listing can be installed in Edge through its Chrome Web Store link.
 
-**Dashboard:** [Calendar Hours item](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. Distribution is Free, Unlisted, and All regions. On October 29, 2026, the dashboard showed **Published 0.2.11** and **Draft 0.3.1 pending review**. The [unlisted listing](https://chromewebstore.google.com/detail/calendar-hours/gkhggalcelmdidfdnllmdpaaapjiegig) still offers the published version until the new review passes.
+**Dashboard:** [Calendar Hours item](https://chrome.google.com/webstore/devconsole/29ef0f4a-68bb-4294-b32d-e38c5258ce17/gkhggalcelmdidfdnllmdpaaapjiegig/edit), item ID `gkhggalcelmdidfdnllmdpaaapjiegig`. Distribution is Free, Unlisted, and All regions. On November 4, 2026, the dashboard showed **Published 0.3.1** and **Draft 0.3.2 pending review**. The [unlisted listing](https://chromewebstore.google.com/detail/calendar-hours/gkhggalcelmdidfdnllmdpaaapjiegig) continues to offer the published version until the new review passes.
 
 **0.2.11 submission:** On October 27, 2026, `dist/calendar-hours-0.2.11.zip` (SHA-256 `6aa2bc30491da71ff2163d571c476f6effd98783eeb6e1a042a45cc867d525b1`) was submitted. It was published by October 29, 2026. Google OAuth verification is still required before distributing direct API mode beyond the project's listed test users.
 
