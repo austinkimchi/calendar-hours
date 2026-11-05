@@ -1,6 +1,6 @@
 # Calendar Hours privacy policy
 
-Updated October 31, 2026. The [public privacy policy](https://calendarhours.austin.kim/privacy/) is the canonical version.
+Updated November 6, 2026. The [public privacy policy](https://calendarhours.austin.kim/privacy/) is the canonical version. [Jump to data protection](https://calendarhours.austin.kim/privacy/#data-protection).
 
 ## Google user data accessed
 
@@ -18,9 +18,17 @@ Direct event reads and title changes are sent between the extension and Google C
 
 Selected Google calendar IDs and names are stored as preferences in browser sync storage. If you use browser sync, Chrome or Edge may transfer these preferences through its own sync service under your browser account. Google OAuth access tokens stay in local extension storage and are not included in browser sync. The Calendar Hours developer does not receive, sell, or share your Google Calendar events or tokens with advertisers or data brokers. The extension has no analytics, advertising, developer account system, Firebase service, or developer-operated data server.
 
-## Data protection
+## Data protection: how we secure Google user data
 
-Calendar API and OAuth requests use HTTPS directly between the extension and Google. OAuth tokens are stored locally, apart from synced preferences; where the browser supports it, the extension restricts token storage to trusted extension contexts. It checks the OAuth sign-in response against the original request and checks an event's version before saving its title, so a concurrent edit is not silently overwritten. Calendar events used for duration calculations or import remain in extension or tab memory while the operation runs and are not saved to extension storage. Workday import uses the page's visible form; the extension does not read or store Workday passwords or cookies.
+We protect Google user data, including calendar names and IDs, event titles, times and optional descriptions, and OAuth access tokens, using the following mechanisms:
+
+- **Encryption in transit.** Requests to Google's Calendar API and OAuth services use HTTPS (TLS), which encrypts the data while it travels between your browser and Google. User-requested Workday imports use the employer's HTTPS Workday page.
+- **Restricted access to tokens.** Google API requests run in the extension's background code. Short-lived OAuth access tokens are kept in local extension storage, excluded from browser sync, and are not sent to Calendar or Workday web pages or to the developer. Where the browser supports it, local token storage is restricted to trusted extension contexts rather than content scripts.
+- **Sign-in and update validation.** The extension validates Google's sign-in response against a randomly generated request value and the expected redirect address before accepting a token. Before an API title update, it checks the event's title, times and version to avoid overwriting a concurrent edit.
+- **Limited event-data storage.** Event records used for calculations and imports are processed temporarily in browser memory and are not saved to extension storage or a developer database. Selected calendar names and IDs are retained separately as preferences, as described under Sharing and disclosure.
+- **Disconnection and credential handling.** Disconnecting Google Calendar removes the local access token and requests revocation from Google. The extension does not read or store Google or Workday account passwords or Workday cookies.
+
+Local storage protection relies on the browser's extension isolation and your device's security. Calendar Hours does not add its own encryption at rest to local extension storage; the encryption described above protects network traffic. Retention and deletion controls are described below.
 
 ## Retention and deletion
 
