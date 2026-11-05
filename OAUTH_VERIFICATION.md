@@ -22,6 +22,10 @@ Google requests a video of the same app showing the complete English consent scr
 
 The video should be shared with Google's OAuth reviewers through the verification form. Redact account email, unrelated events, and Workday organization details before sharing. [Google's verification requirements](https://support.google.com/cloud/answer/13464321) and [submission steps](https://support.google.com/cloud/answer/13461325) are the source for this checklist.
 
-## State on October 29, 2026
+## Verification follow-up on November 6, 2026
 
-The site and policy are public. Google Cloud Branding has the site and policy URLs and `austin.kim` as an authorized domain. `calendar.events` is classified as sensitive, `calendar.calendarlist.readonly` as non-sensitive; there are no restricted scopes. The OAuth app remains in Testing with one test user until publication and verification submission are completed. Chrome Web Store v0.3.1 was pending review at the last observed dashboard check; verify its current status before filming.
+The signed-in Google Auth Platform verification panel shows Homepage requirements, App functionality, Branding guidelines, and Request minimum scopes as complete. Data-access verification remains under review. Privacy policy requirements is the only flagged step: the November 5 feedback asks for data-protection mechanisms for sensitive data.
+
+Branding already points to `https://calendarhours.austin.kim/privacy/`, and that public page loads correctly. The policy's expanded [data-protection section](https://calendarhours.austin.kim/privacy/#data-protection) names the protected data and explains HTTPS encryption in transit, token isolation, sign-in and concurrent-update validation, temporary event-data processing, and token removal/revocation requests. It explicitly distinguishes these protections from application-level encryption at rest, which the extension does not provide. The top of the policy links directly to the section.
+
+The policy URL is unchanged. [Google's guidance](https://support.google.com/cloud/answer/13806988?hl=en) says to reply to the existing verification email after updating the policy; update the Cloud Console URL only if it changes. The verification panel also asks for a reply after resolving the issue. Do not restart or cancel the existing review. Prepare one reply draft from `austink765@gmail.com` in the latest verification thread with the direct section link; the user reviews and sends it. A policy deployment or draft is not Google approval.
