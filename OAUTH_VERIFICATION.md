@@ -7,7 +7,7 @@ Calendar Hours uses project `calendar-hours-512821` and the Web Store extension 
 | Scope | Use | Why narrower access is insufficient |
 | --- | --- | --- |
 | `calendar.events` | Read a qualifying event after a move or resize, then update only its title to show the new duration. Read selected calendar events for a user-triggered Workday draft import. | `calendar.events.readonly` cannot save the corrected title. `calendar.events.owned` would exclude editable shared calendars that the user selects. The extension does not request the broader `calendar` scope. |
-| `calendar.calendarlist.readonly` | Show the user's available calendars, names, and IDs in the optional Workday calendar picker. | The event scope does not provide calendar discovery; the extension needs no write access to the calendar list. |
+| `calendar.calendarlist.readonly` | Show the user's available calendars, names, and IDs in the optional Workday calendar picker. Retain the primary calendar ID locally as an account hint for silent connection renewal. | The event scope does not provide calendar discovery; the extension needs no write access to the calendar list. |
 
 The Google connection is optional for title formatting. Fast API saves and Workday import are separately enabled in settings. The browser extension sends direct title changes to Google Calendar. It sends selected event times, and descriptions only with the separate comment switch, to the user's Workday organization when the user starts an import. It has no developer backend, analytics, or stored event history. Tokens stay in local extension storage; preferences may use browser sync.
 

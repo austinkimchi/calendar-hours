@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.3 — Google connection renewal, November 19, 2026
+
+- Allow Google's delayed redirects to finish during silent OAuth renewal after inactivity in Edge and Chrome.
+- Renew a server-rejected access token once before requiring reconnection, sharing renewal between concurrent title saves and calendar reads.
+- Use the authenticated primary calendar ID as a local account hint for silent renewal; keep explicit account changes available.
+- Preserve existing grants on temporary connection failures and distinguish API quota errors from sign-in requirements.
+- Add Check connection to exercise silent renewal and verify Calendar access without editing events. Label the connected account-selection action Change Google account.
+- Cover expiry, service-worker restart, delayed redirects, HTTP 401 recovery, concurrent requests, account hints, and invalid OAuth responses with regression and integration tests.
+
 ## 0.3.2 — Reliability fixes, November 4, 2026
 
 - Accept Workday's zero-padded dates so imports and draft updates work on single-digit days and months while still rejecting a different date.

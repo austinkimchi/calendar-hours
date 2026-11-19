@@ -8,9 +8,19 @@
   const root = "https://www.googleapis.com/calendar/v3";
   async function read(path, accessToken, fetcher) {
     const response = await fetcher(root + path, { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" });
-    if ([401, 403, 404].includes(response.status)) {
-      const error = new Error(response.status === 404 ? "The selected calendar is no longer available. Choose a calendar in settings." : "Reconnect Google Calendar in settings to allow calendar imports.");
-      error.needsSetup = true; throw error;
+    if (response.status === 401) {
+      throw Object.assign(new Error("Google Calendar authorization expired."), { authExpired: true });
+    }
+    if (response.status === 403) {
+      const body = await response.json?.().catch(() => null);
+      const reasons = body?.error?.errors?.map(error => error.reason) || [];
+      if (reasons.some(reason => ["rateLimitExceeded", "userRateLimitExceeded", "quotaExceeded"].includes(reason))) {
+        throw new Error("Google Calendar is temporarily limiting requests. Try again later.");
+      }
+      throw Object.assign(new Error("Google Calendar denied access. Check this calendar's permissions in settings."), { needsSetup: true });
+    }
+    if (response.status === 404) {
+      throw Object.assign(new Error("The selected calendar is no longer available. Choose a calendar in settings."), { needsSetup: true });
     }
     if (!response.ok) throw new Error(`Google Calendar could not be read (${response.status}). Try again later.`);
     return response.json();

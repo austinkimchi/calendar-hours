@@ -1,6 +1,6 @@
 # Calendar Hours privacy policy
 
-Updated November 6, 2026. The [public privacy policy](https://calendarhours.austin.kim/privacy/) is the canonical version. [Jump to data protection](https://calendarhours.austin.kim/privacy/#data-protection).
+Updated November 19, 2026. The [public privacy policy](https://calendarhours.austin.kim/privacy/) is the canonical version. [Jump to data protection](https://calendarhours.austin.kim/privacy/#data-protection).
 
 ## Google user data accessed
 
@@ -8,7 +8,7 @@ On an open Google Calendar page, Calendar Hours reads visible event titles, date
 
 ## How Google user data is used
 
-Calendar Hours calculates elapsed hours or minutes and suggests or inserts a duration in an event title. When you move or resize a qualifying one-time event and enable automatic updates, it can read that event through the Google Calendar API and save a corrected **title only**; it does not change the event's start or end time. If the direct save cannot run, it may open an inactive Google Calendar editor tab and use Calendar's Save button. An event you are editing yourself still needs your Save action. The calendar list is used only to populate the optional Workday calendar picker.
+Calendar Hours calculates elapsed hours or minutes and suggests or inserts a duration in an event title. When you move or resize a qualifying one-time event and enable automatic updates, it can read that event through the Google Calendar API and save a corrected **title only**; it does not change the event's start or end time. If the direct save cannot run, it may open an inactive Google Calendar editor tab and use Calendar's Save button. An event you are editing yourself still needs your Save action. The calendar list populates the optional Workday calendar picker. Its primary calendar ID is also kept locally as an account hint so silent sign-in renewal selects the same Google account.
 
 When you start **Auto-fill from Calendar** in Workday Enter Time, the extension reads events from your selected calendars for the displayed dates, matches your configured phrase, and enters their time intervals into Workday as unsubmitted drafts for your review. It never submits a time card. Time zone calculations use Calendar's displayed zone or your device's zone locally; the extension does not change either setting.
 
@@ -16,7 +16,7 @@ When you start **Auto-fill from Calendar** in Workday Enter Time, the extension 
 
 Direct event reads and title changes are sent between the extension and Google Calendar. If you start a Workday import, the extension transfers matching event time intervals to *your* Workday organization through its visible form. Event descriptions are transferred as comments of up to 1,000 characters only if you separately enable **Import event descriptions as comments**; event titles are not copied into comments. Your Workday organization controls data entered into Workday under its own policies.
 
-Selected Google calendar IDs and names are stored as preferences in browser sync storage. If you use browser sync, Chrome or Edge may transfer these preferences through its own sync service under your browser account. Google OAuth access tokens stay in local extension storage and are not included in browser sync. The Calendar Hours developer does not receive, sell, or share your Google Calendar events or tokens with advertisers or data brokers. The extension has no analytics, advertising, developer account system, Firebase service, or developer-operated data server.
+Selected Google calendar IDs and names are stored as preferences in browser sync storage. If you use browser sync, Chrome or Edge may transfer these preferences through its own sync service under your browser account. Google OAuth access tokens and the primary calendar ID used for sign-in renewal stay in local extension storage and are not included in browser sync. The Calendar Hours developer does not receive, sell, or share your Google Calendar events or tokens with advertisers or data brokers. The extension has no analytics, advertising, developer account system, Firebase service, or developer-operated data server.
 
 ## Data protection: how we secure Google user data
 
@@ -34,7 +34,7 @@ Local storage protection relies on the browser's extension isolation and your de
 
 Calendar Hours does not maintain a developer copy or history of Google Calendar events. Event data used for a calculation, direct save, or Workday import is held temporarily in browser memory and is not persisted in extension storage. An updated title remains in your Google Calendar until you edit or delete it there. Workday drafts remain with your organization until you change or delete them in Workday.
 
-The short-lived Google OAuth access token remains in local extension storage until you disconnect Google Calendar, remove the extension, or a later authorization replaces it; an expired token cannot be used for API access. **Disconnect Google Calendar** in extension settings removes the local token and asks Google to revoke it. Removing the extension clears its local storage. Formatting options, matching phrases, selected calendar IDs and names, and Workday preferences remain in browser sync storage until you change or clear them; your browser provider controls any synced copies and their retention. Clear extension sync data through your browser's sync controls if you also want those copies removed.
+The short-lived Google OAuth access token remains in local extension storage until you disconnect Google Calendar, remove the extension, or a later authorization replaces it; an expired token cannot be used for API access. **Disconnect Google Calendar** in extension settings removes the local token and account hint and asks Google to revoke the token. Removing the extension clears its local storage. Formatting options, matching phrases, selected calendar IDs and names, and Workday preferences remain in browser sync storage until you change or clear them; your browser provider controls any synced copies and their retention. Clear extension sync data through your browser's sync controls if you also want those copies removed.
 
 ## Your controls and contact
 

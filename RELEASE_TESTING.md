@@ -1,4 +1,33 @@
-# v0.3.2 release verification
+# v0.3.3 release verification
+
+## Connection renewal audit
+
+The prior flow used Chromium's default first-page-load abort for non-interactive authorization. A Google JavaScript redirect could therefore end silent renewal before a token was returned. A separate HTTP 401 path never renewed a server-rejected token, and Workday classified every HTTP 403 as a reconnection problem.
+
+- Silent renewal now allows up to 15 seconds for redirects, with no interactive window. Chrome/Edge 113 or later is required for these identity API options.
+- Calendar saves, calendar discovery, and Workday event reads retry once with a renewed token after HTTP 401. Concurrent requests share renewal; stale responses cannot replace newer credentials.
+- The authenticated primary calendar ID is saved locally with its grant as an account hint. An explicit account change clears the old hint. No additional OAuth scopes or browser permissions are requested.
+- Temporary connection/quota failures preserve the grant and request a retry, while real login/consent failures require explicit reconnection.
+
+## Automated verification
+
+- `npm test`: 173 passing tests. New integration tests execute the real background, OAuth, Calendar-save, and Workday-read modules together with controlled Google/browser responses.
+- Coverage includes expiry after inactivity, a fresh service-worker context, delayed JavaScript redirects, cached-token HTTP 401 recovery, bounded retries, concurrent renewal, quota failures, account-hint ownership, and malformed OAuth responses.
+- Tests use a simulated clock for expiry; no live Google credentials are altered to force expiry.
+- Release packaging retains the registered Web Store ID and the existing OAuth scopes and host permissions.
+
+## Live Edge verification — November 19, 2026
+
+- Installed a temporary unpacked v0.3.3 copy using the already-registered development extension ID. The published v0.3.2 installation remains separate.
+- Connected through the actual Google account chooser and verified a successful Calendar API read in settings.
+- Check connection exercised real non-interactive token renewal and then a successful Calendar API read. Settings displayed “Connection renewed. Google Calendar is ready.” without a sign-in window.
+- Reloaded the unpacked extension to restart its service worker, reopened settings, and repeated Check connection successfully with the saved grant. No interactive sign-in was needed after the restart.
+- Disabled the temporary unpacked copy after testing. The published v0.3.2 copy remains enabled while this patch goes through release review.
+- Calendar events and Workday entries were not changed by this connection test. Actual overnight browser inactivity and a signed-out Google web session are separate conditions; Google can still require sign-in if its own session expires or access is revoked.
+
+---
+
+# v0.3.2 release verification (historical)
 
 ## Reliability audit
 

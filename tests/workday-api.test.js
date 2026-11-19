@@ -18,8 +18,14 @@ test('events read only the configured calendar and exact displayed dates, expand
   assert.equal(urls[1].searchParams.get('pageToken'),'p2');assert.equal(result[0].id,undefined);assert.equal(result[0].attendees,undefined);
 });
 test('revoked access and removed calendars lead back to setup',async()=>{
-  for(const status of [401,403,404]) await assert.rejects(api.listCalendars({accessToken:'test',fetcher:async()=>({ok:false,status})}),e=>e.needsSetup===true);
+  await assert.rejects(api.listCalendars({accessToken:'test',fetcher:async()=>({ok:false,status:401})}),e=>e.authExpired===true && !e.needsSetup);
+  for(const status of [403,404]) await assert.rejects(api.listCalendars({accessToken:'test',fetcher:async()=>({ok:false,status})}),e=>e.needsSetup===true);
   await assert.rejects(api.listCalendars({accessToken:'test',fetcher:async()=>({ok:false,status:500})}),e=>!e.needsSetup);
+});
+test('quota errors do not tell users to reconnect a working Google account',async()=>{
+ for(const reason of ['rateLimitExceeded','userRateLimitExceeded','quotaExceeded']) {
+  await assert.rejects(api.listCalendars({accessToken:'test',fetcher:async()=>({ok:false,status:403,json:async()=>({error:{errors:[{reason}]}})})}),error=>!error.needsSetup && !error.authExpired && /temporarily/.test(error.message));
+ }
 });
 test('Calendar descriptions are forwarded to Workday only when comment importing is enabled',async()=>{
   for(const importComments of [false,true]) {
