@@ -35,12 +35,13 @@
     return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
 
-  function authorizationUrl({ clientId, redirectUri, state, interactive, scopes = sharedScopes }) {
+  function authorizationUrl({ clientId, redirectUri, state, interactive, scopes = sharedScopes, loginHint }) {
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.search = new URLSearchParams({
       client_id: clientId, redirect_uri: redirectUri, response_type: "token", scope: scopes.join(" "),
       state, prompt: interactive ? "select_account" : "none"
     }).toString();
+    if (!interactive && loginHint) url.searchParams.set("login_hint", loginHint);
     return url.href;
   }
 
@@ -58,21 +59,38 @@
     return (await chromeApi.storage.local.get(storageKey))[storageKey] || null;
   }
 
-  async function authorize(chromeApi = chrome, cryptoApi = crypto, interactive = true, scopes = sharedScopes, revision = connectionRevision) {
+  async function authorize(chromeApi = chrome, cryptoApi = crypto, interactive = true, scopes = sharedScopes, revision = connectionRevision, loginHint) {
     if (disconnectInFlight) await disconnectInFlight;
     if (revision !== connectionRevision) throw new Error("Google connection changed before sign-in started. Try connecting again.");
     const clientId = clientIdFor(chromeApi.runtime.id);
     if (!clientId) throw new Error("This extension ID has no Calendar Hours OAuth client");
     const redirectUri = chromeApi.identity.getRedirectURL();
     const state = randomState(cryptoApi);
-    const url = authorizationUrl({ clientId, redirectUri, state, interactive, scopes });
-    const responseUrl = await chromeApi.identity.launchWebAuthFlow({ url, interactive });
+    const url = authorizationUrl({ clientId, redirectUri, state, interactive, scopes, loginHint });
+    let responseUrl;
+    try {
+      // Edge/Chromium otherwise aborts as soon as Google's first page loads,
+      // before its JavaScript redirect can complete silent token renewal.
+      responseUrl = await chromeApi.identity.launchWebAuthFlow({ url, interactive,
+        ...(!interactive ? { abortOnLoadForNonInteractive: false, timeoutMsForNonInteractive: 15000 } : {}) });
+    } catch (error) {
+      if (interactive) throw error;
+      const needsSetup = /user interaction required/i.test(error?.message || "");
+      throw Object.assign(new Error(needsSetup
+        ? "Google requires you to reconnect Calendar Hours in settings."
+        : "Google Calendar connection could not be renewed. Check your connection and try again."), { needsSetup });
+    }
     if (!responseUrl) throw new Error("Google sign-in was cancelled");
     const response = new URL(responseUrl);
     const values = new URLSearchParams(response.hash.slice(1));
     if (response.origin !== new URL(redirectUri).origin || response.pathname !== new URL(redirectUri).pathname ||
         values.get("state") !== state) throw new Error("Google sign-in response did not match this request");
-    if (values.get("error")) throw new Error(`Google sign-in did not grant access (${values.get("error")})`);
+    if (values.get("error")) {
+      const needsSetup = ["login_required", "interaction_required", "consent_required", "account_selection_required", "access_denied"].includes(values.get("error"));
+      throw Object.assign(new Error(needsSetup
+        ? "Google requires you to reconnect Calendar Hours in settings."
+        : "Google could not renew Calendar access. Try again later."), { needsSetup });
+    }
     const accessToken = values.get("access_token");
     const expiresIn = Number(values.get("expires_in"));
     if (!accessToken || values.get("token_type")?.toLowerCase() !== "bearer" ||
@@ -84,7 +102,8 @@
       if (revision !== connectionRevision) throw new Error("Google connection changed before sign-in finished. Try connecting again.");
       await chromeApi.storage.local.set({ [storageKey]: {
         accessToken, expiresAt: Date.now() + Math.max(0, expiresIn - 60) * 1000,
-        extensionId: chromeApi.runtime.id, scopes: grantedScopes
+        extensionId: chromeApi.runtime.id, scopes: grantedScopes,
+        ...(!interactive && loginHint ? { loginHint } : {})
       } });
     });
     if (revision !== connectionRevision) throw new Error("Google connection changed before sign-in finished. Try connecting again.");
@@ -101,21 +120,42 @@
     return connectionInFlight;
   }
 
-  async function getAccessToken(chromeApi = chrome, cryptoApi = crypto) {
+  async function getAccessToken(chromeApi = chrome, cryptoApi = crypto, rejectedToken) {
     if (disconnectInFlight) return null;
     const revision = connectionRevision;
     const value = await stored(chromeApi);
     if (revision !== connectionRevision) return null;
     if (!value || value.extensionId !== chromeApi.runtime.id) return null;
-    if (value.accessToken && value.expiresAt > Date.now()) return value.accessToken;
+    if (value.accessToken && value.expiresAt > Date.now() && value.accessToken !== rejectedToken) return value.accessToken;
     if (!renewalInFlight) {
-      const pending = authorize(chromeApi, cryptoApi, false, value.scopes || [scope], revision)
+      const pending = authorize(chromeApi, cryptoApi, false, value.scopes || [scope], revision, value.loginHint)
         .then(() => stored(chromeApi).then(next => revision === connectionRevision ? next?.accessToken || null : null))
-        .catch(() => null)
+        .catch(error => {
+          if (revision !== connectionRevision || error.needsSetup) return null;
+          throw error;
+        })
         .finally(() => { if (renewalInFlight === pending) renewalInFlight = null; });
       renewalInFlight = pending;
     }
     return renewalInFlight;
+  }
+
+  function refreshAccessToken(rejectedToken, chromeApi = chrome, cryptoApi = crypto) {
+    // A late 401 for an old token must not invalidate a newer connection.
+    return getAccessToken(chromeApi, cryptoApi, rejectedToken);
+  }
+
+  async function rememberAccount(accessToken, calendarId, chromeApi = chrome) {
+    // The authenticated primary calendar ID is an account hint, not a token.
+    // Store it only locally, alongside the grant that returned it.
+    if (typeof calendarId !== "string" || !/^[^\s@]+@[^\s@]+$/.test(calendarId) || calendarId.length > 254) return;
+    const revision = connectionRevision;
+    await changeCredentials(async () => {
+      const value = await stored(chromeApi);
+      if (revision !== connectionRevision || disconnectInFlight || !value ||
+          value.extensionId !== chromeApi.runtime.id || value.accessToken !== accessToken || value.loginHint === calendarId) return;
+      await chromeApi.storage.local.set({ [storageKey]: { ...value, loginHint: calendarId } });
+    });
   }
 
   async function status(chromeApi = chrome) {
@@ -145,5 +185,5 @@
     return pending;
   }
 
-  return { clientIdFor, authorizationUrl, connect, getAccessToken, status, disconnect };
+  return { clientIdFor, authorizationUrl, connect, getAccessToken, refreshAccessToken, rememberAccount, status, disconnect };
 });

@@ -83,16 +83,13 @@ async function syncGridEvent(message, sender) {
   }
   if (settings?.apiSync && message.startIso && message.endIso) {
     try {
-      const accessToken = await globalThis.CalendarHoursOAuth.getAccessToken();
-      if (accessToken) {
-        const result = await globalThis.CalendarHoursApiSync.syncTitle({
-          gridId: message.id, title: message.title, startIso: message.startIso,
-          endIso: message.endIso, settings, accessToken,
-          core: globalThis.CalendarHoursCore
-        });
-        if (result.ok) return result;
-        console.warn("Calendar Hours API save unavailable; trying the Calendar editor:", result.reason);
-      }
+      const result = await withCalendarToken(accessToken => globalThis.CalendarHoursApiSync.syncTitle({
+        gridId: message.id, title: message.title, startIso: message.startIso,
+        endIso: message.endIso, settings, accessToken,
+        core: globalThis.CalendarHoursCore
+      }));
+      if (result.ok) return result;
+      console.warn("Calendar Hours API save unavailable; trying the Calendar editor:", result.reason);
     } catch (error) {
       console.warn("Calendar Hours API save unavailable; trying the Calendar editor:", error);
     }
@@ -102,6 +99,27 @@ async function syncGridEvent(message, sender) {
 
 async function connectCalendar() {
   return globalThis.CalendarHoursOAuth.connect();
+}
+
+function reconnectRequired() {
+  return Object.assign(new Error("Reconnect Google Calendar in Calendar Hours settings."), { needsSetup: true, needsReconnect: true });
+}
+
+async function withCalendarToken(action) {
+  const oauth = globalThis.CalendarHoursOAuth;
+  let token = await oauth.getAccessToken();
+  if (!token) throw reconnectRequired();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const result = await action(token);
+      if (!result?.authExpired) return result;
+    } catch (error) {
+      if (!error.authExpired) throw error;
+    }
+    if (attempt === 1) throw reconnectRequired();
+    token = await oauth.refreshAccessToken(token);
+    if (!token) throw reconnectRequired();
+  }
 }
 
 function trustedWorkday(sender) {
@@ -120,10 +138,24 @@ function trustedSettings(sender) {
 
 async function workdayCalendars() {
   const status = await globalThis.CalendarHoursOAuth.status();
-  if (!status.calendarListAccess) return { ok: false, needsSetup: true, reason: "Connect Google Calendar in General to choose an import calendar." };
-  const accessToken = await globalThis.CalendarHoursOAuth.getAccessToken();
-  if (!accessToken) return { ok: false, needsSetup: true, reason: "Reconnect Google Calendar in General to choose your import calendar." };
-  return { ok: true, calendars: await globalThis.CalendarHoursWorkdayApi.listCalendars({ accessToken }) };
+  if (!status.calendarListAccess) return { ok: false, needsSetup: true, needsReconnect: true, reason: "Connect Google Calendar in General to choose an import calendar." };
+  return withCalendarToken(async accessToken => {
+    const calendars = await globalThis.CalendarHoursWorkdayApi.listCalendars({ accessToken });
+    const primary = calendars.find(calendar => calendar.primary);
+    if (primary) await globalThis.CalendarHoursOAuth.rememberAccount(accessToken, primary.id);
+    return { ok: true, calendars };
+  });
+}
+
+async function checkCalendarConnection() {
+  const oauth = globalThis.CalendarHoursOAuth;
+  // This user-triggered check exercises actual renewal without revoking the
+  // grant, changing accounts, opening a consent window or editing any event.
+  const token = await oauth.getAccessToken();
+  if (!token || !await oauth.refreshAccessToken(token)) throw reconnectRequired();
+  const result = await workdayCalendars();
+  if (!result.ok) return result;
+  return { ok: true, ...await oauth.status() };
 }
 
 async function workdayEvents(message) {
@@ -131,9 +163,7 @@ async function workdayEvents(message) {
   core.validateDates(message.dates);
   const settings = core.settingsFromStorage(await chrome.storage.sync.get(null));
   if (!core.configured(settings)) return { ok: false, needsSetup: true, reason: "Choose your calendar, import phrase and time zone in Calendar Hours settings." };
-  const accessToken = await globalThis.CalendarHoursOAuth.getAccessToken();
-  if (!accessToken) return { ok: false, needsSetup: true, reason: "Reconnect Google Calendar in Calendar Hours settings." };
-  const events = await globalThis.CalendarHoursWorkdayApi.listEvents({ accessToken, settings, dates: message.dates, core });
+  const events = await withCalendarToken(accessToken => globalThis.CalendarHoursWorkdayApi.listEvents({ accessToken, settings, dates: message.dates, core }));
   return { ok: true, settings, events };
 }
 
@@ -141,6 +171,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const handlers = {
     CALENDAR_HOURS_GRID_SYNC: () => syncGridEvent(message, sender),
     CALENDAR_HOURS_API_STATUS: () => globalThis.CalendarHoursOAuth.status(),
+    CALENDAR_HOURS_API_CHECK: checkCalendarConnection,
     CALENDAR_HOURS_API_CONNECT: connectCalendar,
     CALENDAR_HOURS_API_DISCONNECT: () => globalThis.CalendarHoursOAuth.disconnect(),
     CALENDAR_HOURS_WORKDAY_CALENDARS: () => workdayCalendars(),
@@ -162,7 +193,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   }
   Promise.resolve().then(handle).then(respond, error => {
     // Do not log request payloads, calendar events or credentials.
-    respond({ ok: false, reason: error.message, needsSetup: !!error.needsSetup });
+    respond({ ok: false, reason: error.message, needsSetup: !!error.needsSetup, needsReconnect: !!error.needsReconnect });
   });
   return true;
 });

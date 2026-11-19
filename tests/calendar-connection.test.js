@@ -14,6 +14,7 @@ async function harness({connected=false,calendarListAccess=false,fail=false}={})
    connected=calendarListAccess=true;return {connected:true,calendarListAccess:true};
   }
   if(message.type==='CALENDAR_HOURS_API_DISCONNECT'){connected=calendarListAccess=false;return {connected:false};}
+  if(message.type==='CALENDAR_HOURS_API_CHECK')return fail?{ok:false,reason:'Temporary connection problem'}:{ok:true,connected:true,calendarListAccess:true};
   if(message.type==='CALENDAR_HOURS_WORKDAY_CALENDARS')return connected&&calendarListAccess
    ?{ok:true,calendars:[{id:'work-test',name:'Work',timeZone:'America/Los_Angeles'}]}
    :{ok:false,needsSetup:true,reason:'Connect Google Calendar in General.'};
@@ -43,6 +44,19 @@ test('one shared connect populates Workday without a second OAuth call or prefer
  f.doc.querySelector('#workday-refresh').click();await settle();
  assert.equal(f.messages.filter(type=>type.endsWith('_CONNECT')).length,1,'refreshing the calendar list never reconnects');
  f.dom.window.close();
+});
+test('Check connection renews without launching an explicit connection or modifying settings',async()=>{
+ for(const fail of [false,true]) {
+  const f=await harness({connected:true,calendarListAccess:true,fail});
+  assert.equal(f.doc.querySelector('#connect-api').textContent,'Change Google account');
+  f.doc.querySelector('#check-api').click();await settle();await settle();
+  assert.equal(f.messages.filter(type=>type==='CALENDAR_HOURS_API_CHECK').length,1);
+  assert.equal(f.messages.filter(type=>type==='CALENDAR_HOURS_API_CONNECT').length,0);
+  assert.match(f.doc.querySelector('#api-status').textContent,fail?/Temporary connection problem/:/Connection renewed/);
+  assert.equal(f.doc.querySelector('#check-api').disabled,false);
+  assert.equal(f.writes.length,0);
+  f.dom.window.close();
+ }
 });
 test('shared disconnect removes calendar access without erasing saved import choices',async()=>{
  const f=await harness({connected:true,calendarListAccess:true});

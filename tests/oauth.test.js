@@ -144,3 +144,83 @@ test('a late silent renewal cannot overwrite a newer explicit connection',async(
  assert.equal(h.saved,connected);
  assert.equal((await api.status(h.chrome)).calendarListAccess,true);
 });
+
+function freshOAuth() {
+ delete require.cache[require.resolve('../extension/oauth.js')];
+ return require('../extension/oauth.js');
+}
+const expiredGrant = () => ({accessToken:'old-test-token', extensionId:'oaainlebjpmnglnfajgnenicaeamaljo', expiresAt:0,
+ scopes:['https://www.googleapis.com/auth/calendar.events','https://www.googleapis.com/auth/calendar.calendarlist.readonly']});
+
+test('expired grants survive a worker restart and allow Google a delayed JavaScript redirect without a popup',async()=>{
+ const h=sharedHarness(expiredGrant());
+ h.chrome.identity.launchWebAuthFlow=async details=>{
+  h.launches.push(details);
+  // Model Chromium's default first-page-load abort, which broke renewal.
+  if(details.abortOnLoadForNonInteractive!==false)throw new Error('User interaction required.');
+  assert.equal(details.interactive,false);
+  assert.equal(details.timeoutMsForNonInteractive,15000);
+  const u=new URL(details.url);
+  assert.equal(u.searchParams.get('prompt'),'none');
+  await new Promise(resolve=>setImmediate(resolve));
+  return `${h.chrome.identity.getRedirectURL()}#access_token=renewed&token_type=Bearer&expires_in=3600&state=${u.searchParams.get('state')}`;
+ };
+ assert.equal(await freshOAuth().getAccessToken(h.chrome,webcrypto),'renewed');
+ assert.equal(await freshOAuth().getAccessToken(h.chrome,webcrypto),'renewed','new worker reuses the saved grant');
+ assert.equal(h.launches.length,1);
+});
+
+test('temporary renewal failures preserve the grant and retry without requiring consent',async()=>{
+ const api=freshOAuth(),h=sharedHarness(expiredGrant());
+ const launch=h.chrome.identity.launchWebAuthFlow;
+ h.chrome.identity.launchWebAuthFlow=async()=>{throw new Error('net::ERR_INTERNET_DISCONNECTED')};
+ await assert.rejects(api.getAccessToken(h.chrome,webcrypto),error=>!error.needsSetup && /try again/i.test(error.message));
+ assert.equal(h.saved.accessToken,'old-test-token');
+ h.chrome.identity.launchWebAuthFlow=launch;
+ assert.equal(await api.getAccessToken(h.chrome,webcrypto),'shared');
+ assert.equal(h.launches[0].interactive,false);
+});
+
+test('a real login-required response requests reconnection without erasing preferences or opening a popup',async()=>{
+ const api=freshOAuth(),h=sharedHarness(expiredGrant()),previous=h.saved;
+ h.chrome.identity.launchWebAuthFlow=async({url,interactive})=>{
+  assert.equal(interactive,false);
+  return `${h.chrome.identity.getRedirectURL()}#error=login_required&state=${new URL(url).searchParams.get('state')}`;
+ };
+ assert.equal(await api.getAccessToken(h.chrome,webcrypto),null);
+ assert.equal(h.saved,previous);
+});
+
+test('concurrent expired requests share renewal and a late 401 reuses the newly issued token',async()=>{
+ const api=freshOAuth(),h=sharedHarness(expiredGrant());
+ let finish;h.hold=new Promise(resolve=>{finish=resolve});
+ const first=api.getAccessToken(h.chrome,webcrypto),second=api.refreshAccessToken('old-test-token',h.chrome,webcrypto);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.launches.length,1);finish();
+ assert.deepEqual(await Promise.all([first,second]),['shared','shared']);
+ assert.equal(await api.refreshAccessToken('old-test-token',h.chrome,webcrypto),'shared');
+ assert.equal(h.launches.length,1);
+});
+
+test('primary calendar hint stays local, follows its grant, and selects the same account on silent renewal',async()=>{
+ const api=freshOAuth(),h=sharedHarness(expiredGrant());
+ await api.rememberAccount('old-test-token','owner@example.test',h.chrome);
+ assert.equal(h.saved.loginHint,'owner@example.test');
+ assert.equal(await api.getAccessToken(h.chrome,webcrypto),'shared');
+ assert.equal(h.launches[0].u.searchParams.get('login_hint'),'owner@example.test');
+ assert.equal(h.saved.loginHint,'owner@example.test');
+ await api.rememberAccount('old-test-token','stale@example.test',h.chrome);
+ assert.equal(h.saved.loginHint,'owner@example.test','old responses cannot relabel a new grant');
+ await api.connect(h.chrome,webcrypto);
+ assert.equal(h.launches[1].u.searchParams.has('login_hint'),false,'explicit account changes remain available');
+ assert.equal(h.saved.loginHint,undefined,'an explicit new connection cannot inherit the previous account');
+});
+
+test('renewal still rejects mismatched state and redirect before saving credentials',async()=>{
+ for(const wrong of ['state','redirect']) {
+  const api=freshOAuth(),h=sharedHarness(expiredGrant()),previous=h.saved;
+  h.chrome.identity.launchWebAuthFlow=async({url})=>`${wrong==='redirect'?'https://unexpected.example/':h.chrome.identity.getRedirectURL()}#access_token=unsafe&token_type=Bearer&expires_in=3600&state=${wrong==='state'?'wrong':new URL(url).searchParams.get('state')}`;
+  await assert.rejects(api.getAccessToken(h.chrome,webcrypto),/did not match/);
+  assert.equal(h.saved,previous);
+ }
+});

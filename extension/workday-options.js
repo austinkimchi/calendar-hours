@@ -127,7 +127,7 @@
     try {
       const result = await chrome.runtime.sendMessage({ type: "CALENDAR_HOURS_WORKDAY_CALENDARS" });
       if (revision !== loadRevision) return;
-      if (!result?.ok) throw Object.assign(new Error(result?.reason || "Google Calendar is unavailable"), { needsSetup: !!result?.needsSetup });
+      if (!result?.ok) throw Object.assign(new Error(result?.reason || "Google Calendar is unavailable"), { needsSetup: !!result?.needsSetup, needsReconnect: !!result?.needsReconnect });
       calendars = result.calendars;
       renderCalendars(sync.values().calendarIds);
       visible = rawValues();
@@ -139,7 +139,7 @@
       ready = false;
       connection.textContent = error.message;
       manageConnection.hidden = !error.needsSetup;
-      if (error.needsSetup) document.dispatchEvent(new CustomEvent("calendar-hours-connection-required"));
+      if (error.needsReconnect) document.dispatchEvent(new CustomEvent("calendar-hours-connection-required"));
     } finally { if (revision === loadRevision) refresh.disabled = false; }
   }
 
