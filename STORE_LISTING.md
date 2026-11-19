@@ -1,5 +1,15 @@
 # Chrome Web Store submission notes
 
+## 0.3.3 connection renewal update — submitted November 19, 2026
+
+Package: `dist/calendar-hours-0.3.3.zip`, SHA-256 `5bff7e4b13d405698f04b066d243393d469819f5adcfca7bf536c21bd04edf3b`. This is the byte-verified GitHub release package; the 173-test suite, three-time-zone CI, and live Edge silent-renewal checks are documented in [release verification](RELEASE_TESTING.md).
+
+The PKimchi dashboard accepted the package and showed **Draft 0.3.3** and **Published 0.3.2**. After submission, Google displayed “Your extension was submitted for review,” and the destination Status page confirmed **Pending review**. Automatic publication after approval was selected. The unlisted visibility was retained. This confirms submission, not v0.3.3 publication.
+
+The listing release paragraph now describes silent renewal after inactivity, expired-token retries, temporary errors, and Check connection. Storage/identity justifications disclose the local primary-calendar account hint. Personally identifiable information is now selected because that hint is an account email; the existing authentication, user activity, and website content disclosures remain selected. Existing certifications, the domain privacy-policy URL, and three generic screenshots were retained. No OAuth scope or browser permission was added.
+
+Reviewer instructions now include Check connection and a repeat after reloading the extension. No reviewer credentials were added. Private dashboard screenshots remain outside the repository.
+
 ## 0.3.2 reliability update — submitted November 4, 2026
 
 Package: `dist/calendar-hours-0.3.2.zip`, SHA-256 `6b9e21479d5a708603001c3217aa06a30a410aad8a8839510a16253aacd7529d`.

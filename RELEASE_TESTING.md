@@ -25,6 +25,12 @@ The prior flow used Chromium's default first-page-load abort for non-interactive
 - Disabled the temporary unpacked copy after testing. The published v0.3.2 copy remains enabled while this patch goes through release review.
 - Calendar events and Workday entries were not changed by this connection test. Actual overnight browser inactivity and a signed-out Google web session are separate conditions; Google can still require sign-in if its own session expires or access is revoked.
 
+## Release destinations
+
+- GitHub v0.3.3 is published. Its downloaded ZIP matched the tested package byte for byte: SHA-256 `5bff7e4b13d405698f04b066d243393d469819f5adcfca7bf536c21bd04edf3b`.
+- On November 19, 2026, the same package was uploaded to the Chrome Web Store. The dashboard showed Draft 0.3.3 and Published 0.3.2 before submission, then confirmed Pending review after submission. Automatic publication after approval was selected; unlisted visibility was retained.
+- Listing release notes, local-account-hint disclosures, and reviewer instructions were saved before submission. No claim of v0.3.3 store publication or installed-client delivery is made at this stage.
+
 ---
 
 # v0.3.2 release verification (historical)
