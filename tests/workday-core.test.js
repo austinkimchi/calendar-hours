@@ -60,6 +60,32 @@ test('overnight and daylight-saving transition blocks are reported without guess
   const r=plan([{summary:'Work block',start:{dateTime:'2026-11-01T01:15:00-07:00'},end:{dateTime:'2026-11-01T01:45:00-08:00'}}],{dates:['2026-11-01'],now:Infinity});
   assert.equal(r.add.length,0);assert.equal(r.warnings.length,1);
 });
+test('exact next-day midnight belongs to the starting payroll day, including month and year boundaries',()=>{
+  for(const date of ['2026-11-19','2026-11-30','2026-12-31','2028-02-29']) {
+    const next=wd.addDays(date,1);
+    const source={summary:'Work block',start:{dateTime:`${date}T22:00:00Z`},end:{dateTime:`${next}T00:00:00Z`}};
+    const options={dates:[date],settings:{...settings,timeZone:'UTC'},now:Infinity};
+    const r=plan([source],options);
+    assert.deepEqual(r.add.map(b=>[b.date,b.start,b.end]),[[date,1320,1440]]);
+    assert.deepEqual(r.warnings,[]);assert.equal(wd.clock(r.add[0].end),'12:00 AM');
+    const rerun=plan([source],{...options,existing:[{date,start:1320,end:1440,type:'Hours'}]});
+    assert.equal(rerun.add.length,0);assert.equal(rerun.skipped[0].reason,'already-entered');
+    const following=plan([source],{...options,dates:[next]});
+    assert.equal(following.matched,0);assert.deepEqual(following.warnings,[]);
+  }
+});
+test('midnight support still rejects later overnight ends, multiple days, sub-minute and DST crossings',()=>{
+  for(const [start,end,timeZone] of [
+    ['2026-11-19T22:00:00Z','2026-11-20T00:01:00Z','UTC'],
+    ['2026-11-19T22:00:00Z','2026-11-21T00:00:00Z','UTC'],
+    ['2026-11-19T22:00:00Z','2026-11-20T00:00:01Z','UTC'],
+    ['2026-11-19T22:00:00.500Z','2026-11-20T00:00:00.500Z','UTC'],
+    ['2026-11-01T00:00:00-07:00','2026-11-02T00:00:00-08:00','America/Los_Angeles']
+  ]) {
+    const r=plan([{summary:'Work block',start:{dateTime:start},end:{dateTime:end}}],{dates:[start.slice(0,10)],settings:{...settings,timeZone},now:Infinity});
+    assert.equal(r.add.length,0);assert.equal(r.warnings.length,1);
+  }
+});
 test('displayed week, previous week and single day use their actual dates including year boundaries',()=>{
   const labels=['Sun, 12/27','Mon, 12/28','Tue, 12/29','Wed, 12/30','Thu, 12/31','Fri, 1/1','Sat, 1/2'];
   assert.deepEqual(wd.datesFromLabels('Dec 27, 2026 – Jan 2, 2027',labels),['2026-12-27','2026-12-28','2026-12-29','2026-12-30','2026-12-31','2027-01-01','2027-01-02']);

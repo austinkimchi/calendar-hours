@@ -117,16 +117,24 @@
       if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) { warnings.push("A matching event has invalid times."); continue; }
       if (!s.includeFuture && end > now) { skipped.push({ reason: "future", title: event.summary }); continue; }
       const a = parts(start, s.timeZone), b = parts(end, s.timeZone);
-      if (a.date > dates.at(-1) || b.date < dates[0]) continue;
+      // Event ends are exclusive: an entry ending at the first displayed
+      // midnight does not occupy any part of that day.
+      if (a.date > dates.at(-1) || b.date < dates[0] ||
+          (b.date === dates[0] && b.minute === 0 && b.second === 0 && end % 1000 === 0)) continue;
       const uniqueInstant = p => core.wallTimeInstant(core.parseCalendarDate(p.date),
         { hour: Math.floor(p.minute / 60), minute: p.minute % 60 }, s.timeZone);
-      // Workday's In/Out dialog has no date/offset fields. Fail closed on overnight or DST-ambiguous shifts.
-      if (a.date !== b.date || a.second || b.second || (end - start) / 60000 !== b.minute - a.minute ||
+      // Workday accepts 12 AM as the end of this day's block. Keep its real
+      // next-day instant for DST checks, but use 1440 for planning and overlap.
+      const endsAtMidnight = b.date === addDays(a.date, 1) && b.minute === 0;
+      const endMinute = endsAtMidnight ? 1440 : b.minute;
+      // Later overnight ends and ambiguous or shifted DST clocks still need
+      // manual entry because the In/Out dialog has no date/offset fields.
+      if ((a.date !== b.date && !endsAtMidnight) || a.second || b.second || (end - start) / 60000 !== endMinute - a.minute ||
           uniqueInstant(a) !== start || uniqueInstant(b) !== end) {
         warnings.push(`${event.summary}: overnight, sub-minute or daylight-saving time block needs manual entry.`); continue;
       }
       if (!wanted.has(a.date)) continue;
-      blocks.push({ date: a.date, start: a.minute, end: b.minute, title: event.summary,
+      blocks.push({ date: a.date, start: a.minute, end: endMinute, title: event.summary,
         descriptions: s.importComments && typeof event.description === "string" ? [event.description] : [],
         startIso: event.start.dateTime, endIso: event.end.dateTime });
     }

@@ -27,7 +27,11 @@
     return { title, mode, dates, signature: `${mode}:${dates.join(",")}` };
   }
   function readExisting(doc, dates) {
-    const byMonthDay = new Map(dates.map(d => [d.slice(5).split("-").map(Number).join("-"), d]));
+    const monthDay = d => d.slice(5).split("-").map(Number).join("-");
+    // Calendar-date arithmetic only; the device time zone must not change
+    // which payroll day owns a midnight endpoint, including on New Year's.
+    const shiftDate = (d, days) => new Date(Date.parse(`${d}T00:00:00Z`) + days * 86400000).toISOString().slice(0, 10);
+    const byMonthDay = new Map([shiftDate(dates[0], -1), ...dates].map(d => [monthDay(d), d]));
     return [...doc.querySelectorAll(`${aid("calendarevent")}[role="link"]`)].flatMap(e => {
       const start = /^(\d+)-(\d+)-(\d+)-(\d+)$/.exec(e.getAttribute("data-automation-startdate") || "");
       const end = /^(\d+)-(\d+)-(\d+)-(\d+)$/.exec(e.getAttribute("data-automation-enddate") || "");
@@ -36,13 +40,21 @@
         throw new Error("An existing Workday block has unreadable times. Nothing was imported.");
       }
       const sameDay = +start[1] === +end[1] && +start[2] === +end[2];
-      // A crossing entry also occupies the following day, even when its start
-      // is outside the displayed range. Do not truncate it into an editable
-      // same-day draft or ignore its next-day coverage before overlap checks.
-      if (!sameDay) throw new Error("An existing Workday entry spans midnight. Import stopped; check overnight entries manually.");
       const date = byMonthDay.get(`${+start[1]}-${+start[2]}`);
-      if (!date) return [];
-      return [{ date, start: +start[3] * 60 + +start[4], end: +end[3] * 60 + +end[4],
+      const endsAtMidnight = date && !sameDay && +end[3] === 0 && +end[4] === 0 &&
+        monthDay(shiftDate(date, 1)) === `${+end[1]}-${+end[2]}`;
+      // Workday clips midnight blocks to 23:59 in its grid attributes. The
+      // displayed time range preserves the actual Out time; require its In
+      // time to agree too, so a real 11:59 PM ending is never rounded up.
+      const range = /^(0?[1-9]|1[0-2]):([0-5]\d)\s*(am|pm)\s*[-–]\s*12:00\s*am$/i.exec(
+        e.querySelector(aid("calendarAppointmentSubtitle"))?.textContent.trim() || "");
+      const clippedMidnight = sameDay && +end[3] === 23 && +end[4] === 59 && range &&
+        (+range[1] % 12 + (range[3].toLowerCase() === "pm" ? 12 : 0)) * 60 + +range[2] === +start[3] * 60 + +start[4];
+      // An exact midnight ending has no next-day coverage. Other crossing
+      // entries still stop import, even if they start outside the view.
+      if (!sameDay && !endsAtMidnight) throw new Error("An existing Workday entry spans midnight. Import stopped; check overnight entries manually.");
+      if (!date || !dates.includes(date)) return [];
+      return [{ date, start: +start[3] * 60 + +start[4], end: endsAtMidnight || clippedMidnight ? 1440 : +end[3] * 60 + +end[4],
         type: e.querySelector(aid("calendarAppointmentTitle"))?.textContent.trim() || "",
         status: e.querySelector('[data-automation-icontype]')?.getAttribute("data-automation-icontype") || "",
         eventId: e.getAttribute("data-automation-eventid") || "", element: e }];
