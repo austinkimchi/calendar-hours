@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.4 — Workday midnight imports, November 22, 2026
 
 - Import work blocks ending exactly at midnight on their starting payroll day, including month/year boundaries and when the device is in another time zone.
 - Recognize Workday's midnight display even when its grid boundary is clipped to 11:59 PM, so saved blocks verify correctly and repeated imports do not duplicate or rewrite them.
