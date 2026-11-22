@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-`npm test` covers Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` produces a verified `calendar-hours-0.3.0.zip`.
+`npm test` covers Workday/OAuth, settings accessibility, and existing title-formatting regressions. `npm run package` verifies the extension and produces a ZIP for the version declared in its manifest.
 
 The tests cover:
 
@@ -22,7 +22,7 @@ The tests cover:
 - Day/week date extraction, previous dates, cross-year weeks, and DST query boundaries.
 - Saved Workday zones remain fixed across device travel and source-event zones. Both occurrences of a repeated DST clock require manual entry, even when a block lies wholly within one occurrence. Ordinary daytime blocks on transition days remain importable. A multi-day block spanning the entire requested day is reported rather than silently ignored.
 - Exact minute times, lunch gaps, cancelled/all-day/future exclusions, duplicate reruns, source overlaps, and existing-entry conflicts.
-- Existing overnight entries stop imports before planning or opening another form, including entries starting outside the displayed day, cross-year entries, and midnight endpoints. They are never truncated into editable same-day drafts.
+- Exact next-day midnight endings belong to the starting payroll date and use minute 1440 for overlap checks. Existing grid entries accept next-day 00:00, same-day 24:00, and Workday's clipped 23:59 boundary only when the displayed range confirms midnight. Real 23:59 endings are not rounded up. Actual overnight entries still stop imports, including entries starting outside the displayed day or crossing a year.
 - Individual entry form saves; wrong-date/existing-entry dialogs and navigation changes stop before saving.
 - The date guard accepts both padded and unpadded month/day fields (for example, `11/02/2026` and `11/2/2026`) while rejecting another day, month, year, swapped fields, or malformed extra zeros. No device-time-zone conversion is used for the dialog date.
 - Overwrite existing times to match calendar defaults on and preserves explicitly saved off choices. One-to-one overlap updates edit unsubmitted drafts in place, recheck the target before saving, and skip the matching interval on rerun. Submitted/unknown statuses, different time types, split/merge ambiguity, and concurrent entry changes are rejected.
@@ -31,6 +31,16 @@ The tests cover:
 - Explicitly no Review, Submit, Next or Delete action in the import adapter.
 
 ## Live browser verification
+
+### November 22, 2026 midnight-end regression
+
+The planner previously rejected every event whose end date differed from its start date. A 10 PM–midnight block was therefore skipped even though Workday accepts it on the starting day. Regression tests failed before the fix and pass afterward. Exact midnight now uses minute 1440 for planning, while the real end instant remains subject to time-zone and DST validation.
+
+The first live import saved the missing two-hour Thursday block as Not Submitted, but exposed a second issue: Workday's grid attributes end at 23:59 while its displayed subtitle and form use 12:00 AM. The adapter now recognizes that specific clipped boundary from the displayed time range, including agreement with the start time. A separate failing-then-passing regression protects this case and real 11:59 PM endings.
+
+After reloading the final development build and Workday, the saved two-hour block remained on Thursday with the same entry identifier. Reimport reported `0 added, 0 updated, 8 already entered`, with no warning. The seven prior work entries and the time-off entry retained their displayed intervals; the new entry remained Not Submitted. No Review, Submit, Next, or Delete action was taken. The valid missing draft was retained. Screenshots and personal identifiers remain outside the repository.
+
+All 181 tests pass. The 44 core/adapter/import integration tests also pass under `America/Los_Angeles` and `Europe/Madrid`. Coverage includes Calendar API → planner → form saves, duplicate-free reruns, in-place updates to/from midnight, month/year/leap-day boundaries, travel across payroll dates, actual overnight rejection, DST and sub-minute guards. This is an unreleased patch; the store package was not replaced.
 
 ### November 2026 date-format regression
 

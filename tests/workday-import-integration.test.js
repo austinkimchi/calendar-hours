@@ -4,7 +4,7 @@ const wd=require('../extension/workday-core'),core=require('../extension/core'),
 const date='2026-10-19';
 const settings={enabled:true,calendarIds:['work','meals'],keyword:'SCU Block',timeZone:'UTC',timeType:'Hours',outReason:'Out',calendarMeals:true,updateOverlaps:true};
 const event=(a,b,summary='SCU Block')=>({summary,start:{dateTime:`${date}T${a}:00Z`},end:{dateTime:`${date}T${b}:00Z`}});
-function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false,overlayDelay=0,date:formDate=date}={}) {
+function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false,overlayDelay=0,date:formDate=date,midnightEncoding='clipped'}={}) {
  const [year,month,day]=formDate.split('-'),monthDay=`${+month}-${+day}`;
  const heading=new Intl.DateTimeFormat('en-US',{dateStyle:'full',timeZone:'UTC'}).format(new Date(`${formDate}T00:00:00Z`));
  const dom=new JSDOM(`<h1>Enter Time</h1><div data-automation-id="calendarToolbar"><button aria-label="Actions" aria-expanded="true" id="actions"></button><h2 data-automation-id="dateRangeTitle">${heading}</h2><span data-automation-id="calendarViewSelection">Day</span></div><div data-automation-id="weeklyBody"><div data-automation-id="dayCell-${formDate}">${+month}/${+day}</div></div><div class="gwt-appointment-panel">${'<div class="minor-time-interval"></div>'.repeat(96)}<div data-automation-id="timedDaySeparator_0"></div><div class="hit-target"></div></div><button>Review</button><button>Submit</button><button>Next</button>`,{url:'https://www.myworkday.com/scu/'});
@@ -14,12 +14,18 @@ function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false
  const actions=doc.querySelector('#actions');actions.getBoundingClientRect=()=>({left:800,top:0,width:100,height:40});
  const panel=doc.querySelector('.gwt-appointment-panel');panel.getBoundingClientRect=()=>({left:0,top:0,width:700,height:1440});doc.elementFromPoint=(x)=>x>800 ? (Date.now()<overlayUntil ? doc.body : actions) : panel.querySelector('.hit-target');
  const minutes=value=>{const [,h,m,ampm]=/^(\d+):(\d+) (AM|PM)$/.exec(value);return (+h%12+(ampm==='PM'?12:0))*60 + +m};
+ const dialogEnd=d=>{const end=minutes(d.querySelector('#out').value);return end===0 && minutes(d.querySelector('#in').value)>0 ? 1440 : end};
  function render(entry){
   let el=entry.el;
   if(!el){el=entry.el=doc.createElement('div');doc.body.append(el);el.onclick=()=>open(entry)}
   el.setAttribute('role','link');el.setAttribute('data-automation-id','calendarevent');el.setAttribute('data-automation-eventid',entry.id);
-  for(const part of ['start','end'])el.setAttribute(`data-automation-${part}date`,`${monthDay}-${Math.floor(entry[part]/60)}-${entry[part]%60}`);
-  el.innerHTML=`<span data-automation-id="calendarAppointmentTitle">Hours</span><span data-automation-icontype="${entry.status||'Not Submitted'}">${entry.status||'Not Submitted'}</span>`;
+  for(const part of ['start','end']) {
+   const rollover=part==='end' && entry.end===1440 && midnightEncoding==='next-day';
+   const day=rollover ? wd.addDays(formDate,1).slice(5).split('-').map(Number).join('-') : monthDay;
+   const minute=part==='end' && entry.end===1440 && midnightEncoding==='clipped' ? 1439 : entry[part];
+   el.setAttribute(`data-automation-${part}date`,`${day}-${rollover?0:Math.floor(minute/60)}-${minute%60}`);
+  }
+  el.innerHTML=`<span data-automation-id="calendarAppointmentTitle">Hours</span><span data-automation-id="calendarAppointmentSubtitle">${wd.clock(entry.start)} - ${wd.clock(entry.end)}</span><span data-automation-icontype="${entry.status||'Not Submitted'}">${entry.status||'Not Submitted'}</span>`;
  }
  function close(d){
   d.remove();
@@ -36,11 +42,11 @@ function fixture(initial=[],{ignoreReason=false,closingDelay=0,staleHidden=false
    const options=doc.createElement('div');options.setAttribute('role','listbox');
    for(const name of ['Out','Meal']){const el=doc.createElement('div');el.setAttribute('role','option');el.textContent=name;el.onclick=()=>{if(!ignoreReason){reason.querySelector('[data-automation-id=selectSelectedOption]').textContent=name;reason.lastElementChild.textContent=`${name} selected`;}options.remove()};options.append(el)}doc.body.append(options);
   };
-  d.querySelector('#out').onblur=()=>{d.querySelector('[data-automation-id=numericText]').textContent=String((minutes(d.querySelector('#out').value)-minutes(d.querySelector('#in').value))/60)};
+  d.querySelector('#out').onblur=()=>{d.querySelector('[data-automation-id=numericText]').textContent=String((dialogEnd(d)-minutes(d.querySelector('#in').value))/60)};
   for(const button of d.querySelectorAll('button'))button.onclick=()=>{
    if(button.textContent==='Delete'){forbidden.push('Delete');return}
    if(button.textContent==='Cancel'){cancelled.push(entry?.id||'new');close(d);return}
-   const value={id:entry?.id||`new-${entries.length}`,start:minutes(d.querySelector('#in').value),end:minutes(d.querySelector('#out').value),reason:reason.querySelector('[data-automation-id=selectSelectedOption]').textContent,comment:d.querySelector('textarea').value};saves.push({...value});
+   const value={id:entry?.id||`new-${entries.length}`,start:minutes(d.querySelector('#in').value),end:dialogEnd(d),reason:reason.querySelector('[data-automation-id=selectSelectedOption]').textContent,comment:d.querySelector('textarea').value};saves.push({...value});
    if(entry)Object.assign(entry,value);else{entry=value;entries.push(entry)}render(entry);close(d);
   };
  }
@@ -115,5 +121,43 @@ test('travel import keeps the configured payroll date through API, padded dialog
   assert.deepEqual(f.entries.map(e=>[e.start,e.end]),[[1380,1425]]);
   assert.deepEqual((await importEvents(f,events,s)).outcomes,[]);
   assert.equal(f.saves.length,2);assert.deepEqual(f.forbidden,[]);
+ } finally { f.dom.window.close(); }
+});
+for(const midnightEncoding of ['clipped','next-day','same-day-24']) test(`midnight API import creates Thursday's block and reruns without duplicates (${midnightEncoding})`,async()=>{
+ const payrollDate='2026-11-19',s={...settings,calendarIds:['work'],timeZone:'America/Los_Angeles'};
+ const f=fixture([],{date:payrollDate,midnightEncoding});
+ try {
+  // Both source timestamps are Friday in Madrid, but this is Thursday
+  // 10 PM through midnight in the configured California payroll zone.
+  const source={summary:'SCU Block (2 hours)',start:{dateTime:'2026-11-20T07:00:00+01:00'},end:{dateTime:'2026-11-20T09:00:00+01:00'}};
+  const events=await api.listEvents({accessToken:'test',core:wd,settings:s,dates:[payrollDate],fetcher:async url=>{
+   const params=new URL(url).searchParams;
+   assert.equal(params.get('timeMin'),'2026-11-19T08:00:00.000Z');
+   assert.equal(params.get('timeMax'),'2026-11-20T08:00:00.000Z');
+   return {ok:true,json:async()=>({items:[source]})};
+  }});
+  const first=await importEvents(f,events,s);
+  assert.deepEqual(first.outcomes,['added']);assert.deepEqual(first.result.warnings,[]);
+  assert.deepEqual(f.entries.map(e=>[e.start,e.end]),[[1320,1440]]);
+  assert.equal(first.result.add[0].date,payrollDate);
+  const rerun=await importEvents(f,events,s);
+  assert.deepEqual(rerun.outcomes,[]);assert.equal(rerun.result.skipped[0].reason,'already-entered');
+  assert.equal(f.saves.length,1);assert.deepEqual(f.forbidden,[]);
+ } finally { f.dom.window.close(); }
+});
+test('an existing midnight draft can update in place both to and from a midnight ending',async()=>{
+ const payrollDate='2026-11-19',s={...settings,calendarIds:['work'],timeZone:'UTC'};
+ const f=fixture([{id:'manual-midnight',start:1260,end:1440,comment:'Preserve me'}],{date:payrollDate});
+ try {
+  const source={summary:'SCU Block',start:{dateTime:'2026-11-19T22:00:00Z'},end:{dateTime:'2026-11-20T00:00:00Z'}};
+  assert.deepEqual((await importEvents(f,[source],s)).outcomes,['updated']);
+  assert.deepEqual((await importEvents(f,[source],s)).outcomes,[]);
+  source.end.dateTime='2026-11-19T23:30:00Z';
+  assert.deepEqual((await importEvents(f,[source],s)).outcomes,['updated']);
+  source.end.dateTime='2026-11-20T00:00:00Z';
+  assert.deepEqual((await importEvents(f,[source],s)).outcomes,['updated']);
+  assert.deepEqual((await importEvents(f,[source],s)).outcomes,[]);
+  assert.deepEqual(f.entries.map(e=>[e.id,e.start,e.end,e.comment]),[['manual-midnight',1320,1440,'Preserve me']]);
+  assert.equal(f.saves.length,3);assert.deepEqual(f.forbidden,[]);
  } finally { f.dom.window.close(); }
 });

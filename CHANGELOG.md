@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Import work blocks ending exactly at midnight on their starting payroll day, including month/year boundaries and when the device is in another time zone.
+- Recognize Workday's midnight display even when its grid boundary is clipped to 11:59 PM, so saved blocks verify correctly and repeated imports do not duplicate or rewrite them.
+- Keep actual overnight, sub-minute, ambiguous daylight-saving, and conflicting entries protected from automatic import.
+
 ## 0.3.3 — Google connection renewal, November 19, 2026
 
 - Allow Google's delayed redirects to finish during silent OAuth renewal after inactivity in Edge and Chrome.

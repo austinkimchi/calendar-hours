@@ -42,7 +42,8 @@ test('overnight entries stop imports before next-day coverage can be lost',async
   ['10-19-22-0','10-20-6-0',['2026-10-19','2026-10-20']],
   ['10-18-22-0','10-19-6-0',['2026-10-19']],
   ['12-31-22-0','1-1-6-0',['2027-01-01']],
-  ['10-18-22-0','10-19-0-0',['2026-10-19']]
+  ['10-17-22-0','10-19-0-0',['2026-10-19']],
+  ['10-19-22-0','10-20-0-1',['2026-10-19']]
  ]) {
   const f=fixture();
   const entry=f.doc.createElement('div');
@@ -54,6 +55,40 @@ test('overnight entries stop imports before next-day coverage can be lost',async
   const base=adapter.readView(f.doc,core);
   await assert.rejects(adapter.createBlock(f.doc,core,base,{date:'2026-10-19',start:240,end:300},settings),/spans midnight/);
   assert.equal(f.selection.length,0);assert.equal(f.saved.length,0);assert.equal(f.doc.querySelector('[role="dialog"]'),null);
+  f.dom.window.close();
+ }
+});
+test('existing midnight endings normalize to 1440 and do not occupy the following day',()=>{
+ for(const [date,start,end] of [
+  ['2026-11-19','11-19-22-0','11-20-0-0'],
+  ['2026-11-30','11-30-22-0','12-1-0-0'],
+  ['2026-12-31','12-31-22-0','1-1-0-0'],
+  ['2028-02-29','2-29-22-0','3-1-0-0'],
+  ['2026-11-19','11-19-22-0','11-19-24-0']
+ ]) {
+  const f=fixture();
+  const entry=f.doc.createElement('div');
+  entry.setAttribute('data-automation-id','calendarevent');entry.setAttribute('role','link');
+  entry.setAttribute('data-automation-startdate',start);entry.setAttribute('data-automation-enddate',end);
+  entry.innerHTML='<span data-automation-id="calendarAppointmentTitle">Hours</span>';
+  f.doc.body.append(entry);
+  const values=adapter.readExisting(f.doc,[date]);
+  assert.deepEqual(values.map(e=>[e.date,e.start,e.end]),[[date,1320,1440]]);
+  assert.deepEqual(adapter.readExisting(f.doc,[core.addDays(date,1)]),[]);
+  f.dom.window.close();
+ }
+});
+test('a grid endpoint clipped to 23:59 is midnight only when its displayed time range confirms it',()=>{
+ for(const [subtitle,expected] of [
+  ['10:00pm - 12:00am',1440],['10:00 PM – 12:00 AM',1440],
+  ['10:00pm - 11:59pm',1439],['9:00pm - 12:00am',1439],['',1439]
+ ]) {
+  const f=fixture(),entry=f.doc.createElement('div');
+  entry.setAttribute('data-automation-id','calendarevent');entry.setAttribute('role','link');
+  entry.setAttribute('data-automation-startdate','11-19-22-0');entry.setAttribute('data-automation-enddate','11-19-23-59');
+  entry.innerHTML=`<span data-automation-id="calendarAppointmentTitle">Hours</span><span data-automation-id="calendarAppointmentSubtitle">${subtitle}</span>`;
+  f.doc.body.append(entry);
+  assert.equal(adapter.readExisting(f.doc,['2026-11-19'])[0].end,expected,subtitle);
   f.dom.window.close();
  }
 });
