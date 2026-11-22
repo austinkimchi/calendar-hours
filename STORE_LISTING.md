@@ -1,5 +1,13 @@
 # Chrome Web Store submission notes
 
+## 0.3.4 midnight import fix — submitted November 22, 2026
+
+PR #11 was merged after 181 tests, three-time-zone CI, and live Workday validation. Draft PRs #2 (performance experiment) and #4 (meal automation awaiting HR clarification) remain excluded. Release commit: `b460f8853bf774fa86592c91a8cbaabc16fddc93`.
+
+Package: `dist/calendar-hours-0.3.4.zip`, SHA-256 `a640c62fe652393c257c53f56dc1874582a1bde44f72117caaf554ffa45829a1`. The published GitHub release download matched the local ZIP byte for byte. Release CI passed tests and packaging in UTC, Los Angeles, and Madrid.
+
+The PKimchi dashboard confirmed Published 0.3.3 before upload. After uploading 0.3.4 and saving the updated release description, Google confirmed submission. The destination Package page then showed **Pending review**, **Draft 0.3.4**, and **Published 0.3.3**. Automatic publication after approval was selected; unlisted distribution and the three existing generic screenshots were retained. No permissions or data practices changed. This confirms submission, not publication of 0.3.4.
+
 ## 0.3.3 connection renewal update — submitted November 19, 2026
 
 Package: `dist/calendar-hours-0.3.3.zip`, SHA-256 `5bff7e4b13d405698f04b066d243393d469819f5adcfca7bf536c21bd04edf3b`. This is the byte-verified GitHub release package; the 173-test suite, three-time-zone CI, and live Edge silent-renewal checks are documented in [release verification](RELEASE_TESTING.md).
